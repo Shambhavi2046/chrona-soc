@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Environment variables
+.env
+.env.*
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# ML model files
+*.h5
+*.pt
+*.pth
