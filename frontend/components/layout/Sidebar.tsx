@@ -17,7 +17,7 @@ const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Alerts", href: "/alerts", icon: ShieldAlert },
   { name: "Investigations", href: "/investigations", icon: Search },
-  { name: "Threat Intelligence", href: "/threat-intel", icon: Network },
+  { name: "Threat Intelligence", href: "/threat-intelligence", icon: Network },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Reports", href: "/reports", icon: FileText },
   { name: "Settings", href: "/settings", icon: Settings },
