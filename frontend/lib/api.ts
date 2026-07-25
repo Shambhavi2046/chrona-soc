@@ -38,3 +38,29 @@ export async function getAlerts(): Promise<Alert[]> {
 
   return response.json();
 }
+
+export interface InvestigationResponse {
+  alert_id: number;
+  threat_type: string;
+  risk_score: number;
+  status: string;
+  investigation: {
+    analysis: string;
+    recommendations: string[];
+  };
+}
+
+export async function getInvestigation(alertId: string | number): Promise<InvestigationResponse> {
+  const response = await fetch(
+    `${API_URL}/alerts/${alertId}/investigate`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch investigation data");
+  }
+
+  return response.json();
+}
