@@ -10,13 +10,19 @@ import {
   BarChart3,
   FileText,
   Settings,
-  Shield
+  Shield,
+  Briefcase,
+  Share2,
+  Bot
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Alerts", href: "/alerts", icon: ShieldAlert },
   { name: "Investigations", href: "/investigations", icon: Search },
+  { name: "Cases", href: "/cases", icon: Briefcase },
+  { name: "Attack Graph", href: "/attack-graph", icon: Share2 },
+  { name: "Copilot", href: "/copilot", icon: Bot },
   { name: "Threat Intelligence", href: "/threat-intelligence", icon: Network },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Reports", href: "/reports", icon: FileText },

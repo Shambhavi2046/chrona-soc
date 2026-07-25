@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Shield, Search } from "lucide-react";
 import { Alert } from "@/lib/api";
 import SeverityBadge from "@/components/alerts/SeverityBadge";
+import ClientDate from "@/components/common/ClientDate";
 
 interface InvestigationTableProps {
   investigations: Alert[];
@@ -74,7 +75,7 @@ export default function InvestigationTable({ investigations }: InvestigationTabl
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">
-                    {new Date(inv.created_at).toLocaleString()}
+                    <ClientDate date={inv.created_at} format="full" />
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Shield, AlertTriangle } from "lucide-react";
 import { Alert } from "@/lib/api";
 import SeverityBadge from "./SeverityBadge";
+import ClientDate from "@/components/common/ClientDate";
 
 interface AlertTableProps {
   alerts: Alert[];
@@ -75,7 +76,7 @@ export default function AlertTable({ alerts }: AlertTableProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">
-                    {new Date(alert.created_at).toLocaleString()}
+                    <ClientDate date={alert.created_at} format="full" />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 font-mono">
                     LOG-{alert.log_id}

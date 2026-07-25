@@ -1,5 +1,6 @@
 import { Network, Search } from "lucide-react";
 import SeverityBadge from "@/components/alerts/SeverityBadge";
+import ClientDate from "@/components/common/ClientDate";
 
 export interface IOC {
   id: string;
@@ -72,7 +73,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                  {new Date(ioc.lastDetected).toLocaleString()}
+                  <ClientDate date={ioc.lastDetected} format="full" />
                 </td>
               </tr>
             ))}
