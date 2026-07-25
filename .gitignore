@@ -27,3 +27,5 @@ out/
 *.h5
 *.pt
 *.pth
+# Database
+*.db
