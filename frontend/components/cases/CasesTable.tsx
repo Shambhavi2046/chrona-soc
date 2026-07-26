@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Case } from "@/types";
 import { Search, Filter, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
+import { useSearchParams, useRouter } from "next/navigation";
+import { User, getUsers } from "@/services/users";
 
 interface CasesTableProps {
   cases: Case[];
@@ -12,11 +14,28 @@ interface CasesTableProps {
 
 export default function CasesTable({ cases }: CasesTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const globalQuery = searchParams.get("q")?.toLowerCase() || "";
 
-  const filteredCases = cases.filter(c => 
-    c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    getUsers().then(setUsers).catch(console.error);
+  }, []);
+
+  const filteredCases = cases.filter(c => {
+    const matchesLocal = c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         c.status.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const caseIdStr = `case-${c.id.toString().split('-')[0].toLowerCase()}`;
+    const matchesGlobal = !globalQuery || 
+                          c.title.toLowerCase().includes(globalQuery) || 
+                          c.status.toLowerCase().includes(globalQuery) ||
+                          caseIdStr.includes(globalQuery) ||
+                          c.id.toString().toLowerCase().includes(globalQuery);
+
+    return matchesLocal && matchesGlobal;
+  });
 
   const getStatusColor = (status: string) => {
     switch(status.toLowerCase()) {
@@ -87,15 +106,56 @@ export default function CasesTable({ cases }: CasesTableProps) {
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-400">
-                  {c.assignee || <span className="italic text-gray-600">Unassigned</span>}
+                  <div className="flex flex-col gap-1">
+                    {c.assignee || <span className="italic text-gray-600">Unassigned</span>}
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                      <select 
+                        className="text-[10px] bg-soc-bg border border-soc-border hover:border-soc-accent rounded px-1 py-0.5 text-gray-400 max-w-[120px] outline-none"
+                        value=""
+                        onChange={async (e) => {
+                          const newAssignee = e.target.value;
+                          if (newAssignee && newAssignee !== c.assignee) {
+                            try {
+                              const { updateCaseStatus } = await import("@/services/cases");
+                              await updateCaseStatus(c.id, c.status, newAssignee);
+                              router.refresh();
+                            } catch (err) {
+                              console.error(err);
+                              alert("Failed to assign case");
+                            }
+                          }
+                        }}
+                      >
+                        <option value="" disabled>Assign to...</option>
+                        {users.map(u => (
+                          <option key={u.id} value={u.name}>{u.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                   <ClientDate date={c.created_at} format="date" />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="text-xs px-2 py-1 bg-soc-bg border border-soc-border hover:border-soc-accent text-gray-400 hover:text-white rounded">Assign</button>
-                    <button className="text-xs px-2 py-1 bg-soc-bg border border-soc-border hover:border-soc-success text-gray-400 hover:text-soc-success rounded">Close</button>
+                    {c.status.toLowerCase() !== 'closed' && c.status.toLowerCase() !== 'resolved' && (
+                      <button 
+                        onClick={async () => {
+                          try {
+                            const { updateCaseStatus } = await import("@/services/cases");
+                            await updateCaseStatus(c.id, "Closed", c.assignee || undefined);
+                            router.refresh();
+                          } catch (e) {
+                            console.error(e);
+                            alert("Failed to close case");
+                          }
+                        }}
+                        className="text-xs px-2 py-1 bg-soc-bg border border-soc-border hover:border-soc-success text-gray-400 hover:text-soc-success rounded transition-colors"
+                      >
+                        Close
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

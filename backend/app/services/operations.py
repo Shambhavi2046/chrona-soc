@@ -1,0 +1,121 @@
+from typing import Optional, List
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, status
+from app.services.base import BaseService
+from app.repositories.operations import AlertRepository, InvestigationRepository, CaseRepository, EvidenceRepository
+from app.repositories.operations import alert_repo, investigation_repo, case_repo, evidence_repo
+from app.schemas.operations import AlertCreate, AlertUpdate, InvestigationCreate, InvestigationUpdate, CaseCreate, CaseUpdate, EvidenceCreate
+import uuid
+
+class AlertService(BaseService[AlertRepository]):
+    async def create_alert(self, db: AsyncSession, obj_in: AlertCreate):
+        db_obj = await self.repository.create(db, obj_in=obj_in)
+        return await self.repository.get(db, db_obj.id)
+        
+    async def update_alert(self, db: AsyncSession, id: uuid.UUID, obj_in: AlertUpdate):
+        db_obj = await self.repository.get(db, id)
+        if not db_obj:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+            
+        update_data = obj_in.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+            
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
+        
+    async def delete_alert(self, db: AsyncSession, id: uuid.UUID):
+        db_obj = await self.repository.get(db, id)
+        if not db_obj:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+        await db.delete(db_obj)
+        await db.commit()
+
+class InvestigationService(BaseService[InvestigationRepository]):
+    async def get_or_create_by_alert_id(self, db: AsyncSession, alert_id: uuid.UUID):
+        db_obj = await self.repository.get_by_alert_id(db, alert_id)
+        if not db_obj:
+            # Check if alert exists
+            alert = await alert_repo.get(db, alert_id)
+            if not alert:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+            
+            obj_in = InvestigationCreate(
+                alert_id=alert_id,
+                status="In Progress",
+                summary=f"Automated investigation initiated for alert: {alert.title}",
+                findings=[{"action": "Review initial telemetry"}, {"action": "Identify related assets"}],
+            )
+            db_obj = await self.repository.create(db, obj_in=obj_in)
+        return db_obj
+
+    async def create_investigation(self, db: AsyncSession, obj_in: InvestigationCreate):
+        db_obj = await self.repository.create(db, obj_in=obj_in)
+        return await self.repository.get(db, db_obj.id)
+        
+    async def update_investigation(self, db: AsyncSession, id: uuid.UUID, obj_in: InvestigationUpdate):
+        db_obj = await self.repository.get(db, id)
+        if not db_obj:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Investigation not found")
+            
+        update_data = obj_in.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+            
+        # Sync status with linked alert
+        if "status" in update_data and update_data["status"]:
+            alert = await alert_repo.get(db, db_obj.alert_id)
+            if alert:
+                alert.status = update_data["status"]
+                db.add(alert)
+                
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
+
+class CaseService(BaseService[CaseRepository]):
+    async def create_case(self, db: AsyncSession, obj_in: CaseCreate):
+        db_obj = await self.repository.create(db, obj_in=obj_in)
+        return await self.repository.get(db, db_obj.id)
+        
+    async def update_case(self, db: AsyncSession, id: uuid.UUID, obj_in: CaseUpdate):
+        db_obj = await self.repository.get(db, id)
+        if not db_obj:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+            
+        update_data = obj_in.dict(exclude_unset=True)
+        
+        if "assignee" in update_data:
+            assignee_name = update_data.pop("assignee")
+            if assignee_name:
+                from sqlalchemy import select
+                from app.models.identity import User
+                from fastapi import HTTPException
+                user_res = await db.execute(select(User).filter(User.name == assignee_name))
+                user = user_res.scalars().first()
+                if user:
+                    update_data["assignee_id"] = user.id
+                else:
+                    raise HTTPException(status_code=400, detail=f"User '{assignee_name}' not found")
+                    
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+            
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return await self.repository.get(db, db_obj.id)
+
+class EvidenceService(BaseService[EvidenceRepository]):
+    async def add_evidence(self, db: AsyncSession, case_id: uuid.UUID, obj_in: EvidenceCreate):
+        obj_in.case_id = case_id
+        db_obj = await self.repository.create(db, obj_in=obj_in)
+        return await self.repository.get(db, db_obj.id)
+
+alert_service = AlertService(alert_repo)
+investigation_service = InvestigationService(investigation_repo)
+case_service = CaseService(case_repo)
+evidence_service = EvidenceService(evidence_repo)

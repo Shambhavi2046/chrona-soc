@@ -4,11 +4,35 @@ import { Evidence } from "@/types";
 import { FileText, Globe, Hash, Link as LinkIcon } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
 
+import { useParams, useRouter } from "next/navigation";
+
 interface EvidenceBoardProps {
   evidence: Evidence[];
 }
 
 export default function EvidenceBoard({ evidence }: EvidenceBoardProps) {
+  const params = useParams();
+  const router = useRouter();
+
+  const handleAddEvidence = async () => {
+    const value = window.prompt("Enter evidence value (e.g. IP, Hash, Domain):");
+    if (value && value.trim() && params?.caseId) {
+      // Determine type crudely for mock purposes
+      let type = "IP";
+      if (value.includes(".")) type = "Domain";
+      if (value.length === 32 || value.length === 64) type = "Hash";
+      
+      try {
+        const { addCaseEvidence } = await import("@/services/cases");
+        await addCaseEvidence(params.caseId as string, type, value.trim());
+        router.refresh();
+      } catch (e) {
+        console.error(e);
+        alert("Failed to add evidence");
+      }
+    }
+  };
+
   const getEvidenceIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'ip': return <Globe className="w-5 h-5 text-soc-accent" />;
@@ -27,7 +51,10 @@ export default function EvidenceBoard({ evidence }: EvidenceBoardProps) {
     <div className="glass-card rounded-xl p-6 h-full">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-semibold text-white">Evidence Board</h3>
-        <button className="px-3 py-1 bg-soc-accent hover:bg-soc-accent/80 text-white text-xs font-medium rounded transition-colors">
+        <button 
+          onClick={handleAddEvidence}
+          className="px-3 py-1 bg-soc-accent hover:bg-soc-accent/80 text-white text-xs font-medium rounded transition-colors"
+        >
           + Add Evidence
         </button>
       </div>

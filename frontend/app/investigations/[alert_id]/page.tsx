@@ -31,6 +31,7 @@ export default async function InvestigationPage({
       {/* Dynamic Header section */}
       <div className="bg-soc-card/30 rounded-xl p-6 border border-soc-border glass">
         <InvestigationHeader 
+          investigationId={data.id}
           alertId={data.alert_id}
           threatType={data.threat_type}
           riskScore={data.risk_score}

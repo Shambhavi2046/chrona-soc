@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 class QuickActionSchema(BaseModel):
@@ -26,6 +26,6 @@ class ActiveContextSchema(BaseModel):
 
 class ChatResponseSchema(BaseModel):
     response: str
-    suggested_prompts: List[str]
-    quick_actions: List[QuickActionSchema]
+    suggested_prompts: List[str] = Field(default_factory=list)
+    quick_actions: List[QuickActionSchema] = Field(default_factory=list)
     active_context: Optional[ActiveContextSchema] = None

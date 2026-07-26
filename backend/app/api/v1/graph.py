@@ -14,6 +14,6 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/graph", response_model=GraphTopologySchema)
+@router.get("", response_model=GraphTopologySchema)
 def get_attack_graph(db: Session = Depends(get_db)):
     return graph_service.generate_topology(db)

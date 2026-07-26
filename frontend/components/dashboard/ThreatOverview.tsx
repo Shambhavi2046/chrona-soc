@@ -1,11 +1,14 @@
 import { ShieldAlert, Activity, Wifi } from "lucide-react";
+import Link from "next/link";
 
 export default function ThreatOverview() {
   return (
     <div className="glass-card rounded-xl p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Threat Activity Overview</h3>
-        <button className="text-xs text-soc-accent hover:text-white transition-colors">View All</button>
+        <Link href="/alerts">
+          <button className="text-xs text-soc-accent hover:text-white transition-colors">View All</button>
+        </Link>
       </div>
 
       <div className="space-y-6 flex-1">

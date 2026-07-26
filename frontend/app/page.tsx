@@ -1,13 +1,15 @@
-import { getDashboardSummary } from "@/services";
+import { getDashboardSummary, getRecentAlerts } from "@/services";
 import StatCard from "@/components/dashboard/StatCard";
 import ThreatOverview from "@/components/dashboard/ThreatOverview";
 import IncidentTable from "@/components/dashboard/IncidentTable";
 import RiskIndicator from "@/components/dashboard/RiskIndicator";
 import { ShieldAlert, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
+import Link from "next/link";
 
 export default async function Home() {
   // Fetch real data from backend
   const stats = await getDashboardSummary();
+  const recentAlerts = await getRecentAlerts();
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -19,9 +21,11 @@ export default async function Home() {
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-500">Last updated: Just now</span>
-          <button className="px-4 py-2 bg-soc-accent hover:bg-soc-accent/90 text-white text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(56,189,248,0.4)]">
-            Generate Report
-          </button>
+          <Link href="/reports">
+            <button className="px-4 py-2 bg-soc-accent hover:bg-soc-accent/90 text-white text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+              Generate Report
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -34,6 +38,7 @@ export default async function Home() {
           trend="up"
           trendValue="12%"
           colorClass="text-soc-accent border-soc-accent"
+          href="/alerts"
         />
         <StatCard
           title="Critical Alerts"
@@ -42,6 +47,7 @@ export default async function Home() {
           trend="up"
           trendValue="5%"
           colorClass="text-soc-danger border-soc-danger"
+          href="/alerts?severity=critical"
         />
         <StatCard
           title="Open Cases"
@@ -50,6 +56,7 @@ export default async function Home() {
           trend="down"
           trendValue="2%"
           colorClass="text-soc-success border-soc-success"
+          href="/cases"
         />
         <StatCard
           title="Active Playbooks"
@@ -58,6 +65,7 @@ export default async function Home() {
           trend="neutral"
           trendValue="0%"
           colorClass="text-soc-warning border-soc-warning"
+          href="/soar"
         />
       </div>
 
@@ -76,7 +84,7 @@ export default async function Home() {
 
       {/* Full width table */}
       <div>
-        <IncidentTable />
+        <IncidentTable incidents={recentAlerts} />
       </div>
     </div>
   );

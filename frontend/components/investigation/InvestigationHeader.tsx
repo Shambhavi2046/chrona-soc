@@ -1,8 +1,15 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowLeft, Download, CheckCircle, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle, ShieldAlert, Loader2 } from "lucide-react";
 import SeverityBadge from "@/components/alerts/SeverityBadge";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { updateInvestigationStatus } from "@/services/investigations";
+import { getTemplates, generateReport, downloadReportPdf } from "@/services/reports";
 
 interface InvestigationHeaderProps {
+  investigationId?: string;
   alertId: number | string;
   threatType: string;
   riskScore: number;
@@ -10,11 +17,52 @@ interface InvestigationHeaderProps {
 }
 
 export default function InvestigationHeader({
+  investigationId,
   alertId,
   threatType,
   riskScore,
   status,
 }: InvestigationHeaderProps) {
+  const router = useRouter();
+  const [isResolving, setIsResolving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleResolve = async () => {
+    if (!investigationId) return;
+    try {
+      setIsResolving(true);
+      await updateInvestigationStatus(investigationId, "Resolved");
+      router.refresh(); // Refresh the page to reflect the new status
+    } catch (e) {
+      console.error("Failed to mark as resolved", e);
+    } finally {
+      setIsResolving(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!investigationId) return;
+    try {
+      setIsExporting(true);
+      // Pick the first available template
+      const templates = await getTemplates();
+      if (!templates.length) throw new Error("No templates available");
+      
+      const report = await generateReport({
+        name: `Investigation Report - ALT-${String(alertId).padStart(4, '0')}`,
+        source_type: "Investigation",
+        source_id: investigationId,
+        template_id: templates[0].id
+      });
+      
+      downloadReportPdf(report.id);
+    } catch (e) {
+      console.error("Failed to export report", e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
       <div>
@@ -45,14 +93,22 @@ export default function InvestigationHeader({
         </div>
       </div>
       <div className="flex items-center space-x-3 mt-4 md:mt-0">
-        <button className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-          <Download className="w-4 h-4 mr-2" />
-          Export Report
+        <button 
+          onClick={handleExport}
+          disabled={isExporting || !investigationId}
+          className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
+        >
+          {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+          {isExporting ? "Exporting..." : "Export Report"}
         </button>
         {status.toLowerCase() !== 'resolved' && (
-          <button className="flex items-center px-4 py-2 bg-soc-success/20 hover:bg-soc-success/30 border border-soc-success/50 text-soc-success text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Mark as Resolved
+          <button 
+            onClick={handleResolve}
+            disabled={isResolving || !investigationId}
+            className="flex items-center px-4 py-2 bg-soc-success/20 hover:bg-soc-success/30 border border-soc-success/50 text-soc-success text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(16,185,129,0.2)] disabled:opacity-50"
+          >
+            {isResolving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+            {isResolving ? "Resolving..." : "Mark as Resolved"}
           </button>
         )}
       </div>

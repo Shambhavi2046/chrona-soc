@@ -1,7 +1,9 @@
 import { getCases } from "@/services";
 import CasesTable from "@/components/cases/CasesTable";
 import CaseKPIs from "@/components/cases/CaseKPIs";
-import { Briefcase, Plus } from "lucide-react";
+import { Briefcase } from "lucide-react";
+import NewCaseButton from "@/components/cases/NewCaseButton";
+import { Suspense } from "react";
 
 export default async function CasesDashboardPage() {
   const cases = await getCases();
@@ -20,17 +22,16 @@ export default async function CasesDashboardPage() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="flex items-center px-4 py-2 bg-soc-accent hover:bg-soc-accent/80 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-            <Plus className="w-4 h-4 mr-2" />
-            New Case
-          </button>
+          <NewCaseButton />
         </div>
       </div>
 
       <CaseKPIs cases={cases} />
 
       <div className="h-[600px]">
-        <CasesTable cases={cases} />
+        <Suspense fallback={<div className="h-full w-full bg-soc-bg rounded-xl border border-soc-border animate-pulse" />}>
+          <CasesTable cases={cases} />
+        </Suspense>
       </div>
     </div>
   );

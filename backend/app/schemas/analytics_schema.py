@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
 class KPIStats(BaseModel):
@@ -28,7 +28,7 @@ class TacticCount(BaseModel):
     count: int
 
 class MitreAnalytics(BaseModel):
-    topTactics: List[TacticCount]
+    topTactics: List[TacticCount] = Field(default_factory=list)
 
 class AssetRisk(BaseModel):
     asset: str
@@ -40,17 +40,17 @@ class GeographicCount(BaseModel):
     count: int
 
 class AlertAnalytics(BaseModel):
-    open: int
-    closed: int
-    falsePositive: int
-    suppressed: int
+    open: int = 0
+    closed: int = 0
+    falsePositive: int = 0
+    suppressed: int = 0
 
 class AnalyticsResponse(BaseModel):
     kpis: KPIStats
-    attackTrends: List[TrendPoint]
-    threatSeverity: List[SeverityCount]
-    mitreAnalytics: MitreAnalytics
-    assetRisk: List[AssetRisk]
-    geographicAnalytics: List[GeographicCount]
-    alertAnalytics: AlertAnalytics
-    aiInsights: List[str]
+    attackTrends: List[TrendPoint] = Field(default_factory=list)
+    threatSeverity: List[SeverityCount] = Field(default_factory=list)
+    mitreAnalytics: MitreAnalytics = Field(default_factory=lambda: MitreAnalytics(topTactics=[]))
+    assetRisk: List[AssetRisk] = Field(default_factory=list)
+    geographicAnalytics: List[GeographicCount] = Field(default_factory=list)
+    alertAnalytics: AlertAnalytics = Field(default_factory=lambda: AlertAnalytics(open=0, closed=0, falsePositive=0, suppressed=0))
+    aiInsights: List[str] = Field(default_factory=list)

@@ -3,12 +3,69 @@
 import { CaseDetail } from "@/types";
 import { Clock, ShieldAlert, CheckCircle, MoreHorizontal } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
+import { useRouter } from "next/navigation";
 
 interface CaseDetailHeaderProps {
   caseDetail: CaseDetail;
 }
 
 export default function CaseDetailHeader({ caseDetail }: CaseDetailHeaderProps) {
+  const router = useRouter();
+  const handleAssignToMe = async () => {
+    try {
+      const { updateCaseStatus } = await import("@/services/cases");
+      await updateCaseStatus(caseDetail.id, caseDetail.status, "System Administrator");
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to assign case");
+    }
+  };
+
+  const handleResolve = async () => {
+    try {
+      const { updateCaseStatus } = await import("@/services/cases");
+      await updateCaseStatus(caseDetail.id, "Resolved", caseDetail.assignee || undefined);
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to resolve case");
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      const { generateReport, getTemplates, downloadReportPdf } = await import("@/services/reports");
+      const templates = await getTemplates();
+      if (!templates || templates.length === 0) {
+         alert("No templates available");
+         return;
+      }
+      const report = await generateReport({
+        name: `Report for Case ${caseDetail.id}`,
+        source_type: "Case",
+        source_id: caseDetail.id.toString(),
+        template_id: templates[0].id
+      });
+      alert(`Report generated: ${report.name}`);
+      router.push("/reports");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to generate report");
+    }
+  };
+
+  const handleEscalate = async () => {
+    try {
+      const { escalateCase } = await import("@/services/cases");
+      await escalateCase(caseDetail.id);
+      router.refresh();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to escalate case");
+    }
+  };
+
   return (
     <div className="glass-card rounded-xl p-6 border-b-4 border-b-soc-accent mb-8">
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -64,18 +121,32 @@ export default function CaseDetailHeader({ caseDetail }: CaseDetailHeaderProps) 
           </div>
 
           <div className="flex gap-2">
-            <button className="flex-1 bg-soc-accent hover:bg-soc-accent/80 text-white py-2 rounded-lg text-sm font-medium transition-colors">
+            <button 
+              onClick={handleAssignToMe}
+              className="flex-1 bg-soc-accent hover:bg-soc-accent/80 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+            >
               Assign to Me
             </button>
-            <button className="flex-1 bg-soc-success hover:bg-soc-success/80 text-white py-2 rounded-lg text-sm font-medium transition-colors">
-              Resolve
-            </button>
+            {caseDetail.status.toLowerCase() !== 'closed' && caseDetail.status.toLowerCase() !== 'resolved' && (
+              <button 
+                onClick={handleResolve}
+                className="flex-1 bg-soc-success hover:bg-soc-success/80 text-white py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Resolve
+              </button>
+            )}
           </div>
           <div className="flex gap-2">
-            <button className="flex-1 bg-soc-bg border border-soc-border hover:border-soc-accent py-2 rounded-lg text-xs font-medium text-gray-300 hover:text-white transition-colors">
+            <button 
+              onClick={handleEscalate}
+              className="flex-1 bg-soc-bg hover:bg-soc-danger/20 border border-soc-border hover:border-soc-danger hover:text-soc-danger py-2 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+            >
               Escalate
             </button>
-            <button className="flex-1 bg-soc-bg border border-soc-border hover:border-soc-accent py-2 rounded-lg text-xs font-medium text-gray-300 hover:text-white transition-colors">
+            <button 
+              onClick={handleGenerateReport}
+              className="flex-1 bg-soc-bg hover:bg-soc-accent/20 border border-soc-border hover:border-soc-accent hover:text-soc-accent py-2 rounded-lg text-xs font-medium text-gray-300 transition-colors"
+            >
               Generate Report
             </button>
           </div>

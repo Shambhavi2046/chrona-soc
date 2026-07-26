@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 interface StatCardProps {
   title: string;
@@ -7,6 +8,7 @@ interface StatCardProps {
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
   colorClass?: string;
+  href?: string;
 }
 
 export default function StatCard({
@@ -16,9 +18,10 @@ export default function StatCard({
   trend,
   trendValue,
   colorClass = "text-soc-accent",
+  href,
 }: StatCardProps) {
-  return (
-    <div className="glass-card rounded-xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group">
+  const content = (
+    <div className={`glass-card rounded-xl p-6 transition-all duration-300 ${href ? "hover:-translate-y-1 hover:shadow-lg cursor-pointer" : ""} group`}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-gray-400 mb-1">{title}</p>
@@ -45,4 +48,10 @@ export default function StatCard({
       )}
     </div>
   );
+
+  return href ? (
+    <Link href={href} className="block">
+      {content}
+    </Link>
+  ) : content;
 }

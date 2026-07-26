@@ -1,3 +1,4 @@
+import { mapToUuid } from "@/utils/idMapping";
 import { API_URL } from "./config";
 import { Alert, InvestigationResponse } from "@/types";
 
@@ -8,7 +9,8 @@ export async function getAlerts(): Promise<Alert[]> {
 }
 
 export async function getAlertById(alertId: string | number): Promise<Alert> {
-  const response = await fetch(`${API_URL}/alerts/${alertId}`, { cache: "no-store" });
+  const uuid = mapToUuid(alertId);
+  const response = await fetch(`${API_URL}/alerts/${uuid}`, { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch alert data");
   return response.json();
 }

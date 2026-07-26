@@ -1,6 +1,10 @@
+export const dynamic = 'force-dynamic';
+
 import { getAlerts } from "@/services";
 import AlertTable from "@/components/alerts/AlertTable";
-import { ShieldAlert, RefreshCcw } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
+import { Suspense } from "react";
+import RefreshButton from "@/components/common/RefreshButton";
 
 export default async function AlertsPage() {
   // Fetch real alerts from backend
@@ -21,16 +25,15 @@ export default async function AlertsPage() {
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-500">Live Feed Active</span>
-          <button className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors">
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Refresh
-          </button>
+          <RefreshButton />
         </div>
       </div>
 
       {/* Main Alerts Table */}
       <div className="w-full">
-        <AlertTable alerts={alerts} />
+        <Suspense fallback={<div className="h-64 w-full bg-soc-card rounded-xl border border-soc-border animate-pulse" />}>
+          <AlertTable alerts={alerts} />
+        </Suspense>
       </div>
     </div>
   );

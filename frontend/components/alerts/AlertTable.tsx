@@ -1,14 +1,39 @@
+"use client";
+
 import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Shield, AlertTriangle } from "lucide-react";
 import { Alert } from "@/types";
 import SeverityBadge from "./SeverityBadge";
 import ClientDate from "@/components/common/ClientDate";
+import { useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 
 interface AlertTableProps {
   alerts: Alert[];
 }
 
 export default function AlertTable({ alerts }: AlertTableProps) {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q")?.toLowerCase() || "";
+
+  const filteredAlerts = useMemo(() => {
+    if (!query) return alerts;
+    return alerts.filter(alert => {
+      const q = query.toLowerCase();
+      
+      const alertId = alert.id.split('-')[0].toLowerCase();
+      const incMatch = `inc-${alertId}`.includes(q) || `alt-${alertId}`.includes(q) || alertId.includes(q);
+      
+      const threatMatch = alert.threat_type?.toLowerCase().includes(q);
+      const sourceMatch = (alert as any).source?.toLowerCase().includes(q);
+      const logMatch = alert.log_id?.toLowerCase().includes(q);
+      const titleMatch = (alert as any).title?.toLowerCase().includes(q);
+      const rawLogMatch = (alert as any).raw_log ? JSON.stringify((alert as any).raw_log).toLowerCase().includes(q) : false;
+      
+      return incMatch || threatMatch || sourceMatch || logMatch || titleMatch || rawLogMatch;
+    });
+  }, [alerts, query]);
+
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col">
       <div className="p-6 border-b border-soc-border flex items-center justify-between">
@@ -17,7 +42,8 @@ export default function AlertTable({ alerts }: AlertTableProps) {
           Detected Alerts
         </h3>
         <span className="text-sm font-medium text-gray-400">
-          Showing {alerts.length} alerts
+          Showing {filteredAlerts.length} {filteredAlerts.length === 1 ? 'alert' : 'alerts'}
+          {query && " (filtered)"}
         </span>
       </div>
       
@@ -36,14 +62,14 @@ export default function AlertTable({ alerts }: AlertTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-soc-border">
-            {alerts.length === 0 ? (
+            {filteredAlerts.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                  No alerts detected. All clear.
+                  {query ? "No alerts match your search." : "No alerts detected. All clear."}
                 </td>
               </tr>
             ) : (
-              alerts.map((alert) => (
+              filteredAlerts.map((alert) => (
                 <tr key={alert.id} className="hover:bg-soc-card-hover/50 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap text-gray-400 font-mono text-sm">
                     {alert.id.toString().split('-')[0].toUpperCase()}

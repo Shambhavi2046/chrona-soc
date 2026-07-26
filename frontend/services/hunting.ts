@@ -1,5 +1,6 @@
 import { API_URL } from "./config";
-import { SavedHunt, HuntQueryRequest, HuntExecuteResponse } from "@/types";
+import { HuntQueryRequest, HuntExecuteResponse, SavedHunt } from "@/types/hunting";
+import { mapToUuid } from "@/utils/idMapping";
 
 export async function getSavedHunts(skip: number = 0, limit: number = 100): Promise<SavedHunt[]> {
   const response = await fetch(`${API_URL}/hunting/saved?skip=${skip}&limit=${limit}`, { cache: "no-store" });
@@ -18,7 +19,8 @@ export async function createSavedHunt(data: Partial<SavedHunt>): Promise<SavedHu
 }
 
 export async function deleteSavedHunt(id: string): Promise<void> {
-  const response = await fetch(`${API_URL}/hunting/saved/${id}`, {
+  const uuid = mapToUuid(id);
+  const response = await fetch(`${API_URL}/hunting/saved/${uuid}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete saved hunt");

@@ -1,3 +1,4 @@
+import { mapToUuid } from "@/utils/idMapping";
 import { API_URL } from "./config";
 
 export interface SecurityEvent {
@@ -70,7 +71,8 @@ export const searchEvents = async (params: Record<string, any>): Promise<Securit
 
 export const getEventById = async (id: string): Promise<SecurityEvent | null> => {
   try {
-    const response = await fetch(`${API_URL}/events/${id}`, { cache: "no-store" });
+    const uuid = mapToUuid(id);
+    const response = await fetch(`${API_URL}/events/${uuid}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to fetch event");
     return await response.json();
   } catch (error) {

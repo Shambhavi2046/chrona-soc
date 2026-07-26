@@ -1,12 +1,24 @@
-import { FileText, Download, Eye, Copy, Trash2, Clock, CheckCircle2, AlertCircle } from "lucide-react";
-import { GeneratedReport } from "@/types";
+import { FileText, Download, Eye, FileJson, Trash2, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { GeneratedReport } from "@/types/reports";
 import ClientDate from "@/components/common/ClientDate";
+import { downloadReportPdf, downloadReportJson, deleteReport } from "@/services/reports";
 
 interface GeneratedReportsTableProps {
   reports: GeneratedReport[];
+  onRefresh?: () => void;
 }
 
-export default function GeneratedReportsTable({ reports }: GeneratedReportsTableProps) {
+export default function GeneratedReportsTable({ reports, onRefresh }: GeneratedReportsTableProps) {
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteReport(id);
+      if (onRefresh) onRefresh();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col">
       <div className="p-4 border-b border-soc-border flex items-center justify-between">
@@ -29,7 +41,13 @@ export default function GeneratedReportsTable({ reports }: GeneratedReportsTable
             </tr>
           </thead>
           <tbody className="divide-y divide-soc-border">
-            {reports.map((report) => (
+            {reports.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-400 text-sm">
+                  No reports generated yet.
+                </td>
+              </tr>
+            ) : reports.map((report) => (
               <tr key={report.id} className="hover:bg-soc-card-hover transition-colors group">
                 <td className="px-6 py-4">
                   <div className="font-medium text-white text-sm">{report.name}</div>
@@ -41,10 +59,10 @@ export default function GeneratedReportsTable({ reports }: GeneratedReportsTable
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-400">
-                  {report.generatedBy}
+                  {report.generated_by}
                 </td>
                 <td className="px-6 py-4 text-xs text-gray-400">
-                  <ClientDate date={report.generatedTime} format="full" />
+                  <ClientDate date={report.created_at} format="full" />
                 </td>
                 <td className="px-6 py-4">
                   <span className={`flex items-center text-xs font-medium ${
@@ -59,16 +77,13 @@ export default function GeneratedReportsTable({ reports }: GeneratedReportsTable
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Preview">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download PDF">
+                    <button onClick={() => downloadReportPdf(report.id)} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download PDF">
                       <Download className="w-4 h-4" />
                     </button>
-                    <button className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Duplicate">
-                      <Copy className="w-4 h-4" />
+                    <button onClick={() => downloadReportJson(report.id)} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download JSON">
+                      <FileJson className="w-4 h-4" />
                     </button>
-                    <button className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Delete">
+                    <button onClick={() => handleDelete(report.id)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Delete">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

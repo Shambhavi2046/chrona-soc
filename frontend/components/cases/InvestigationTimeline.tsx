@@ -4,6 +4,7 @@ import { TimelineEvent } from "@/types";
 import { motion } from "framer-motion";
 import { Activity, MessageSquare, Paperclip, AlertCircle, Bot, ShieldAlert } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
+import { useRouter, useParams } from "next/navigation";
 
 interface InvestigationTimelineProps {
   timeline: TimelineEvent[];
@@ -36,11 +37,31 @@ export default function InvestigationTimeline({ timeline }: InvestigationTimelin
     );
   };
 
+  const params = useParams();
+  const router = useRouter();
+
+  const handleAddEvent = async () => { console.log("PARAMS:", params); 
+    const content = window.prompt("Enter event note/comment:");
+    if (content && content.trim() && params?.caseId) {
+      try {
+        const { addCaseComment } = await import("@/services/cases");
+        await addCaseComment(params.caseId as string, content.trim());
+        router.refresh();
+      } catch (e) {
+        console.error(e);
+        alert("Failed to add event");
+      }
+    }
+  };
+
   return (
     <div className="glass-card rounded-xl p-6 h-full">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-semibold text-white">Investigation Timeline</h3>
-        <button className="px-3 py-1 bg-soc-accent hover:bg-soc-accent/80 text-white text-xs font-medium rounded transition-colors">
+        <button 
+          onClick={handleAddEvent}
+          className="px-3 py-1 bg-soc-accent hover:bg-soc-accent/80 text-white text-xs font-medium rounded transition-colors"
+        >
           + Add Event
         </button>
       </div>

@@ -1,6 +1,61 @@
-import { Settings2, Calendar, FileText, Bot } from "lucide-react";
+import { useState } from "react";
+import { Settings2, FileText, Loader2 } from "lucide-react";
+import { ReportTemplate } from "@/types/reports";
+import { generateReport } from "@/services/reports";
 
-export default function ReportGenerator() {
+interface ReportGeneratorProps {
+  templates?: ReportTemplate[];
+  onGenerateSuccess?: () => void;
+}
+
+export default function ReportGenerator({ templates = [], onGenerateSuccess }: ReportGeneratorProps) {
+  const [loading, setLoading] = useState(false);
+  const [sourceType, setSourceType] = useState("Alert");
+  const [sourceId, setSourceId] = useState("");
+  const [name, setName] = useState("");
+  const [templateId, setTemplateId] = useState("");
+
+  const mapToUuid = (id: string): string => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(id)) return id;
+    
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+        hash = ((hash << 5) - hash) + id.charCodeAt(i);
+        hash |= 0;
+    }
+    const hex = Math.abs(hash).toString(16).padStart(8, '0');
+    return `${hex}-aaaa-4000-8000-a00000000000`;
+  };
+
+  const handleGenerate = async () => {
+    if (!name || !sourceId || (!templateId && templates.length > 0)) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const selectedTemplateId = templateId || templates[0]?.id;
+      const validSourceId = mapToUuid(sourceId);
+      
+      await generateReport({
+        name,
+        source_type: sourceType,
+        source_id: validSourceId,
+        template_id: selectedTemplateId
+      });
+      if (onGenerateSuccess) onGenerateSuccess();
+      setName("");
+      setSourceId("");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to generate report");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 h-full">
       <div className="flex items-center gap-2 mb-6 text-white font-medium">
@@ -8,47 +63,66 @@ export default function ReportGenerator() {
         Report Configuration
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Report Type</label>
-          <select className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent">
-            <option>Executive Summary</option>
-            <option>Incident Report</option>
-            <option>Threat Hunting Summary</option>
-            <option>Compliance Audit</option>
+          <label className="block text-xs font-medium text-gray-400 mb-2">Report Name</label>
+          <input 
+            type="text" 
+            placeholder="e.g. Q3 Executive Summary"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent" 
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-400 mb-2">Source Type</label>
+          <select 
+            value={sourceType}
+            onChange={(e) => setSourceType(e.target.value)}
+            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent"
+          >
+            <option value="Alert">Alert</option>
+            <option value="Investigation">Investigation</option>
+            <option value="Threat Hunt">Threat Hunt</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Date Range</label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Calendar className="absolute left-3 top-2 w-4 h-4 text-gray-500" />
-              <input type="text" value="Oct 1, 2023" readOnly className="w-full bg-soc-bg border border-soc-border rounded-lg pl-9 pr-3 py-2 text-sm text-gray-300 focus:outline-none" />
-            </div>
-            <span className="text-gray-500 self-center">to</span>
-            <div className="relative flex-1">
-              <Calendar className="absolute left-3 top-2 w-4 h-4 text-gray-500" />
-              <input type="text" value="Oct 31, 2023" readOnly className="w-full bg-soc-bg border border-soc-border rounded-lg pl-9 pr-3 py-2 text-sm text-gray-300 focus:outline-none" />
-            </div>
-          </div>
+          <label className="block text-xs font-medium text-gray-400 mb-2">Source ID (UUID)</label>
+          <input 
+            type="text" 
+            placeholder="00000000-0000-0000-0000-000000000000"
+            value={sourceId}
+            onChange={(e) => setSourceId(e.target.value)}
+            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent font-mono" 
+          />
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Include Sections</label>
-          <div className="grid grid-cols-2 gap-3">
-            {["AI Summary", "Timeline", "Charts", "IOC List", "Recommendations", "Raw Logs"].map(sec => (
-              <label key={sec} className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" defaultChecked={sec !== "Raw Logs"} className="w-4 h-4 rounded border-gray-500 bg-soc-bg text-soc-accent focus:ring-soc-accent/50 focus:ring-1" />
-                <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{sec}</span>
-              </label>
-            ))}
+        {templates.length > 0 && (
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-2">Template</label>
+            <select 
+              value={templateId}
+              onChange={(e) => setTemplateId(e.target.value)}
+              className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent"
+            >
+              <option value="" disabled>Select a template</option>
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>{t.name} ({t.category})</option>
+              ))}
+            </select>
           </div>
-        </div>
+        )}
 
         <div className="pt-4 border-t border-soc-border/50">
-          <button className="w-full py-2.5 bg-soc-accent hover:bg-blue-600 rounded-lg text-sm font-medium text-white transition-colors shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2">
-            <FileText className="w-4 h-4" /> Generate Preview
+          <button 
+            onClick={handleGenerate}
+            disabled={loading}
+            className="w-full py-2.5 bg-soc-accent hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-white transition-colors shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} 
+            {loading ? "Generating..." : "Generate Report"}
           </button>
         </div>
       </div>
