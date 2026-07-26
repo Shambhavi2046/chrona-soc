@@ -16,7 +16,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import { GraphTopology } from '@/lib/api';
+import { GraphTopology } from "@/types";
 
 import { CaseNode, AlertNode, AssetNode, IocNode, ThreatActorNode, MalwareNode, MitreNode } from './CustomNodes';
 import NodeDetailPanel from './NodeDetailPanel';
@@ -70,8 +70,8 @@ interface AttackGraphViewerProps {
 }
 
 export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [selectedNode, setSelectedNode] = useState<any>(null);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
     }));
     
     const rfEdges = topology.edges.map(e => ({
-      id: e.id,
+      id: e.id || `e-${e.source}-${e.target}`,
       source: e.source,
       target: e.target,
       label: e.label,

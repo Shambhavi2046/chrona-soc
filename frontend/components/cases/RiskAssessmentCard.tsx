@@ -1,4 +1,4 @@
-import { RiskAssessment } from "@/lib/api";
+import { RiskAssessment } from "@/types";
 import { AlertTriangle, TrendingUp, ShieldAlert, Target, Shield, Crosshair } from "lucide-react";
 
 interface RiskAssessmentCardProps {

@@ -13,7 +13,10 @@ import {
   Shield,
   Briefcase,
   Share2,
-  Bot
+  Bot,
+  Target,
+  Workflow,
+  Users
 } from "lucide-react";
 
 const navItems = [
@@ -21,11 +24,14 @@ const navItems = [
   { name: "Alerts", href: "/alerts", icon: ShieldAlert },
   { name: "Investigations", href: "/investigations", icon: Search },
   { name: "Cases", href: "/cases", icon: Briefcase },
+  { name: "Threat Hunting", href: "/threat-hunting", icon: Target },
+  { name: "SOAR Automation", href: "/soar", icon: Workflow },
   { name: "Attack Graph", href: "/attack-graph", icon: Share2 },
   { name: "Copilot", href: "/copilot", icon: Bot },
   { name: "Threat Intelligence", href: "/threat-intelligence", icon: Network },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Administration", href: "/administration", icon: Users },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

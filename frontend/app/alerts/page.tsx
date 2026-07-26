@@ -1,4 +1,4 @@
-import { getAlerts } from "@/lib/api";
+import { getAlerts } from "@/services";
 import AlertTable from "@/components/alerts/AlertTable";
 import { ShieldAlert, RefreshCcw } from "lucide-react";
 

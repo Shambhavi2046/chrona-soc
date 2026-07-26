@@ -2,6 +2,7 @@ import { Network, RefreshCcw } from "lucide-react";
 import ThreatStats from "@/components/threat-intelligence/ThreatStats";
 import IOCTable, { IOC } from "@/components/threat-intelligence/IOCTable";
 import ThreatActivityCard from "@/components/threat-intelligence/ThreatActivityCard";
+import MockModeBanner from "@/components/common/MockModeBanner";
 
 // Realistic mock data structured for future API integration
 const MOCK_IOCS: IOC[] = [
@@ -77,6 +78,7 @@ const MOCK_FEED = [
 export default function ThreatIntelligencePage() {
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
+      <MockModeBanner moduleName="Threat Intelligence" />
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

@@ -1,4 +1,4 @@
-import { getCases } from "@/lib/api";
+import { getCases } from "@/services";
 import CasesTable from "@/components/cases/CasesTable";
 import CaseKPIs from "@/components/cases/CaseKPIs";
 import { Briefcase, Plus } from "lucide-react";

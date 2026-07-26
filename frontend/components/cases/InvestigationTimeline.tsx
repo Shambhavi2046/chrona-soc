@@ -1,6 +1,6 @@
 "use client";
 
-import { TimelineEvent } from "@/lib/api";
+import { TimelineEvent } from "@/types";
 import { motion } from "framer-motion";
 import { Activity, MessageSquare, Paperclip, AlertCircle, Bot, ShieldAlert } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";

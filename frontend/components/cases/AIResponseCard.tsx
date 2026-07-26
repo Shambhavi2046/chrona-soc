@@ -2,7 +2,7 @@
 
 import { BrainCircuit, Shield } from "lucide-react";
 
-import { AIRecommendation } from "@/lib/api";
+import { AIRecommendation } from "@/types";
 
 interface AIResponseCardProps {
   summary: string;

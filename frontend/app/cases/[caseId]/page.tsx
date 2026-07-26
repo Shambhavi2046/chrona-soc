@@ -1,4 +1,4 @@
-import { getCaseById } from "@/lib/api";
+import { getCaseById } from "@/services";
 import CaseDetailHeader from "@/components/cases/CaseDetailHeader";
 import InvestigationTimeline from "@/components/cases/InvestigationTimeline";
 import EvidenceBoard from "@/components/cases/EvidenceBoard";

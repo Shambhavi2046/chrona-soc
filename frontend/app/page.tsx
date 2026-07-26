@@ -1,4 +1,4 @@
-import { getDashboardStats } from "@/lib/api";
+import { getDashboardSummary } from "@/services";
 import StatCard from "@/components/dashboard/StatCard";
 import ThreatOverview from "@/components/dashboard/ThreatOverview";
 import IncidentTable from "@/components/dashboard/IncidentTable";
@@ -7,7 +7,7 @@ import { ShieldAlert, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
 
 export default async function Home() {
   // Fetch real data from backend
-  const stats = await getDashboardStats();
+  const stats = await getDashboardSummary();
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -36,24 +36,24 @@ export default async function Home() {
           colorClass="text-soc-accent border-soc-accent"
         />
         <StatCard
-          title="Active Threats"
-          value={stats.open_alerts}
+          title="Critical Alerts"
+          value={stats.critical_alerts}
           icon={AlertTriangle}
           trend="up"
           trendValue="5%"
           colorClass="text-soc-danger border-soc-danger"
         />
         <StatCard
-          title="Resolved Incidents"
-          value={stats.resolved_alerts}
+          title="Open Cases"
+          value={stats.open_cases}
           icon={CheckCircle2}
           trend="down"
           trendValue="2%"
           colorClass="text-soc-success border-soc-success"
         />
         <StatCard
-          title="High Risk Events"
-          value={stats.high_risk_alerts}
+          title="Active Playbooks"
+          value={stats.active_playbooks}
           icon={Shield}
           trend="neutral"
           trendValue="0%"
@@ -70,7 +70,7 @@ export default async function Home() {
         
         {/* Right column - spans 1 col */}
         <div className="space-y-6">
-          <RiskIndicator topThreat={stats.top_threat} />
+          <RiskIndicator topThreat={{ title: "Ransomware Detected", source: "EDR", risk_score: 95 }} />
         </div>
       </div>
 

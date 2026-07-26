@@ -1,12 +1,18 @@
 import { Cpu, ChevronRight, AlertOctagon, Target } from "lucide-react";
 
+interface TopThreat {
+  title: string;
+  source: string;
+  risk_score: number;
+}
+
 interface RiskIndicatorProps {
-  topThreat: string;
+  topThreat?: TopThreat | null;
 }
 
 export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
-  // Using dummy values around the dynamic topThreat
-  const riskScore = 85;
+  // Use dynamic risk score or fallback
+  const riskScore = topThreat?.risk_score || 85;
 
   return (
     <div className="glass-card rounded-xl p-6 relative overflow-hidden flex flex-col h-full border-t-2 border-t-soc-accent">
@@ -29,7 +35,7 @@ export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
           </span>
           <div className="flex items-center text-soc-danger font-bold">
             <AlertOctagon className="w-4 h-4 mr-2" />
-            <span className="truncate">{topThreat || "Analyzing network traffic..."}</span>
+            <span className="truncate">{topThreat?.title || "Analyzing network traffic..."}</span>
           </div>
         </div>
 

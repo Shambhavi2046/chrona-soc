@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Shield, AlertTriangle } from "lucide-react";
-import { Alert } from "@/lib/api";
+import { Alert } from "@/types";
 import SeverityBadge from "./SeverityBadge";
 import ClientDate from "@/components/common/ClientDate";
 
@@ -46,7 +46,7 @@ export default function AlertTable({ alerts }: AlertTableProps) {
               alerts.map((alert) => (
                 <tr key={alert.id} className="hover:bg-soc-card-hover/50 transition-colors group">
                   <td className="px-6 py-4 whitespace-nowrap text-gray-400 font-mono text-sm">
-                    ALT-{alert.id.toString().padStart(4, '0')}
+                    {alert.id.toString().split('-')[0].toUpperCase()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <SeverityBadge score={alert.risk_score} />
@@ -79,7 +79,7 @@ export default function AlertTable({ alerts }: AlertTableProps) {
                     <ClientDate date={alert.created_at} format="full" />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 font-mono">
-                    LOG-{alert.log_id}
+                    {alert.log_id ? `LOG-${alert.log_id}` : `SYS`}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <Link 

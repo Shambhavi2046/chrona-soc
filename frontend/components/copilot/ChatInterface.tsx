@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Sparkles, AlertCircle, Loader2, Shield, Activity, Target } from 'lucide-react';
 import MessageBubble from './MessageBubble';
-import { CopilotMessage, CopilotQuickAction, CopilotActiveContext, sendCopilotMessage } from '@/lib/api';
+import { CopilotMessage, CopilotQuickAction, CopilotActiveContext } from "@/types";
+import { sendCopilotMessage } from "@/services";
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<CopilotMessage[]>([]);

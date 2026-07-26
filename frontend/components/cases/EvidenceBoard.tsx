@@ -1,6 +1,6 @@
 "use client";
 
-import { Evidence } from "@/lib/api";
+import { Evidence } from "@/types";
 import { FileText, Globe, Hash, Link as LinkIcon } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
 

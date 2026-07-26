@@ -1,4 +1,5 @@
-import { getAnalytics } from "@/lib/api";
+import { getAnalytics } from "@/services";
+import MockModeBanner from "@/components/common/MockModeBanner";
 import KPIGrid from "@/components/analytics/KPIGrid";
 import AttackTrendChart from "@/components/analytics/AttackTrendChart";
 import SeverityAnalytics from "@/components/analytics/SeverityAnalytics";
@@ -30,6 +31,8 @@ export default async function AnalyticsPage() {
           </button>
         </div>
       </div>
+
+      <MockModeBanner moduleName="Analytics" />
 
       {/* AI Insights (Top-level contextual summary) */}
       <ExecutiveInsights insights={analyticsData.aiInsights} />

@@ -2,7 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, User, Copy, ExternalLink, Activity, RefreshCw } from 'lucide-react';
-import { CopilotMessage, CopilotQuickAction } from '@/lib/api';
+import { CopilotMessage, CopilotQuickAction } from "@/types";
 import Link from 'next/link';
 import ClientDate from '../common/ClientDate';
 

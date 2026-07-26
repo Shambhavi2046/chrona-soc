@@ -1,4 +1,4 @@
-import { getAlerts } from "@/lib/api";
+import { getAlerts } from "@/services";
 import StatCard from "@/components/dashboard/StatCard";
 import InvestigationTable from "@/components/investigation/InvestigationTable";
 import { Search, ShieldAlert, CheckCircle2, Clock } from "lucide-react";

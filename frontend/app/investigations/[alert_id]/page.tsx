@@ -1,4 +1,4 @@
-import { getInvestigation } from "@/lib/api";
+import { getInvestigation } from "@/services";
 import InvestigationHeader from "@/components/investigation/InvestigationHeader";
 import ThreatAnalysisCard from "@/components/investigation/ThreatAnalysisCard";
 import RecommendationList from "@/components/investigation/RecommendationList";
@@ -12,6 +12,18 @@ export default async function InvestigationPage({
   const resolvedParams = await params;
   // Fetch real data based on URL parameter
   const data = await getInvestigation(resolvedParams.alert_id);
+  
+  if (!data) {
+    return (
+      <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto flex flex-col items-center justify-center h-[50vh]">
+        <ShieldCheck className="w-16 h-16 text-gray-600 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-300">No Investigation Found</h2>
+        <p className="text-gray-500 max-w-md text-center mb-6">
+          There is no active investigation linked to this alert. You can initiate a new investigation from the SOC dashboard or alert details page.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">

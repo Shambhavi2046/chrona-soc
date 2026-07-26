@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Case } from "@/lib/api";
+import { Case } from "@/types";
 import { Search, Filter, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
 
@@ -68,7 +68,7 @@ export default function CasesTable({ cases }: CasesTableProps) {
             {filteredCases.map((c) => (
               <tr key={c.id} className="hover:bg-soc-card-hover/50 transition-colors group">
                 <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-gray-400 group-hover:text-soc-accent transition-colors">
-                  <Link href={`/cases/${c.id}`}>CASE-{c.id}</Link>
+                  <Link href={`/cases/${c.id}`}>CASE-{c.id.toString().split('-')[0].toUpperCase()}</Link>
                 </td>
                 <td className="px-6 py-4">
                   <Link href={`/cases/${c.id}`} className="font-medium text-gray-200 group-hover:text-white transition-colors">

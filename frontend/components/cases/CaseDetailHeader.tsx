@@ -1,6 +1,6 @@
 "use client";
 
-import { CaseDetail } from "@/lib/api";
+import { CaseDetail } from "@/types";
 import { Clock, ShieldAlert, CheckCircle, MoreHorizontal } from "lucide-react";
 import ClientDate from "@/components/common/ClientDate";
 

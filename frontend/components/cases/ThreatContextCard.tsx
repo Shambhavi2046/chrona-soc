@@ -1,4 +1,4 @@
-import { ThreatContext } from "@/lib/api";
+import { ThreatContext } from "@/types";
 import { Radar, Skull, Bug, Network, Database, ShieldAlert } from "lucide-react";
 
 interface ThreatContextCardProps {

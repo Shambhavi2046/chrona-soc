@@ -1,4 +1,5 @@
-import { getGraphTopology } from "@/lib/api";
+import { getGraphTopology } from "@/services";
+import MockModeBanner from "@/components/common/MockModeBanner";
 import AttackGraphViewer from "@/components/attack-graph/AttackGraphViewer";
 import { Network, ShieldAlert, Cpu } from "lucide-react";
 
@@ -43,6 +44,8 @@ export default async function AttackGraphPage() {
           </div>
         </div>
       </div>
+      
+      <MockModeBanner moduleName="Attack Graph" />
       
       <div className="flex-1 w-full relative">
         <AttackGraphViewer topology={topology} />

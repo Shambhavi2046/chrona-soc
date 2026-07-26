@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ShieldCheck, ShieldAlert, Shield, Search } from "lucide-react";
-import { Alert } from "@/lib/api";
+import { Alert } from "@/types";
 import SeverityBadge from "@/components/alerts/SeverityBadge";
 import ClientDate from "@/components/common/ClientDate";
 
