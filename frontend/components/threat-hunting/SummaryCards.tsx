@@ -1,12 +1,20 @@
 import { Search, Database, Target, AlertTriangle, ShieldAlert } from "lucide-react";
+import { HuntEvent } from "@/types";
 
-export default function SummaryCards() {
+interface Props {
+  events?: HuntEvent[];
+}
+
+export default function SummaryCards({ events = [] }: Props) {
+  const highRisk = events.filter(e => e.severity.toLowerCase() === 'critical' || e.severity.toLowerCase() === 'high').length;
+  const iocMatches = events.filter(e => !!e.ioc_match).length;
+  
   const stats = [
-    { label: "Active Hunts", value: "12", icon: Search, color: "text-blue-400", bg: "bg-blue-500/10", trend: "+2 today" },
-    { label: "Saved Queries", value: "48", icon: Database, color: "text-purple-400", bg: "bg-purple-500/10", trend: "Steady" },
-    { label: "Matching Events", value: "8,392", icon: Target, color: "text-emerald-400", bg: "bg-emerald-500/10", trend: "+12% vs avg" },
-    { label: "High-Risk Findings", value: "5", icon: AlertTriangle, color: "text-orange-400", bg: "bg-orange-500/10", trend: "Requires review" },
-    { label: "Recent IOC Matches", value: "14", icon: ShieldAlert, color: "text-red-400", bg: "bg-red-500/10", trend: "Critical" },
+    { label: "Active Hunts", value: "1", icon: Search, color: "text-blue-400", bg: "bg-blue-500/10", trend: "Current Session" },
+    { label: "Saved Queries", value: "System", icon: Database, color: "text-purple-400", bg: "bg-purple-500/10", trend: "Available" },
+    { label: "Matching Events", value: events.length.toString(), icon: Target, color: "text-emerald-400", bg: "bg-emerald-500/10", trend: "Current Query" },
+    { label: "High-Risk Findings", value: highRisk.toString(), icon: AlertTriangle, color: "text-orange-400", bg: "bg-orange-500/10", trend: "Requires review" },
+    { label: "Recent IOC Matches", value: iocMatches.toString(), icon: ShieldAlert, color: "text-red-400", bg: "bg-red-500/10", trend: "Critical" },
   ];
 
   return (

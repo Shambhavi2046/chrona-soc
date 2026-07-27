@@ -17,6 +17,16 @@ export async function getInvestigation(alertId: string | number): Promise<any> {
   return response.json();
 }
 
+export async function createInvestigation(data: any): Promise<any> {
+  const response = await fetch(`${API_URL}/investigations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create investigation");
+  return response.json();
+}
+
 export async function updateInvestigationStatus(id: string, status: string): Promise<any> {
   const uuid = mapToUuid(id);
   const response = await fetch(`${API_URL}/investigations/${uuid}`, {

@@ -17,27 +17,55 @@ class ReportService(BaseService):
         self.template_repo = report_template_repo
 
     async def generate_report_from_source(self, db: AsyncSession, request: ReportGenerateRequest):
-        # 1. We mock the source data parsing for brevity but adhere to the architecture.
-        # In a fully connected module, we'd inject AlertService / InvestigationService here.
-        # For now, we generate a highly structured content payload based on the source type.
+        from app.services.operations import alert_service, investigation_service, case_service
+        from app.services.hunting_service import hunting_service
         
-        content = ReportContentSchema(
-            executive_summary=f"Automated {request.source_type} report generated for ID {request.source_id}. This report summarizes the critical findings and immediate mitigation strategies deployed.",
-            incident_overview=f"An anomalous event was flagged via the {request.source_type} module. Initial triaging indicated suspicious behavior requiring deep-dive analysis.",
-            timeline=[
-                {"time": str(datetime.utcnow()), "event": f"{request.source_type} triggered"},
-                {"time": str(datetime.utcnow()), "event": "Analyst assigned and triaged"}
-            ],
-            affected_assets=["CORP-LAPTOP-042", "10.0.5.15"],
-            mitre_mapping=["T1059.001 - PowerShell", "T1078 - Valid Accounts"],
-            indicators_of_compromise=[
-                {"type": "IP", "value": "198.51.100.44"},
-                {"type": "Hash", "value": "8d11c0620f3e69123b7b252033c467a2"}
-            ],
-            analyst_findings="The threat actor successfully bypassed primary defenses using stolen credentials, followed by encoded execution. Lateral movement was blocked by internal zero-trust rules.",
-            recommendations="1. Reset all compromised credentials.\n2. Isolate CORP-LAPTOP-042 for forensics.\n3. Implement stricter MFA on VPN gateways.",
-            appendix="System logs attached in external SIEM. Refer to Case #4492 for raw event correlation."
-        )
+        # Default empty content
+        content_kwargs = {
+            "executive_summary": f"Automated {request.source_type} report generated.",
+            "incident_overview": f"No details available for {request.source_id}.",
+            "timeline": [],
+            "affected_assets": [],
+            "mitre_mapping": [],
+            "indicators_of_compromise": [],
+            "analyst_findings": "",
+            "recommendations": "Review system logs for more details.",
+            "appendix": ""
+        }
+        
+        try:
+            if request.source_type.lower() == "alert":
+                alert = await alert_service.get_by_id(db, request.source_id)
+                if alert:
+                    content_kwargs["incident_overview"] = f"Alert '{alert.title}' (Severity: {alert.severity}) triggered at {alert.created_at}."
+                    content_kwargs["affected_assets"] = [alert.asset] if alert.asset else []
+                    if alert.mitre_tactic or alert.mitre_technique:
+                        content_kwargs["mitre_mapping"] = [f"{alert.mitre_tactic or ''} - {alert.mitre_technique or ''}"]
+            elif request.source_type.lower() == "investigation":
+                investigation = await investigation_service.get_by_id(db, request.source_id)
+                if investigation:
+                    content_kwargs["incident_overview"] = f"Investigation initiated for alert {investigation.alert_id}."
+                    content_kwargs["analyst_findings"] = str(investigation.findings) if investigation.findings else ""
+                    content_kwargs["executive_summary"] = investigation.summary or content_kwargs["executive_summary"]
+            elif request.source_type.lower() == "case":
+                case = await case_service.get_by_id(db, request.source_id)
+                if case:
+                    content_kwargs["incident_overview"] = f"Case '{case.title}' (Priority: {case.priority}) currently {case.status}."
+                    content_kwargs["executive_summary"] = case.description or content_kwargs["executive_summary"]
+                    if getattr(case, 'timeline', None):
+                        content_kwargs["timeline"] = [{"time": str(t.created_at), "event": t.content} for t in case.timeline]
+                    if getattr(case, 'evidence', None):
+                        content_kwargs["indicators_of_compromise"] = [{"type": e.type, "value": e.value} for e in case.evidence]
+            elif request.source_type.lower() == "threat hunt":
+                hunt = await hunting_service.get_by_id(db, request.source_id)
+                if hunt:
+                    content_kwargs["incident_overview"] = f"Threat Hunt '{hunt.name}' with query: {hunt.query}."
+                    content_kwargs["analyst_findings"] = f"Matches found based on {hunt.type} execution."
+        except Exception as e:
+            # Fallback in case of fetching error, don't crash
+            print(f"Error fetching source data for report: {e}")
+        
+        content = ReportContentSchema(**content_kwargs)
 
         obj_in = ReportCreate(
             name=request.name,
@@ -50,11 +78,8 @@ class ReportService(BaseService):
             content=content
         )
 
-        db_obj = self.repository.model(**obj_in.dict(exclude_unset=True))
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
+        db_obj = await self.repository.create(db, obj_in=obj_in)
+        return await self.repository.get(db, db_obj.id)
 
     async def get_pdf_bytes(self, db: AsyncSession, report_id: uuid.UUID) -> bytes:
         report = await self.repository.get(db, report_id)

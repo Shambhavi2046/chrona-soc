@@ -107,46 +107,139 @@ class HuntingService(BaseService[SavedHuntRepository]):
         await db.delete(db_obj)
         await db.commit()
         
-    def execute_hunt(self, request: HuntQueryRequest) -> HuntExecuteResponse:
-        results = []
-        for event in MOCK_TELEMETRY:
-            # Apply filters
-            if request.ioc and request.ioc.lower() not in (event.get("ioc_match", "") or "").lower():
-                continue
-            if request.hostname and request.hostname.lower() not in event["host"].lower():
-                continue
-            if request.username and request.username.lower() not in event["user"].lower():
-                continue
-            if request.severity and request.severity.lower() != event["severity"].lower():
-                continue
-            if request.mitre_tactic and request.mitre_tactic.lower() not in (event.get("mitre_tactic", "") or "").lower():
-                continue
-            if request.mitre_technique and request.mitre_technique.lower() not in (event.get("mitre_technique", "") or "").lower():
-                continue
-            if request.query:
-                q = request.query.lower()
-                # Basic full text search across common fields
-                if q not in json.dumps(event).lower():
-                    continue
-            results.append(HuntEventSchema(**event))
+    async def execute_hunt(self, db: AsyncSession, request: HuntQueryRequest) -> HuntExecuteResponse:
+        from app.models.event_model import SecurityEvent
+        from sqlalchemy import select, func, desc, asc, or_, String
+        import json
+        
+        query = select(SecurityEvent)
+        
+        # Apply filters
+        if request.ioc:
+            ioc_q = f"%{request.ioc}%"
+            query = query.filter(or_(
+                SecurityEvent.ip_address.ilike(ioc_q),
+                SecurityEvent.destination_ip.ilike(ioc_q),
+                SecurityEvent.hostname.ilike(ioc_q),
+                func.cast(SecurityEvent.raw_event, String).ilike(ioc_q)
+            ))
             
+        if request.hostname:
+            query = query.filter(SecurityEvent.hostname.ilike(f"%{request.hostname}%"))
+            
+        if request.username:
+            query = query.filter(SecurityEvent.user_account.ilike(f"%{request.username}%"))
+            
+        if request.severity:
+            query = query.filter(SecurityEvent.severity.ilike(request.severity))
+            
+        # For JSON containment, depending on dialect, but we can do a simple string matching for now
+        # since SQLite JSON operators might be limited, we'll cast to string if needed.
+        if request.mitre_tactic:
+            query = query.filter(func.cast(SecurityEvent.mitre_techniques, String).ilike(f"%{request.mitre_tactic}%"))
+            
+        if request.mitre_technique:
+            query = query.filter(func.cast(SecurityEvent.mitre_techniques, String).ilike(f"%{request.mitre_technique}%"))
+            
+        if request.query:
+            q = f"%{request.query}%"
+            query = query.filter(or_(
+                SecurityEvent.event_type.ilike(q),
+                SecurityEvent.source.ilike(q),
+                func.cast(SecurityEvent.raw_event, String).ilike(q),
+                SecurityEvent.process_name.ilike(q),
+                SecurityEvent.command_line.ilike(q)
+            ))
+            
+        # Count total
+        count_query = select(func.count()).select_from(query.subquery())
+        total_res = await db.execute(count_query)
+        total = total_res.scalar() or 0
+        
         # Sorting
         if request.sort_by:
-            # simple sort simulation
-            desc = request.sort_desc
-            results.sort(key=lambda x: getattr(x, request.sort_by, ""), reverse=desc)
+            # Map standard frontend sort keys to db columns
+            sort_col_map = {
+                "timestamp": SecurityEvent.timestamp,
+                "severity": SecurityEvent.severity,
+                "host": SecurityEvent.hostname,
+                "source": SecurityEvent.source,
+                "user": SecurityEvent.user_account
+            }
+            sort_col = sort_col_map.get(request.sort_by, SecurityEvent.timestamp)
+            if request.sort_desc:
+                query = query.order_by(desc(sort_col))
+            else:
+                query = query.order_by(asc(sort_col))
+        else:
+            query = query.order_by(desc(SecurityEvent.timestamp))
             
         # Pagination
-        total = len(results)
         start = (request.page - 1) * request.page_size
-        end = start + request.page_size
-        paginated_results = results[start:end]
+        query = query.offset(start).limit(request.page_size)
         
+        result = await db.execute(query)
+        events_db = result.scalars().all()
+        
+        results = []
+        for e in events_db:
+            mitre_t = None
+            if e.mitre_techniques and isinstance(e.mitre_techniques, list) and len(e.mitre_techniques) > 0:
+                mitre_t = e.mitre_techniques[0]
+            elif e.event_type == 'logon':
+                mitre_t = 'Initial Access'
+            elif e.event_type == 'process_creation':
+                mitre_t = 'Execution'
+            elif e.event_type == 'network_traffic':
+                mitre_t = 'Command and Control'
+                
+            raw_data = e.raw_event if isinstance(e.raw_event, dict) else {}
+            host = e.hostname or e.ip_address or raw_data.get('host') or raw_data.get('Computer') or "Unknown"
+            user = e.user_account or raw_data.get('user') or raw_data.get('AccountName') or "Unknown"
+            
+            results.append(HuntEventSchema(
+                id=str(e.id),
+                timestamp=e.timestamp.isoformat() if e.timestamp else "",
+                host=host,
+                source=e.source or "Unknown",
+                user=user,
+                severity=e.severity or "Info",
+                mitre_tactic=mitre_t,
+                mitre_technique=mitre_t,
+                ioc_match=e.ip_address or e.destination_ip,
+                description=f"{e.event_type} - {e.process_name or e.command_line or ''}",
+                status=e.status or "Logged",
+                raw_log=json.dumps(e.raw_event) if e.raw_event else ""
+            ))
+            
         return HuntExecuteResponse(
-            events=paginated_results,
+            events=results,
             total=total,
             page=request.page,
             page_size=request.page_size
         )
+
+    async def ask_copilot(self, db: AsyncSession, event_id: str) -> dict:
+        import asyncio
+        import uuid
+        await asyncio.sleep(1.5) # Simulate AI thinking
+        from app.models.event_model import SecurityEvent
+        from sqlalchemy import select
+        
+        try:
+            evt_uuid = uuid.UUID(event_id)
+        except ValueError:
+            return {"analysis": "Invalid event ID format."}
+            
+        query = select(SecurityEvent).where(SecurityEvent.id == evt_uuid)
+        result = await db.execute(query)
+        event = result.scalar_one_or_none()
+        
+        if not event:
+            return {"analysis": "Event not found. Unable to provide analysis."}
+            
+        return {
+            "analysis": f"AI Copilot Analysis for {event.event_type}:\n\nThis event appears to be part of a larger sequence. Based on the {event.source} logs, the user '{event.user_account or 'Unknown'}' performed an action on host '{event.hostname or 'Unknown'}'. I recommend correlating this with recent authentication attempts and checking for lateral movement indicators."
+        }
 
 hunting_service = HuntingService(saved_hunt_repo)

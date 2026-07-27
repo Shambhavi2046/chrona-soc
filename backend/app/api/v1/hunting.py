@@ -31,8 +31,24 @@ async def delete_saved_hunt(
     await hunting_service.delete_saved_hunt(db, id)
     return {"status": "success"}
 
+@router.patch("/saved/{id}", response_model=SavedHuntSchema)
+async def update_saved_hunt(
+    id: uuid.UUID,
+    obj_in: SavedHuntUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    return await hunting_service.update_saved_hunt(db, id, obj_in)
+
 @router.post("/execute", response_model=HuntExecuteResponse)
 async def execute_hunt(
-    request: HuntQueryRequest
+    request: HuntQueryRequest,
+    db: AsyncSession = Depends(get_db)
 ):
-    return hunting_service.execute_hunt(request)
+    return await hunting_service.execute_hunt(db, request)
+
+@router.post("/copilot/{event_id}")
+async def ask_copilot(
+    event_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    return await hunting_service.ask_copilot(db, event_id)

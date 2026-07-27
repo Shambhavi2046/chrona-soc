@@ -37,7 +37,11 @@ async def delete_report(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
 ):
-    await report_service.repository.remove(db, id=id)
+    report = await report_service.repository.get(db, id=id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    await db.delete(report)
+    await db.commit()
     return {"status": "success"}
 
 @router.get("/{id}/export/json")

@@ -29,14 +29,19 @@ export default function ReportGenerator({ templates = [], onGenerateSuccess }: R
   };
 
   const handleGenerate = async () => {
-    if (!name || !sourceId || (!templateId && templates.length > 0)) {
+    if (!name || !sourceId) {
       alert("Please fill in all required fields.");
+      return;
+    }
+    
+    const selectedTemplateId = templateId || templates[0]?.id;
+    if (!selectedTemplateId) {
+      alert("No report templates available. Please seed the database.");
       return;
     }
     
     setLoading(true);
     try {
-      const selectedTemplateId = templateId || templates[0]?.id;
       const validSourceId = mapToUuid(sourceId);
       
       await generateReport({
@@ -84,6 +89,7 @@ export default function ReportGenerator({ templates = [], onGenerateSuccess }: R
           >
             <option value="Alert">Alert</option>
             <option value="Investigation">Investigation</option>
+            <option value="Case">Case</option>
             <option value="Threat Hunt">Threat Hunt</option>
           </select>
         </div>

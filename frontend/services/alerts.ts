@@ -14,3 +14,13 @@ export async function getAlertById(alertId: string | number): Promise<Alert> {
   if (!response.ok) throw new Error("Failed to fetch alert data");
   return response.json();
 }
+
+export async function createAlert(data: Partial<Alert>): Promise<Alert> {
+  const response = await fetch(`${API_URL}/alerts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create alert");
+  return response.json();
+}

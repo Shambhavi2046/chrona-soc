@@ -1,10 +1,14 @@
 export interface Alert {
   id: string;
   log_id?: string;
+  title?: string;
+  severity?: string;
   threat_type: string;
   risk_score: number;
   status: string;
   created_at: string;
+  mitre_tactic?: string;
+  mitre_technique?: string;
 }
 
 export interface InvestigationResponse {

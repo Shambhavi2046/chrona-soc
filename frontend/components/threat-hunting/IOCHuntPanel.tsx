@@ -1,6 +1,12 @@
 import { ShieldAlert, Search } from "lucide-react";
+import { useState } from "react";
 
-export default function IOCHuntPanel() {
+interface Props {
+  onApply: (ioc: string) => void;
+}
+
+export default function IOCHuntPanel({ onApply }: Props) {
+  const [ioc, setIoc] = useState("");
   const iocTypes = ["IP", "Hash", "Domain", "URL", "Email", "File Name"];
 
   return (
@@ -21,11 +27,17 @@ export default function IOCHuntPanel() {
             <input 
               type="text" 
               placeholder="Enter indicator..." 
+              value={ioc}
+              onChange={(e) => setIoc(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onApply(ioc)}
               className="w-full pl-9 pr-3 py-2 bg-soc-bg border border-soc-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-soc-accent" 
             />
           </div>
         </div>
-        <button className="w-full py-2 bg-soc-card hover:bg-soc-accent/10 border border-soc-border hover:border-soc-accent rounded-lg text-sm font-medium text-soc-accent transition-colors">
+        <button 
+          onClick={() => onApply(ioc)}
+          className="w-full py-2 bg-soc-card hover:bg-soc-accent/10 border border-soc-border hover:border-soc-accent rounded-lg text-sm font-medium text-soc-accent transition-colors"
+        >
           Search Telemetry
         </button>
       </div>

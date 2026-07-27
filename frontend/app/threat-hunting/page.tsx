@@ -16,7 +16,7 @@ import ResultsTable from "@/components/threat-hunting/ResultsTable";
 import TimelineView from "@/components/threat-hunting/TimelineView";
 import EventDrawer from "@/components/threat-hunting/EventDrawer";
 import { HuntEvent, SavedHunt, HuntQueryRequest } from "@/types";
-import { getSavedHunts, executeHunt, createSavedHunt, deleteSavedHunt } from "@/services/hunting";
+import { getSavedHunts, executeHunt, createSavedHunt, deleteSavedHunt, updateSavedHunt } from "@/services/hunting";
 
 export default function ThreatHuntingWorkspace() {
   const [selectedEvent, setSelectedEvent] = useState<HuntEvent | null>(null);
@@ -57,12 +57,23 @@ export default function ThreatHuntingWorkspace() {
   }, []);
 
   const handleRunSavedHunt = (hunt: SavedHunt) => {
-    handleExecute({ query: hunt.query });
+    const q = { query: hunt.query };
+    setCurrentQuery(q);
+    handleExecute(q);
   };
 
   const handleDeleteSavedHunt = async (id: string) => {
     try {
       await deleteSavedHunt(id);
+      fetchSavedHunts();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRenameSavedHunt = async (id: string, newName: string) => {
+    try {
+      await updateSavedHunt(id, { name: newName });
       fetchSavedHunts();
     } catch (err) {
       console.error(err);
@@ -92,6 +103,22 @@ export default function ThreatHuntingWorkspace() {
     downloadAnchorNode.remove();
   };
 
+  const updateQuery = (updates: Partial<HuntQueryRequest>) => {
+    setCurrentQuery(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateAndRun = (updates: Partial<HuntQueryRequest>) => {
+    const newQ = { ...currentQuery, ...updates };
+    setCurrentQuery(newQ);
+    handleExecute(newQ);
+  };
+
+  const clearWorkspace = () => {
+    setCurrentQuery({});
+    setEvents([]);
+    setSelectedEvent(null);
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500 pb-24">
       {/* Header */}
@@ -103,36 +130,49 @@ export default function ThreatHuntingWorkspace() {
           { label: "Refresh", icon: RefreshCw, onClick: () => handleExecute(currentQuery) },
           { label: "Export", icon: Download, onClick: handleExport },
           { label: "Save Hunt", icon: Save, variant: "outline", onClick: handleSaveHunt },
-          { label: "New Hunt", icon: Plus, variant: "primary", onClick: () => handleExecute({}) }
+          { label: "New Hunt", icon: Plus, variant: "primary", onClick: clearWorkspace }
         ]}
       />
       
       {/* Summary KPI Cards */}
-      <SummaryCards />
+      <SummaryCards events={events} />
       
       {/* Search & Filters */}
       <div className="space-y-4">
-        <SearchBar />
-        <FilterPanel />
+        <SearchBar query={currentQuery} onUpdate={updateQuery} onSearch={(updates) => updateAndRun(updates || {})} />
+        <FilterPanel query={currentQuery} onUpdate={updateQuery} onRun={(updates) => updateAndRun(updates || {})} />
       </div>
 
       {/* Query Builder (mocked visual) */}
-      <QueryBuilder />
+      <QueryBuilder query={currentQuery} onUpdate={updateQuery} onRun={(updates) => updateAndRun(updates || {})} />
 
       {/* Threat Intel Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MitrePanel />
-        <IOCHuntPanel />
+        <MitrePanel onApply={(tactic, technique) => {
+          const newQ = { ...currentQuery, mitre_tactic: tactic, mitre_technique: technique };
+          setCurrentQuery(newQ);
+          handleExecute(newQ);
+        }} />
+        <IOCHuntPanel onApply={(ioc) => {
+          const newQ = { ...currentQuery, ioc };
+          setCurrentQuery(newQ);
+          handleExecute(newQ);
+        }} />
       </div>
 
       {/* Copilot Suggestions */}
-      <AISuggestions />
+      <AISuggestions onApply={(q) => {
+        const newQ = { ...currentQuery, query: q };
+        setCurrentQuery(newQ);
+        handleExecute(newQ);
+      }} />
 
       {/* Saved Hunts */}
       <SavedHunts 
         hunts={savedHunts} 
         onRun={handleRunSavedHunt} 
         onDelete={handleDeleteSavedHunt} 
+        onRename={handleRenameSavedHunt}
       />
 
       {/* Results & Timeline Layout */}

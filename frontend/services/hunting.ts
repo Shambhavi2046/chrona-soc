@@ -26,6 +26,17 @@ export async function deleteSavedHunt(id: string): Promise<void> {
   if (!response.ok) throw new Error("Failed to delete saved hunt");
 }
 
+export async function updateSavedHunt(id: string, data: Partial<SavedHunt>): Promise<SavedHunt> {
+  const uuid = mapToUuid(id);
+  const response = await fetch(`${API_URL}/hunting/saved/${uuid}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to update saved hunt");
+  return response.json();
+}
+
 export async function executeHunt(request: HuntQueryRequest): Promise<HuntExecuteResponse> {
   const response = await fetch(`${API_URL}/hunting/execute`, {
     method: "POST",
@@ -33,5 +44,13 @@ export async function executeHunt(request: HuntQueryRequest): Promise<HuntExecut
     body: JSON.stringify(request),
   });
   if (!response.ok) throw new Error("Failed to execute hunt query");
+  return response.json();
+}
+
+export async function askCopilot(eventId: string): Promise<{ analysis: string }> {
+  const response = await fetch(`${API_URL}/hunting/copilot/${eventId}`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error("Failed to fetch AI analysis");
   return response.json();
 }

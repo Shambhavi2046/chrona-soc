@@ -1,14 +1,27 @@
 import { Bot, Sparkles, ArrowRight } from "lucide-react";
 
-export default function AISuggestions() {
+interface Props {
+  onApply: (query: string) => void;
+}
+
+export default function AISuggestions({ onApply }: Props) {
   const suggestions = [
-    "Search for failed logins followed by PowerShell execution.",
-    "Detect encoded PowerShell commands.",
-    "Investigate Office spawning cmd.exe.",
-    "Hunt for suspicious rundll32 execution.",
-    "Look for unusual outbound DNS traffic.",
-    "Search for disabled security tools."
+    "logon",
+    "powershell",
+    "cmd.exe",
+    "network_traffic",
+    "comsvcs.dll",
+    "Security"
   ];
+
+  const displayMap: Record<string, string> = {
+    "logon": "Search for authentication and logon events.",
+    "powershell": "Detect PowerShell execution.",
+    "cmd.exe": "Investigate cmd.exe spawning.",
+    "network_traffic": "Hunt for outbound network connections.",
+    "comsvcs.dll": "Look for memory dumping attempts via comsvcs.",
+    "Security": "Search for Security event logs."
+  };
 
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5">
@@ -18,10 +31,14 @@ export default function AISuggestions() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {suggestions.map((suggestion, idx) => (
-          <div key={idx} className="bg-soc-bg border border-soc-border hover:border-soc-accent rounded-lg p-3 transition-colors group cursor-pointer">
+          <div 
+            key={idx} 
+            onClick={() => onApply(suggestion)}
+            className="bg-soc-bg border border-soc-border hover:border-soc-accent rounded-lg p-3 transition-colors group cursor-pointer"
+          >
             <div className="flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-soc-warning flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-300 group-hover:text-white transition-colors">{suggestion}</p>
+              <p className="text-sm text-gray-300 group-hover:text-white transition-colors">{displayMap[suggestion]}</p>
             </div>
             <div className="mt-3 flex justify-end">
               <span className="text-xs font-medium text-soc-accent flex items-center opacity-0 group-hover:opacity-100 transition-opacity">

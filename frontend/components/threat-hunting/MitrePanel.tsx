@@ -1,10 +1,14 @@
 import { Crosshair } from "lucide-react";
 
-export default function MitrePanel() {
+interface Props {
+  onApply: (tactic: string, technique?: string) => void;
+}
+
+export default function MitrePanel({ onApply }: Props) {
   const tactics = [
     "Initial Access", "Execution", "Persistence", "Privilege Escalation",
     "Defense Evasion", "Credential Access", "Discovery", "Lateral Movement",
-    "Collection", "Exfiltration", "Command & Control", "Impact"
+    "Collection", "Exfiltration", "Command and Control", "Impact"
   ];
 
   return (
@@ -17,6 +21,7 @@ export default function MitrePanel() {
         {tactics.map((tactic, idx) => (
           <button 
             key={idx}
+            onClick={() => onApply(tactic)}
             className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:border-soc-accent hover:bg-soc-accent/10 rounded-lg text-xs text-gray-300 hover:text-white transition-all shadow-sm"
           >
             {tactic}
