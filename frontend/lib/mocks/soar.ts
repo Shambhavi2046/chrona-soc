@@ -1,13 +1,13 @@
 import { Playbook, ExecutionLog, Integration } from "@/types";
 
 export const mockPlaybooks: Playbook[] = [
-  { id: "PB-001", name: "Phishing Response", description: "Automated extraction of indicators from suspected phishing emails, IP enrichment, and auto-quarantine.", trigger: "Email Alert", lastRun: "10 mins ago", status: "Active" },
-  { id: "PB-002", name: "Malware Containment", description: "Isolates infected endpoints via EDR upon High severity malware detection.", trigger: "EDR Alert", lastRun: "2 hours ago", status: "Active" },
-  { id: "PB-003", name: "Ransomware Response", description: "Critical rapid-response protocol disabling user accounts and isolating entire subnets.", trigger: "Multiple EDR Alerts", lastRun: "5 days ago", status: "Active" },
-  { id: "PB-004", name: "Privileged Account Compromise", description: "Forces password reset, terminates active sessions, and alerts security management.", trigger: "Impossible Travel", lastRun: "1 day ago", status: "Active" },
-  { id: "PB-005", name: "IOC Enrichment", description: "Automatically queries VirusTotal and ThreatFox for newly ingested hashes.", trigger: "New Hash Ingested", lastRun: "2 mins ago", status: "Active" },
-  { id: "PB-006", name: "Endpoint Isolation", description: "Manually triggered workflow to sever endpoint network connectivity.", trigger: "Manual", lastRun: "1 week ago", status: "Inactive" },
-  { id: "PB-007", name: "Disable User Account", description: "Disables AD/Okta account pending HR review.", trigger: "Manual", lastRun: "3 weeks ago", status: "Draft" },
+  { id: "PB-001", name: "Phishing Response", description: "Automated extraction of indicators from suspected phishing emails, IP enrichment, and auto-quarantine.", category: "General", trigger_type: "Email Alert", status: "Active" },
+  { id: "PB-002", name: "Malware Containment", description: "Isolates infected endpoints via EDR upon High severity malware detection.", category: "General", trigger_type: "EDR Alert", status: "Active" },
+  { id: "PB-003", name: "Ransomware Response", description: "Critical rapid-response protocol disabling user accounts and isolating entire subnets.", category: "General", trigger_type: "Multiple EDR Alerts", status: "Active" },
+  { id: "PB-004", name: "Privileged Account Compromise", description: "Forces password reset, terminates active sessions, and alerts security management.", category: "General", trigger_type: "Impossible Travel", status: "Active" },
+  { id: "PB-005", name: "IOC Enrichment", description: "Automatically queries VirusTotal and ThreatFox for newly ingested hashes.", category: "General", trigger_type: "New Hash Ingested", status: "Active" },
+  { id: "PB-006", name: "Endpoint Isolation", description: "Manually triggered workflow to sever endpoint network connectivity.", category: "General", trigger_type: "Manual", status: "Disabled" },
+  { id: "PB-007", name: "Disable User Account", description: "Disables AD/Okta account pending HR review.", category: "General", trigger_type: "Manual", status: "Draft" },
 ];
 
 export const mockExecutions: ExecutionLog[] = [

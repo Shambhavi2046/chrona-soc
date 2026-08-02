@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MockModeBanner from "@/components/common/MockModeBanner";
 import ModuleHeader from "@/components/common/ModuleHeader";
 import { Workflow, RefreshCw, Upload, Download, Plus } from "lucide-react";
@@ -13,11 +13,70 @@ import IntegrationsPanel from "@/components/soar/IntegrationsPanel";
 import AIPlaybookAssistant from "@/components/soar/AIPlaybookAssistant";
 import Analytics from "@/components/soar/Analytics";
 
-import { ExecutionLog } from "@/types";
-import { mockPlaybooks, mockExecutions, mockIntegrations } from "@/lib/mocks/soar";
+import PlaybookModal from "@/components/soar/PlaybookModal";
+import * as soarApi from "@/services/soar";
+
+import { ExecutionLog, Playbook } from "@/types";
+import { mockExecutions, mockIntegrations } from "@/lib/mocks/soar";
 
 export default function SoarWorkspace() {
   const [selectedExec, setSelectedExec] = useState<ExecutionLog | null>(null);
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
+
+  const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
+  const [executions, setExecutions] = useState<ExecutionLog[]>([]);
+
+  const fetchPlaybooks = async () => {
+    try {
+      const data = await soarApi.getPlaybooks();
+      setPlaybooks(data);
+      if (data.length > 0 && !selectedPlaybook) {
+        setSelectedPlaybook(data[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch playbooks:", err);
+    }
+  };
+
+  const fetchExecutions = async () => {
+    try {
+      const data = await soarApi.getExecutions();
+      setExecutions(data);
+    } catch (err) {
+      console.error("Failed to fetch executions:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlaybooks();
+    fetchExecutions();
+  }, []);
+
+  const handleSavePlaybook = async (data: Partial<Playbook>) => {
+    if (editingPlaybook) {
+      await soarApi.updatePlaybook(editingPlaybook.id, data);
+    } else {
+      await soarApi.createPlaybook(data);
+    }
+    fetchPlaybooks();
+  };
+
+  const handleDuplicate = async (playbook: Playbook) => {
+    const { id, created_at, updated_at, created_by, ...rest } = playbook;
+    await soarApi.createPlaybook({ ...rest, name: `${rest.name} (Copy)` });
+    fetchPlaybooks();
+  };
+
+  const handleRunPlaybook = async (id: string) => {
+    try {
+      await soarApi.executePlaybook(id);
+      fetchExecutions();
+    } catch (err) {
+      console.error("Failed to execute playbook:", err);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500 pb-24">
@@ -27,10 +86,10 @@ export default function SoarWorkspace() {
         subtitle="Security Orchestration, Automation and Response. Streamline SOC workflows with playbooks."
         icon={Workflow}
         actions={[
-          { label: "Refresh", icon: RefreshCw },
+          { label: "Refresh", icon: RefreshCw, onClick: fetchPlaybooks },
           { label: "Import", icon: Upload },
           { label: "Export", icon: Download },
-          { label: "New Playbook", icon: Plus, variant: "primary" }
+          { label: "New Playbook", icon: Plus, variant: "primary", onClick: () => { setEditingPlaybook(null); setIsModalOpen(true); } }
         ]}
       />
 
@@ -42,10 +101,27 @@ export default function SoarWorkspace() {
       {/* Playbook Builder & Library */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
-          <VisualPlaybookBuilder />
+          <VisualPlaybookBuilder 
+            playbook={selectedPlaybook} 
+            onSave={async (definition) => {
+              if (selectedPlaybook) {
+                await soarApi.updatePlaybook(selectedPlaybook.id, { workflow_definition: definition });
+                fetchPlaybooks();
+              }
+            }} 
+          />
         </div>
         <div className="xl:col-span-1">
-          <PlaybookLibrary playbooks={mockPlaybooks} />
+          <PlaybookLibrary 
+            playbooks={playbooks} 
+            onSelect={(pb) => setSelectedPlaybook(pb)}
+            onEdit={(pb) => { setEditingPlaybook(pb); setIsModalOpen(true); }}
+            onDelete={async (id) => { await soarApi.deletePlaybook(id); fetchPlaybooks(); }}
+            onActivate={async (id) => { await soarApi.activatePlaybook(id); fetchPlaybooks(); }}
+            onDeactivate={async (id) => { await soarApi.deactivatePlaybook(id); fetchPlaybooks(); }}
+            onDuplicate={handleDuplicate}
+            onRun={handleRunPlaybook}
+          />
         </div>
       </div>
 
@@ -65,7 +141,7 @@ export default function SoarWorkspace() {
       {/* Execution History */}
       <div className="h-[400px]">
         <ExecutionHistory 
-          executions={mockExecutions} 
+          executions={executions} 
           onRowClick={(exec) => setSelectedExec(exec)} 
         />
       </div>
@@ -74,6 +150,14 @@ export default function SoarWorkspace() {
       <ExecutionDrawer 
         execution={selectedExec} 
         onClose={() => setSelectedExec(null)} 
+      />
+
+      {/* Playbook Modal */}
+      <PlaybookModal 
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setEditingPlaybook(null); }}
+        playbook={editingPlaybook}
+        onSave={handleSavePlaybook}
       />
     </div>
   );

@@ -1,7 +1,14 @@
 import { GitMerge, Zap, Shield, HelpCircle, Mail, Database, X, AlertTriangle, Play } from "lucide-react";
 
-export default function VisualPlaybookBuilder() {
-  const nodes = [
+import { Playbook } from "@/types";
+
+interface VisualPlaybookBuilderProps {
+  playbook?: Playbook | null;
+  onSave?: (workflow_definition: any) => void;
+}
+
+export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybookBuilderProps) {
+  const nodes = playbook?.workflow_definition?.nodes || [
     { id: 1, type: "Trigger", title: "Email Alert Received", icon: Mail, color: "text-blue-400", border: "border-blue-500/50", bg: "bg-blue-500/10" },
     { id: 2, type: "Condition", title: "Is Phishing?", icon: HelpCircle, color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-500/10" },
     { id: 3, type: "Integration", title: "Extract IOCs (ThreatFox)", icon: Database, color: "text-emerald-400", border: "border-emerald-500/50", bg: "bg-emerald-500/10" },
@@ -14,11 +21,17 @@ export default function VisualPlaybookBuilder() {
       <div className="flex items-center justify-between mb-4 pb-4 border-b border-soc-border">
         <div className="flex items-center gap-2 text-white font-medium">
           <Zap className="w-5 h-5 text-soc-accent" />
-          Playbook Builder: <span className="text-gray-400 font-normal">Phishing Response (Draft)</span>
+          Playbook Builder: <span className="text-gray-400 font-normal">{playbook ? playbook.name : 'Select a Playbook'}</span>
         </div>
         <div className="flex gap-2">
           <button className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:border-gray-500 rounded text-xs font-medium text-gray-300 transition-colors">Discard</button>
-          <button className="px-3 py-1.5 bg-soc-accent hover:bg-blue-600 rounded text-xs font-medium text-white transition-colors shadow-lg">Save & Activate</button>
+          <button 
+            onClick={() => onSave && playbook && onSave({ nodes })}
+            disabled={!playbook}
+            className="px-3 py-1.5 bg-soc-accent hover:bg-blue-600 rounded text-xs font-medium text-white transition-colors shadow-lg disabled:opacity-50"
+          >
+            Save
+          </button>
         </div>
       </div>
       
@@ -29,8 +42,8 @@ export default function VisualPlaybookBuilder() {
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
 
         <div className="relative z-10 flex flex-col items-center w-full max-w-md">
-          {nodes.map((node, idx) => {
-            const Icon = node.icon;
+          {nodes.map((node: any, idx: number) => {
+            const Icon = node.icon || Mail;
             const isLast = idx === nodes.length - 1;
             
             return (

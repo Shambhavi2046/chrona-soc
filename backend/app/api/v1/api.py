@@ -18,6 +18,7 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboar
 api_router.include_router(events.router, prefix="/events", tags=["events"])
 api_router.include_router(detections.router, prefix="/detections", tags=["detections"])
 api_router.include_router(graph.router, prefix="/graph", tags=["graph"])
-from app.api.v1 import hunting, reports
+from app.api.v1 import hunting, reports, soar
 api_router.include_router(hunting.router, prefix="/hunting", tags=["hunting"])
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
+api_router.include_router(soar.router, prefix="/soar", tags=["soar"])
