@@ -93,8 +93,6 @@ export default function SoarWorkspace() {
         ]}
       />
 
-      <MockModeBanner moduleName="SOAR Automation" />
-
       {/* Summary KPI Cards */}
       <SummaryCards />
 

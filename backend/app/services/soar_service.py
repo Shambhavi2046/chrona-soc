@@ -89,39 +89,47 @@ class SOARService:
     async def execute_playbook(self, db: AsyncSession, playbook_id: uuid.UUID, user: str = "System") -> dict:
         from app.models.automation import PlaybookExecution
         from datetime import datetime
+        from app.services.soar.context import ExecutionContext
+        from app.services.soar.engine import ExecutionEngine
         
         playbook = await self.get_by_id(db, playbook_id)
         if not playbook:
             raise HTTPException(status_code=404, detail="Playbook not found")
             
+        execution_id = uuid.uuid4()
         start_time = datetime.utcnow()
         
-        # Simulated steps
-        logs = [
-            {"step": "Initializing", "status": "Success", "time": start_time.isoformat()},
-            {"step": f"Loading Playbook: {playbook.name}", "status": "Success", "time": start_time.isoformat()},
-            {"step": f"Validating Trigger: {playbook.trigger_type}", "status": "Success", "time": start_time.isoformat()},
-            {"step": "Executing Actions", "status": "Success", "time": start_time.isoformat()},
-            {"step": "Completed", "status": "Success", "time": start_time.isoformat()}
-        ]
+        # Setup context and engine
+        context = ExecutionContext(execution_id=str(execution_id), playbook_id=str(playbook.id), initiated_by=user)
+        
+        # Extract actions from playbook definition.
+        # Fallback to 'nodes' if 'actions' is not present, otherwise use empty list.
+        definition = playbook.definition or {}
+        actions = definition.get("actions") or definition.get("nodes") or []
+        
+        engine = ExecutionEngine(context=context, actions=actions)
+        
+        # Run execution
+        final_status = engine.execute_all()
         
         end_time = datetime.utcnow()
         duration = f"{(end_time - start_time).total_seconds():.2f}s"
         
         execution = PlaybookExecution(
+            id=execution_id,
             playbook_id=playbook.id,
-            status="Success",
+            status=final_status,
             started_at=start_time.isoformat() + "Z",
             completed_at=end_time.isoformat() + "Z",
             duration=duration,
-            execution_logs=logs,
+            execution_logs=engine.execution_logs,
             initiated_by=user
         )
         db.add(execution)
         await db.commit()
         await db.refresh(execution)
         
-        resp = execution.__dict__
+        resp = execution.__dict__.copy()
         resp['playbookName'] = playbook.name
         resp['trigger'] = playbook.trigger_type
         
