@@ -1,72 +1,139 @@
-import { Network, Plus, ServerCrash, CheckCircle2, RotateCw } from "lucide-react";
-import { IntegrationStatus } from "@/types";
+"use client";
 
-interface IntegrationSettingsProps {
-  integrations: IntegrationStatus[];
-}
+import { useState, useEffect } from "react";
+import { Network, Plus, Trash2, Shield } from "lucide-react";
+import { listCredentials, createCredential, deleteCredential, CredentialResponse } from "../../services/credentials";
 
-export default function IntegrationSettings({ integrations }: IntegrationSettingsProps) {
+export default function IntegrationSettings() {
+  const [credentials, setCredentials] = useState<CredentialResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  const [name, setName] = useState("");
+  const [secret, setSecret] = useState("");
+
+  const fetchCredentials = async () => {
+    try {
+      const data = await listCredentials();
+      setCredentials(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchCredentials();
+  }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !secret) return;
+    setLoading(true);
+    try {
+      await createCredential({ name, provider: "threatfox", secret });
+      setShowAddForm(false);
+      setName("");
+      setSecret("");
+      await fetchCredentials();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCredential(id);
+      await fetchCredentials();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="glass-card border border-soc-border rounded-xl p-6 animate-in fade-in duration-300">
-      
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <Network className="w-5 h-5 text-soc-accent" />
-            Connected Integrations
+            Integration Credentials
           </h2>
-          <p className="text-sm text-gray-400 mt-1">Manage data ingests, SIEM connections, and SOAR endpoints.</p>
+          <p className="text-sm text-gray-400 mt-1">Manage API keys for SOAR integrations securely.</p>
         </div>
-        <button className="flex items-center px-4 py-2 bg-soc-accent hover:bg-blue-600 rounded-lg text-sm font-medium text-white transition-colors">
-          <Plus className="w-4 h-4 mr-2" /> Add Integration
+        <button
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="flex items-center px-4 py-2 bg-soc-accent hover:bg-blue-600 rounded-lg text-sm font-medium text-white transition-colors"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Add Credential
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {integrations.map((int) => (
-          <div key={int.id} className="bg-soc-bg border border-soc-border hover:border-soc-accent/50 rounded-lg p-4 transition-all group flex flex-col">
-            <div className="flex justify-between items-start mb-4">
-              <h4 className="text-sm font-bold text-white">{int.name}</h4>
-              {int.status === "Connected" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-              {int.status === "Disconnected" && <div className="w-2 h-2 rounded-full bg-gray-500 mt-1" />}
-              {int.status === "Error" && <ServerCrash className="w-4 h-4 text-red-400" />}
+      {showAddForm && (
+        <form onSubmit={handleAdd} className="mb-6 bg-soc-bg border border-soc-border rounded-lg p-4">
+          <h3 className="text-sm font-bold text-white mb-4">Add ThreatFox API Key</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. ThreatFox Prod Key"
+                className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-soc-accent"
+                required
+              />
             </div>
-            
-            <div className="mt-auto space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Status</span>
-                <span className={`font-medium ${
-                  int.status === "Connected" ? "text-emerald-400" :
-                  int.status === "Error" ? "text-red-400" : "text-gray-400"
-                }`}>
-                  {int.status}
-                </span>
-              </div>
-              
-              {int.status !== "Disconnected" && (
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">Last Sync</span>
-                  <span className="text-gray-300 flex items-center gap-1">
-                    <RotateCw className="w-3 h-3" /> {int.lastSync}
-                  </span>
-                </div>
-              )}
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">API Key</label>
+              <input
+                type="password"
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                placeholder="Paste API Key here..."
+                className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-soc-accent"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-3 py-1.5 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+            <button type="submit" disabled={loading} className="px-4 py-1.5 bg-soc-accent hover:bg-blue-600 rounded text-sm text-white transition-colors">
+              {loading ? "Saving..." : "Save Credential"}
+            </button>
+          </div>
+        </form>
+      )}
 
-              <div className="pt-3 border-t border-soc-border/50 flex gap-2">
-                {int.status === "Disconnected" ? (
-                  <button className="flex-1 py-1.5 bg-soc-card hover:bg-soc-border border border-soc-border rounded text-xs font-medium text-white transition-colors">Connect</button>
-                ) : (
-                  <>
-                    <button className="flex-1 py-1.5 bg-soc-card hover:bg-soc-border border border-soc-border rounded text-xs font-medium text-white transition-colors">Configure</button>
-                    <button className="py-1.5 px-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded text-xs font-medium text-red-400 transition-colors">Disconnect</button>
-                  </>
-                )}
+      <div className="space-y-3">
+        {credentials.length === 0 && !showAddForm && (
+          <div className="text-sm text-gray-500 text-center py-8">No credentials configured.</div>
+        )}
+        {credentials.map((cred) => (
+          <div key={cred.id} className="bg-soc-bg border border-soc-border rounded-lg p-4 flex items-center justify-between group">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-soc-card border border-soc-border flex items-center justify-center">
+                <Shield className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">{cred.name}</h4>
+                <div className="text-xs text-gray-500 flex gap-2">
+                  <span>Provider: <span className="text-gray-300 font-medium capitalize">{cred.provider}</span></span>
+                  <span>•</span>
+                  <span>Created: {new Date(cred.created_at).toLocaleDateString()}</span>
+                </div>
               </div>
             </div>
+            <button
+              onClick={() => handleDelete(cred.id)}
+              className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+              title="Delete Credential"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
           </div>
         ))}
       </div>
-
     </div>
   );
 }

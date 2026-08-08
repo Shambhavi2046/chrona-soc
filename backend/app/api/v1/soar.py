@@ -5,9 +5,27 @@ import uuid
 
 from app.db.session import get_db
 from app.services.soar_service import soar_service
+from app.services.credentials_service import credentials_service
 from app.schemas.soar import PlaybookCreate, PlaybookUpdate, PlaybookResponse, PlaybookExecutionResponse
+from app.schemas.credentials import CredentialCreate, CredentialResponse
+from fastapi import HTTPException
 
 router = APIRouter()
+
+@router.get("/credentials", response_model=List[CredentialResponse])
+async def list_credentials(db: AsyncSession = Depends(get_db)):
+    return await credentials_service.get_all(db)
+
+@router.post("/credentials", response_model=CredentialResponse)
+async def create_credential(obj_in: CredentialCreate, db: AsyncSession = Depends(get_db)):
+    return await credentials_service.create(db, obj_in)
+
+@router.delete("/credentials/{id}")
+async def delete_credential(id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    success = await credentials_service.delete(db, id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Credential not found")
+    return {"status": "success"}
 
 @router.get("/playbooks", response_model=List[PlaybookResponse])
 async def list_playbooks(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):

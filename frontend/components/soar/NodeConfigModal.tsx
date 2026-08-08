@@ -1,6 +1,40 @@
 import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import { PlaybookNode } from "@/types/soar";
+import { CredentialResponse, listCredentials } from "@/services/credentials";
+
+function IntegrationCredentialSelector({ provider, value, onChange }: { provider: string, value: string, onChange: (val: string) => void }) {
+  const [credentials, setCredentials] = useState<CredentialResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    listCredentials().then(data => {
+      setCredentials(data.filter(c => c.provider === provider));
+      setLoading(false);
+    }).catch(e => {
+      console.error(e);
+      setLoading(false);
+    });
+  }, [provider]);
+
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-400 mb-1">Credential</label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-soc-accent"
+      >
+        <option value="">Select a credential...</option>
+        {credentials.map(c => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+      {loading && <p className="text-xs text-gray-500 mt-1">Loading credentials...</p>}
+      {!loading && credentials.length === 0 && <p className="text-xs text-red-400 mt-1">No credentials found for this provider. Add one in settings.</p>}
+    </div>
+  );
+}
 
 interface NodeConfigModalProps {
   node: PlaybookNode | null;
@@ -81,6 +115,7 @@ export default function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeC
                 <option value="set_variable">Set Variable</option>
                 <option value="condition">Condition</option>
                 <option value="http_request">HTTP Request</option>
+                <option value="integration">Integration</option>
               </select>
             </div>
           </div>
@@ -102,6 +137,36 @@ export default function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeC
                 </div>
               )}
             </div>
+
+            {formData.type === "integration" && (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Integration Provider</label>
+                  <select
+                    value={formData.config?.integration || "threatfox"}
+                    onChange={e => handleConfigChange("integration", e.target.value)}
+                    className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-soc-accent"
+                  >
+                    <option value="threatfox">ThreatFox</option>
+                  </select>
+                </div>
+                <IntegrationCredentialSelector
+                  provider={formData.config?.integration || "threatfox"}
+                  value={formData.config?.credential_id || ""}
+                  onChange={(val) => handleConfigChange("credential_id", val)}
+                />
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">IOC (Variable or String)</label>
+                  <input
+                    type="text"
+                    value={formData.config?.ioc || ""}
+                    onChange={e => handleConfigChange("ioc", e.target.value)}
+                    placeholder="e.g. {{alert.ioc}} or 1.1.1.1"
+                    className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-soc-accent"
+                  />
+                </div>
+              </div>
+            )}
 
             {formData.type === "log" && (
               <div>

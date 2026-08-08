@@ -12,7 +12,7 @@ interface VisualPlaybookBuilderProps {
 const defaultNodes: PlaybookNode[] = [
   { id: 1, category: "Trigger", type: "log", config: { message: "Trigger: Email Alert Received" }, title: "Email Alert Received" },
   { id: 2, category: "Action", type: "set_variable", config: { name: "investigation_started", value: true }, title: "Start Investigation" },
-  { id: 3, category: "Integration", type: "http_request", config: { url: "https://api.threatfox.ch/api/v1/", method: "POST", timeout: 5 }, title: "Extract IOCs (ThreatFox)" },
+  { id: 3, category: "Integration", type: "integration", config: { integration: "threatfox", credential_id: "", ioc: "{{alert.ioc}}" }, title: "Extract IOCs (ThreatFox)" },
   { id: 4, category: "Decision", type: "condition", config: { variable: "investigation_started", operator: "equals", value: true }, title: "Proceed?" },
   { id: 5, category: "Action", type: "log", config: { message: "Quarantine User Action Executed" }, title: "Quarantine User" },
 ];
@@ -49,12 +49,20 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
       config: { message: "New Action" },
       title: "New Action",
     };
-    setNodes([...nodes, newNode]);
+    const newNodes = [...nodes, newNode];
+    setNodes(newNodes);
+    if (onSave && playbook) {
+      onSave({ nodes: newNodes });
+    }
   };
 
   const handleDeleteNode = (id: string | number, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNodes(nodes.filter(n => n.id !== id));
+    const newNodes = nodes.filter(n => n.id !== id);
+    setNodes(newNodes);
+    if (onSave && playbook) {
+      onSave({ nodes: newNodes });
+    }
   };
 
   const handleNodeClick = (node: PlaybookNode) => {
@@ -63,7 +71,11 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
   };
 
   const handleSaveNode = (updatedNode: PlaybookNode) => {
-    setNodes(nodes.map(n => n.id === updatedNode.id ? updatedNode : n));
+    const newNodes = nodes.map(n => n.id === updatedNode.id ? updatedNode : n);
+    setNodes(newNodes);
+    if (onSave && playbook) {
+      onSave({ nodes: newNodes });
+    }
   };
 
   return (

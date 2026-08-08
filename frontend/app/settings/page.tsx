@@ -33,7 +33,7 @@ export default function SettingsWorkspace() {
       case "copilot":
         return <AICopilotSettings />;
       case "integrations":
-        return <IntegrationSettings integrations={mockIntegrationStatuses} />;
+        return <IntegrationSettings />;
       case "system":
         return <SystemPreferences />;
       case "backup":

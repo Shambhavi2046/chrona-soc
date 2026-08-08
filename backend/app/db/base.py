@@ -6,3 +6,4 @@ from app.models.automation import Playbook
 from app.models.event_model import SecurityEvent
 from app.models.hunting_model import SavedHunt
 from app.models.report_model import Report, ReportTemplate
+from app.models.credentials import IntegrationCredential
