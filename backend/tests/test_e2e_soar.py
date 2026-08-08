@@ -47,6 +47,17 @@ def test_e2e_playbook_execution(monkeypatch):
         exec_res = client.post(f"/api/v1/soar/playbooks/{pb_id}/execute")
         assert exec_res.status_code == 200
         execution = exec_res.json()
+        assert execution["status"] == "Running"
+        exec_id = execution["id"]
+
+        import time
+        # Poll for completion
+        for _ in range(10):
+            res = client.get(f"/api/v1/soar/executions/{exec_id}")
+            execution = res.json()
+            if execution["status"] != "Running":
+                break
+            time.sleep(0.5)
 
         assert execution["status"] == "Success"
         assert "execution_logs" in execution

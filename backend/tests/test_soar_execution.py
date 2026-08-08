@@ -50,15 +50,25 @@ def test_invalid_action_config():
     assert res["status"] == "failed"
     assert "Missing required field" in res["message"]
 
-def test_engine_unsupported_action():
+@pytest.mark.asyncio
+async def test_engine_unsupported_action():
+    from unittest.mock import AsyncMock, MagicMock
     context = ExecutionContext("exec-1", "pb-1")
     actions = [{"type": "launch_missiles", "config": {}}]
     engine = ExecutionEngine(context, actions)
-    status = engine.execute_all()
+
+    db_mock = AsyncMock()
+    exec_mock = MagicMock()
+    exec_mock.status = "Running"
+    db_mock.get.return_value = exec_mock
+
+    status = await engine.execute_all(db_mock, "exec-1")
     assert status == "Failed"
     assert engine.execution_logs[-1]["message"].startswith("Unsupported action type")
 
-def test_engine_full_workflow():
+@pytest.mark.asyncio
+async def test_engine_full_workflow():
+    from unittest.mock import AsyncMock, MagicMock
     context = ExecutionContext("exec-1", "pb-1")
     actions = [
         {"type": "log", "config": {"message": "Starting workflow"}},
@@ -67,7 +77,13 @@ def test_engine_full_workflow():
         {"type": "log", "config": {"message": "Admin check passed"}}
     ]
     engine = ExecutionEngine(context, actions)
-    status = engine.execute_all()
+
+    db_mock = AsyncMock()
+    exec_mock = MagicMock()
+    exec_mock.status = "Running"
+    db_mock.get.return_value = exec_mock
+
+    status = await engine.execute_all(db_mock, "exec-1")
     assert status == "Success"
 
     # 1 init, 4 actions, 1 complete
@@ -170,3 +186,41 @@ def test_http_request_non_success(monkeypatch):
     res = handler.execute(context, {"url": "https://api.example.com"})
     assert res["status"] == "failed"
     assert res["output"]["status_code"] == 404
+
+def test_http_request_ssrf_blocked_localhost(monkeypatch):
+    import socket
+    def mock_getaddrinfo(*args, **kwargs):
+        return [(2, 1, 6, '', ('127.0.0.1', 80))]
+    monkeypatch.setattr(socket, "getaddrinfo", mock_getaddrinfo)
+
+    context = ExecutionContext("exec-1", "pb-1")
+    handler = HTTPRequestActionHandler()
+    res = handler.execute(context, {"url": "http://localhost:8000"})
+    assert res["status"] == "failed"
+    assert "SSRF Protection" in res["message"]
+    assert "is blocked" in res["message"]
+
+def test_http_request_ssrf_blocked_private_ip(monkeypatch):
+    import socket
+    def mock_getaddrinfo(*args, **kwargs):
+        return [(2, 1, 6, '', ('192.168.1.1', 80))]
+    monkeypatch.setattr(socket, "getaddrinfo", mock_getaddrinfo)
+
+    context = ExecutionContext("exec-1", "pb-1")
+    handler = HTTPRequestActionHandler()
+    res = handler.execute(context, {"url": "http://192.168.1.1"})
+    assert res["status"] == "failed"
+    assert "SSRF Protection" in res["message"]
+    assert "is blocked" in res["message"]
+
+def test_http_request_dns_failure(monkeypatch):
+    import socket
+    def mock_getaddrinfo(*args, **kwargs):
+        raise socket.gaierror("[Errno 8] nodename nor servname provided")
+    monkeypatch.setattr(socket, "getaddrinfo", mock_getaddrinfo)
+
+    context = ExecutionContext("exec-1", "pb-1")
+    handler = HTTPRequestActionHandler()
+    res = handler.execute(context, {"url": "https://api.thisdoesntexist.local"})
+    assert res["status"] == "failed"
+    assert "DNS Resolution Failed" in res["message"]

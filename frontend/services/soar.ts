@@ -68,13 +68,43 @@ export const executePlaybook = async (id: string): Promise<any> => {
   return response.json();
 };
 
-export const getExecutions = async (): Promise<any[]> => {
-  const response = await fetch(`${API_URL}/soar/executions`, {
-    cache: "no-store"
+export const cancelExecution = async (id: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/soar/executions/${id}/cancel`, {
+    method: "POST",
   });
-  if (!response.ok) throw new Error("Failed to fetch executions");
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to cancel execution");
+  }
   const data = await response.json();
-  return data.map((ex: any) => ({
+  return mapExecution(data);
+};
+
+export const pauseExecution = async (id: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/soar/executions/${id}/pause`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to pause execution");
+  }
+  const data = await response.json();
+  return mapExecution(data);
+};
+
+export const resumeExecution = async (id: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/soar/executions/${id}/resume`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to resume execution");
+  }
+  const data = await response.json();
+  return mapExecution(data);
+};
+
+const mapExecution = (ex: any) => ({
     id: ex.id,
     playbookName: ex.playbookName || 'Unknown',
     trigger: ex.trigger || 'Unknown',
@@ -83,5 +113,22 @@ export const getExecutions = async (): Promise<any[]> => {
     status: ex.status,
     initiatedBy: ex.initiated_by,
     execution_logs: ex.execution_logs
-  }));
+});
+
+export const getExecution = async (id: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/soar/executions/${id}`, {
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("Failed to fetch execution");
+  const data = await response.json();
+  return mapExecution(data);
+};
+
+export const getExecutions = async (): Promise<any[]> => {
+  const response = await fetch(`${API_URL}/soar/executions`, {
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("Failed to fetch executions");
+  const data = await response.json();
+  return data.map(mapExecution);
 };

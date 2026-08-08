@@ -86,7 +86,22 @@ export default function NodeConfigModal({ node, isOpen, onClose, onSave }: NodeC
           </div>
 
           <div className="pt-4 border-t border-soc-border">
-            <h3 className="text-sm font-semibold text-gray-300 mb-3">Configuration</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-300">Configuration</h3>
+              {['Action', 'Integration'].includes(formData.category) && (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-medium text-gray-400">Retries:</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    value={formData.config?.retries || 0}
+                    onChange={e => handleConfigChange("retries", parseInt(e.target.value) || 0)}
+                    className="w-16 bg-soc-card border border-soc-border rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-soc-accent"
+                  />
+                </div>
+              )}
+            </div>
 
             {formData.type === "log" && (
               <div>

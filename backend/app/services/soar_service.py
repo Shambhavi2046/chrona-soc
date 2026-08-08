@@ -90,11 +90,9 @@ class SOARService:
         await db.refresh(db_obj)
         return db_obj
 
-    async def execute_playbook(self, db: AsyncSession, playbook_id: uuid.UUID, user: str = "System") -> dict:
+    async def execute_playbook(self, db: AsyncSession, playbook_id: uuid.UUID, background_tasks, user: str = "System") -> dict:
         from app.models.automation import PlaybookExecution
         from datetime import datetime
-        from app.services.soar.context import ExecutionContext
-        from app.services.soar.engine import ExecutionEngine
         
         playbook = await self.get_by_id(db, playbook_id)
         if not playbook:
@@ -103,41 +101,116 @@ class SOARService:
         execution_id = uuid.uuid4()
         start_time = datetime.utcnow()
         
-        # Setup context and engine
-        context = ExecutionContext(execution_id=str(execution_id), playbook_id=str(playbook.id), initiated_by=user)
-        
-        # Extract actions from playbook definition.
-        # Fallback to 'nodes' if 'actions' is not present, otherwise use empty list.
-        definition = playbook.definition or {}
-        actions = definition.get("actions") or definition.get("nodes") or []
-        
-        engine = ExecutionEngine(context=context, actions=actions)
-        
-        # Run execution
-        final_status = engine.execute_all()
-        
-        end_time = datetime.utcnow()
-        duration = f"{(end_time - start_time).total_seconds():.2f}s"
-        
         execution = PlaybookExecution(
             id=execution_id,
             playbook_id=playbook.id,
-            status=final_status,
+            status="Running",
             started_at=start_time.isoformat() + "Z",
-            completed_at=end_time.isoformat() + "Z",
-            duration=duration,
-            execution_logs=engine.execution_logs,
+            execution_logs=[],
             initiated_by=user
         )
         db.add(execution)
         await db.commit()
         await db.refresh(execution)
         
+        background_tasks.add_task(self._run_execution_background, execution_id, playbook.id, user)
+
         resp = execution.__dict__.copy()
         resp['playbookName'] = playbook.name
         resp['trigger'] = playbook.trigger_type
         
         return resp
+
+    async def _run_execution_background(self, execution_id: uuid.UUID, playbook_id: uuid.UUID, user: str):
+        from app.db.session import async_session_maker
+        from app.models.automation import PlaybookExecution
+        from datetime import datetime
+        from app.services.soar.context import ExecutionContext
+        from app.services.soar.engine import ExecutionEngine
+        import asyncio
+
+        async with async_session_maker() as db:
+            playbook = await self.get_by_id(db, playbook_id)
+            if not playbook:
+                return
+
+            context = ExecutionContext(execution_id=str(execution_id), playbook_id=str(playbook.id), initiated_by=user)
+            definition = playbook.definition or {}
+            actions = definition.get("actions") or definition.get("nodes") or []
+
+            engine = ExecutionEngine(context=context, actions=actions)
+
+            # Run execution asynchronously
+            final_status = await engine.execute_all(db, execution_id)
+
+            exec_obj = await db.get(PlaybookExecution, execution_id)
+            if exec_obj:
+                end_time = datetime.utcnow()
+                start_time = datetime.fromisoformat(exec_obj.started_at.replace('Z', ''))
+                duration = f"{(end_time - start_time).total_seconds():.2f}s"
+
+                exec_obj.status = final_status
+                exec_obj.completed_at = end_time.isoformat() + "Z"
+                exec_obj.duration = duration
+                db.add(exec_obj)
+                await db.commit()
+
+    async def cancel_execution(self, db: AsyncSession, id: uuid.UUID) -> dict:
+        from app.models.automation import PlaybookExecution
+        exec_obj = await db.get(PlaybookExecution, id)
+        if not exec_obj:
+            raise HTTPException(status_code=404, detail="Execution not found")
+        if exec_obj.status not in ["Running", "Paused", "Pending"]:
+            raise HTTPException(status_code=400, detail="Execution is already completed")
+        exec_obj.status = "Cancelled"
+        db.add(exec_obj)
+        await db.commit()
+        await db.refresh(exec_obj)
+        return exec_obj.__dict__
+
+    async def pause_execution(self, db: AsyncSession, id: uuid.UUID) -> dict:
+        from app.models.automation import PlaybookExecution
+        exec_obj = await db.get(PlaybookExecution, id)
+        if not exec_obj:
+            raise HTTPException(status_code=404, detail="Execution not found")
+        if exec_obj.status != "Running":
+            raise HTTPException(status_code=400, detail="Only running executions can be paused")
+        exec_obj.status = "Paused"
+        db.add(exec_obj)
+        await db.commit()
+        await db.refresh(exec_obj)
+        return exec_obj.__dict__
+
+    async def resume_execution(self, db: AsyncSession, id: uuid.UUID) -> dict:
+        from app.models.automation import PlaybookExecution
+        exec_obj = await db.get(PlaybookExecution, id)
+        if not exec_obj:
+            raise HTTPException(status_code=404, detail="Execution not found")
+        if exec_obj.status != "Paused":
+            raise HTTPException(status_code=400, detail="Only paused executions can be resumed")
+        exec_obj.status = "Running"
+        db.add(exec_obj)
+        await db.commit()
+        await db.refresh(exec_obj)
+        return exec_obj.__dict__
+
+    async def get_execution_by_id(self, db: AsyncSession, id: uuid.UUID) -> dict:
+        from app.models.automation import PlaybookExecution
+        from sqlalchemy.orm import selectinload
+        query = select(PlaybookExecution).options(selectinload(PlaybookExecution.playbook)).where(PlaybookExecution.id == id)
+        result = await db.execute(query)
+        ex = result.scalar_one_or_none()
+        if not ex:
+            raise HTTPException(status_code=404, detail="Execution not found")
+
+        d = ex.__dict__.copy()
+        if ex.playbook:
+            d['playbookName'] = ex.playbook.name
+            d['trigger'] = ex.playbook.trigger_type
+        else:
+            d['playbookName'] = "Unknown"
+            d['trigger'] = "Unknown"
+        return d
 
     async def get_executions(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[dict]:
         from app.models.automation import PlaybookExecution

@@ -156,11 +156,17 @@ class HTTPRequestActionHandler(ActionHandler):
                         "output": {},
                         "message": f"SSRF Protection: Access to internal or reserved IP address ({ip_str}) is blocked."
                     }
+        except socket.gaierror as e:
+            return {
+                "status": "failed",
+                "output": {},
+                "message": f"DNS Resolution Failed: Cannot resolve hostname '{hostname}'"
+            }
         except Exception as e:
             return {
                 "status": "failed",
                 "output": {},
-                "message": f"SSRF Protection: Failed to resolve hostname '{hostname}'"
+                "message": f"SSRF Protection: Validation error for '{hostname}'"
             }
 
         try:

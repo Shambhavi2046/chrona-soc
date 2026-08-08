@@ -1,13 +1,58 @@
-import { X, Activity, Play, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Activity, Play, CheckCircle2, AlertTriangle, PauseCircle, StopCircle, RefreshCw } from "lucide-react";
 import { ExecutionLog } from "@/types";
 import ClientDate from "@/components/common/ClientDate";
+import { getExecution, pauseExecution, resumeExecution, cancelExecution } from "@/services/soar";
 
 interface ExecutionDrawerProps {
   execution: ExecutionLog | null;
   onClose: () => void;
 }
 
-export default function ExecutionDrawer({ execution, onClose }: ExecutionDrawerProps) {
+export default function ExecutionDrawer({ execution: initialExecution, onClose }: ExecutionDrawerProps) {
+  const [execution, setExecution] = useState<ExecutionLog | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setExecution(initialExecution);
+  }, [initialExecution]);
+
+  useEffect(() => {
+    if (!execution || !['Running', 'Paused', 'Pending'].includes(execution.status as string)) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updated = await getExecution(execution.id);
+        setExecution(updated);
+      } catch (e) {
+        console.error(e);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [execution?.id, execution?.status]);
+
+  const handleControl = async (action: 'pause' | 'resume' | 'cancel') => {
+    if (!execution) return;
+    setError(null);
+    try {
+      let res;
+      if (action === 'pause') res = await pauseExecution(execution.id);
+      else if (action === 'resume') res = await resumeExecution(execution.id);
+      else if (action === 'cancel') res = await cancelExecution(execution.id);
+
+      if (res) setExecution(res);
+    } catch (err: any) {
+      setError(err.message || `Failed to ${action} execution`);
+      try {
+        const fresh = await getExecution(execution.id);
+        setExecution(fresh);
+      } catch (e) {
+        console.error("Failed to refresh execution status after error", e);
+      }
+    }
+  };
+
   if (!execution) return null;
 
   return (
@@ -40,20 +85,43 @@ export default function ExecutionDrawer({ execution, onClose }: ExecutionDrawerP
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
           {/* Status Banner */}
-          <div className={`p-4 rounded-xl border flex items-center justify-between ${
-            execution.status === 'Success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-            execution.status === 'Failed' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
-            execution.status === 'Running' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+          <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+            (execution.status as string) === 'Success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+            (execution.status as string) === 'Failed' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+            (execution.status as string) === 'Cancelled' ? 'bg-gray-500/10 border-gray-500/20 text-gray-400' :
+            ['Running', 'Pending'].includes(execution.status as string) ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
             'bg-orange-500/10 border-orange-500/20 text-orange-400'
           }`}>
             <div className="flex items-center gap-3">
-              {execution.status === 'Success' && <CheckCircle2 className="w-5 h-5" />}
-              {execution.status === 'Failed' && <X className="w-5 h-5" />}
-              {execution.status === 'Pending Approval' && <AlertTriangle className="w-5 h-5" />}
+              {(execution.status as string) === 'Success' && <CheckCircle2 className="w-5 h-5" />}
+              {['Failed', 'Cancelled'].includes(execution.status as string) && <X className="w-5 h-5" />}
+              {(execution.status as string) === 'Paused' && <PauseCircle className="w-5 h-5" />}
+              {['Running', 'Pending'].includes(execution.status as string) && <RefreshCw className="w-5 h-5 animate-spin" />}
               <span className="font-bold">{execution.status}</span>
+              <span className="text-sm font-mono ml-4 text-gray-400 border-l border-gray-600 pl-4"><ClientDate date={execution.startTime} format="full" /></span>
             </div>
-            <span className="text-sm font-mono"><ClientDate date={execution.startTime} format="full" /></span>
+            <div className="flex items-center gap-2">
+              {['Running', 'Pending'].includes(execution.status as string) && (
+                <>
+                  <button onClick={() => handleControl('pause')} className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:bg-soc-card-hover rounded text-xs font-medium text-white flex items-center gap-1"><PauseCircle className="w-3.5 h-3.5" /> Pause</button>
+                  <button onClick={() => handleControl('cancel')} className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 rounded text-xs font-medium text-red-400 flex items-center gap-1"><StopCircle className="w-3.5 h-3.5" /> Cancel</button>
+                </>
+              )}
+              {(execution.status as string) === 'Paused' && (
+                <>
+                  <button onClick={() => handleControl('resume')} className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 rounded text-xs font-medium text-emerald-400 flex items-center gap-1"><Play className="w-3.5 h-3.5" /> Resume</button>
+                  <button onClick={() => handleControl('cancel')} className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 rounded text-xs font-medium text-red-400 flex items-center gap-1"><StopCircle className="w-3.5 h-3.5" /> Cancel</button>
+                </>
+              )}
+            </div>
           </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg text-sm flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <p>{error}</p>
+            </div>
+          )}
 
           {/* Stepper Timeline */}
           <div className="glass-card p-5 rounded-xl border border-soc-border">
