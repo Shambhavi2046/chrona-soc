@@ -1,3 +1,15 @@
+export interface PlaybookNode {
+  id: string | number;
+  category: string;
+  type: string;
+  config: Record<string, any>;
+  title?: string;
+  icon?: any;
+  color?: string;
+  border?: string;
+  bg?: string;
+}
+
 export interface Playbook {
   id: string;
   name: string;
@@ -5,7 +17,14 @@ export interface Playbook {
   category: string;
   trigger_type: string;
   status: "Active" | "Disabled" | "Draft" | string;
-  workflow_definition?: Record<string, any>;
+  definition?: {
+    nodes?: PlaybookNode[];
+    [key: string]: any;
+  };
+  workflow_definition?: {
+    nodes?: PlaybookNode[];
+    [key: string]: any;
+  };
   created_by?: string;
   created_at?: string;
   updated_at?: string;

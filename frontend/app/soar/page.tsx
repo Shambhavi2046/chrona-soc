@@ -103,7 +103,8 @@ export default function SoarWorkspace() {
             playbook={selectedPlaybook} 
             onSave={async (definition) => {
               if (selectedPlaybook) {
-                await soarApi.updatePlaybook(selectedPlaybook.id, { workflow_definition: definition });
+                const updated = await soarApi.updatePlaybook(selectedPlaybook.id, { workflow_definition: definition });
+                setSelectedPlaybook(updated);
                 fetchPlaybooks();
               }
             }} 
@@ -113,7 +114,7 @@ export default function SoarWorkspace() {
           <PlaybookLibrary 
             playbooks={playbooks} 
             onSelect={(pb) => setSelectedPlaybook(pb)}
-            onEdit={(pb) => { setEditingPlaybook(pb); setIsModalOpen(true); }}
+            onEdit={(pb) => { setSelectedPlaybook(pb); setEditingPlaybook(pb); setIsModalOpen(true); }}
             onDelete={async (id) => { await soarApi.deletePlaybook(id); fetchPlaybooks(); }}
             onActivate={async (id) => { await soarApi.activatePlaybook(id); fetchPlaybooks(); }}
             onDeactivate={async (id) => { await soarApi.deactivatePlaybook(id); fetchPlaybooks(); }}

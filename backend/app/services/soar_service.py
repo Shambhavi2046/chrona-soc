@@ -51,6 +51,10 @@ class SOARService:
             for field, value in update_data.items():
                 setattr(db_obj, field, value)
 
+            from sqlalchemy.orm.attributes import flag_modified
+            if 'definition' in update_data:
+                flag_modified(db_obj, "definition")
+
             db.add(db_obj)
             await db.commit()
             await db.refresh(db_obj)
