@@ -18,7 +18,18 @@ import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
 import { GraphTopology } from "@/types";
 
-import { CaseNode, AlertNode, AssetNode, IocNode, ThreatActorNode, MalwareNode, MitreNode } from './CustomNodes';
+import {
+  CaseNode,
+  AlertNode,
+  AssetNode,
+  IocNode,
+  ThreatActorNode,
+  MalwareNode,
+  MitreNode,
+  InvestigationNode,
+  EvidenceNode,
+  UserNode,
+} from './CustomNodes';
 import NodeDetailPanel from './NodeDetailPanel';
 import { RefreshCw } from 'lucide-react';
 
@@ -30,6 +41,9 @@ const nodeTypes = {
   threat_actor: ThreatActorNode,
   malware: MalwareNode,
   mitre: MitreNode,
+  investigation: InvestigationNode,
+  evidence: EvidenceNode,
+  user: UserNode,
 };
 
 const dagreGraph = new dagre.graphlib.Graph();
@@ -73,6 +87,7 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
   const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [rfInstance, setRfInstance] = useState<any>(null);
 
   useEffect(() => {
     // Transform backend topology into React Flow format
@@ -99,7 +114,13 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(rfNodes, rfEdges, 'LR');
     setNodes(layoutedNodes);
     setEdges(layoutedEdges);
-  }, [topology]);
+
+    if (rfInstance) {
+      window.requestAnimationFrame(() => {
+        rfInstance.fitView({ padding: 0.2, duration: 500 });
+      });
+    }
+  }, [topology, rfInstance, setNodes, setEdges]);
 
   const onConnect = useCallback((params: any) => setEdges((eds) => addEdge({ ...params, type: ConnectionLineType.SmoothStep, animated: true }, eds)), []);
 
@@ -111,7 +132,12 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction);
     setNodes([...layoutedNodes]);
     setEdges([...layoutedEdges]);
-  }, [nodes, edges]);
+    if (rfInstance) {
+      window.requestAnimationFrame(() => {
+        rfInstance.fitView({ padding: 0.2, duration: 500 });
+      });
+    }
+  }, [nodes, edges, rfInstance, setNodes, setEdges]);
 
   return (
     <div className="w-full h-full relative bg-soc-bg border border-soc-border rounded-xl overflow-hidden glass-card">
@@ -122,9 +148,12 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onInit={setRfInstance}
         nodeTypes={nodeTypes}
         connectionLineType={ConnectionLineType.SmoothStep}
         fitView
+        minZoom={0.05}
+        maxZoom={2}
         className="bg-soc-bg"
         proOptions={{ hideAttribution: true }}
       >

@@ -69,3 +69,17 @@ export const MalwareNode = ({ data, selected }: any) => {
 export const MitreNode = ({ data, selected }: any) => {
   return <BaseNode icon={Target} label={data.label} type="MITRE Tactic" selected={selected} color="purple-400" />;
 };
+
+import { Search, FileText, User } from 'lucide-react';
+
+export const InvestigationNode = ({ data, selected }: any) => {
+  return <BaseNode icon={Search} label={data.label} type="Investigation" selected={selected} color="soc-accent" badge={data.status} />;
+};
+
+export const EvidenceNode = ({ data, selected }: any) => {
+  return <BaseNode icon={FileText} label={data.label} type="Evidence" selected={selected} color="soc-muted" badge={data.evidence_type} />;
+};
+
+export const UserNode = ({ data, selected }: any) => {
+  return <BaseNode icon={User} label={data.label} type="User" selected={selected} color="gray-400" />;
+};

@@ -4,12 +4,13 @@ import { SavedHunt } from "@/types";
 
 interface SavedHuntsProps {
   hunts: SavedHunt[];
+  error?: string | null;
   onRun?: (hunt: SavedHunt) => void;
   onDelete?: (id: string) => void;
   onRename?: (id: string, newName: string) => void;
 }
 
-export default function SavedHunts({ hunts, onRun, onDelete, onRename }: SavedHuntsProps) {
+export default function SavedHunts({ hunts, error, onRun, onDelete, onRename }: SavedHuntsProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
@@ -34,7 +35,9 @@ export default function SavedHunts({ hunts, onRun, onDelete, onRename }: SavedHu
         </div>
       </div>
       
-      {hunts.length === 0 ? (
+      {error ? (
+        <div className="text-center p-8 text-red-400 bg-soc-card border border-red-900 rounded">{error}</div>
+      ) : hunts.length === 0 ? (
         <div className="text-center p-8 text-gray-400">No saved hunts yet.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

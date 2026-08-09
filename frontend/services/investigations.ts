@@ -39,3 +39,11 @@ export async function updateInvestigationStatus(id: string, status: string): Pro
   }
   return response.json();
 }
+
+export async function generateInvestigationsSummary(): Promise<{summary: string}> {
+  const response = await fetch(`${API_URL}/investigations/summary/overview`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Failed to generate investigations summary");
+  }
+  return response.json();
+}

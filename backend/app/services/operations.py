@@ -76,6 +76,33 @@ class InvestigationService(BaseService[InvestigationRepository]):
         await db.refresh(db_obj)
         return db_obj
 
+    async def generate_overview_summary(self, db: AsyncSession) -> dict:
+        from sqlalchemy import select
+        from app.models.operations import Alert
+        
+        result = await db.execute(select(Alert))
+        alerts = result.scalars().all()
+        
+        total = len(alerts)
+        if total == 0:
+            return {"summary": "There are currently no active investigations or alerts in the system."}
+            
+        critical_count = sum(1 for a in alerts if a.risk_score >= 90)
+        resolved_count = sum(1 for a in alerts if a.status.lower() == 'resolved')
+        pending_count = total - resolved_count
+        
+        threat_types = list(set([a.threat_type for a in alerts if a.threat_type]))
+        threats_str = ", ".join(threat_types) if threat_types else "various threats"
+        
+        summary = (
+            f"Chrona SOC is currently tracking {total} investigations. "
+            f"There are {critical_count} critical threats requiring immediate attention, "
+            f"and {pending_count} pending reviews. "
+            f"Active threat vectors include {threats_str}. "
+            f"So far, {resolved_count} investigations have been successfully resolved."
+        )
+        return {"summary": summary}
+
 class CaseService(BaseService[CaseRepository]):
     async def create_case(self, db: AsyncSession, obj_in: CaseCreate):
         db_obj = await self.repository.create(db, obj_in=obj_in)

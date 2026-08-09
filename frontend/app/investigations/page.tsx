@@ -3,6 +3,8 @@ import StatCard from "@/components/dashboard/StatCard";
 import InvestigationTable from "@/components/investigation/InvestigationTable";
 import { Search, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
 
+import GenerateSummaryButton from "@/components/investigation/GenerateSummaryButton";
+
 export default async function InvestigationsOverviewPage() {
   // Fetch real alerts to populate the investigations dashboard
   const alerts = await getAlerts();
@@ -27,9 +29,7 @@ export default async function InvestigationsOverviewPage() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-            Generate Summary
-          </button>
+          <GenerateSummaryButton />
         </div>
       </div>
 

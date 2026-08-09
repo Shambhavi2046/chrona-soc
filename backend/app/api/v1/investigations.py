@@ -10,6 +10,12 @@ from app.utils.validation import get_pagination, PaginationParams
 
 router = APIRouter()
 
+@router.get("/summary/overview")
+async def get_overview_summary(
+    db: AsyncSession = Depends(get_db)
+):
+    return await investigation_service.generate_overview_summary(db)
+
 @router.get("", response_model=List[InvestigationResponse])
 async def list_investigations(
     db: AsyncSession = Depends(get_db),

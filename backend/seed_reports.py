@@ -23,21 +23,21 @@ async def seed():
 
         templates = [
             ReportTemplate(
-                id=uuid.uuid4(),
+                id=uuid.UUID("aaaa1111-aaaa-4aaa-8aaa-aaaa11111111"),
                 name="Executive Summary",
                 description="High-level overview of an incident for stakeholders.",
                 estimated_pages=3,
                 category="Executive"
             ),
             ReportTemplate(
-                id=uuid.uuid4(),
+                id=uuid.UUID("bbbb2222-bbbb-4bbb-8bbb-bbbb22222222"),
                 name="Detailed Technical Analysis",
                 description="In-depth forensic and technical breakdown.",
                 estimated_pages=7,
                 category="Operational"
             ),
             ReportTemplate(
-                id=uuid.uuid4(),
+                id=uuid.UUID("cccc3333-cccc-4ccc-8ccc-cccc33333333"),
                 name="Compliance & Regulatory",
                 description="Mapping of the incident against compliance frameworks (e.g. GDPR, HIPAA).",
                 estimated_pages=5,

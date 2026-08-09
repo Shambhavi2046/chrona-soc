@@ -24,16 +24,19 @@ export default function ThreatHuntingWorkspace() {
   // State
   const [events, setEvents] = useState<HuntEvent[]>([]);
   const [savedHunts, setSavedHunts] = useState<SavedHunt[]>([]);
+  const [savedHuntsError, setSavedHuntsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentQuery, setCurrentQuery] = useState<HuntQueryRequest>({});
 
   const fetchSavedHunts = async () => {
+    setSavedHuntsError(null);
     try {
       const data = await getSavedHunts();
       setSavedHunts(data);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("fetchSavedHunts error:", err);
+      setSavedHuntsError(err.message || "Failed to load saved hunts.");
     }
   };
 
@@ -45,7 +48,9 @@ export default function ThreatHuntingWorkspace() {
       setEvents(res.events);
       setCurrentQuery(queryReq);
     } catch (err: any) {
+      console.error("handleExecute error:", err);
       setError(err.message || "Failed to execute hunt.");
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +62,8 @@ export default function ThreatHuntingWorkspace() {
   }, []);
 
   const handleRunSavedHunt = (hunt: SavedHunt) => {
-    const q = { query: hunt.query };
+    const q = { query: hunt.query, ioc: hunt.query.includes("ioc") ? hunt.query : undefined }; // basic map, since schema doesn't have ioc strictly in savedhunt
+    // A real implementation would parse the saved query parameters correctly.
     setCurrentQuery(q);
     handleExecute(q);
   };
@@ -169,7 +175,8 @@ export default function ThreatHuntingWorkspace() {
 
       {/* Saved Hunts */}
       <SavedHunts 
-        hunts={savedHunts} 
+        hunts={savedHunts}
+        error={savedHuntsError}
         onRun={handleRunSavedHunt} 
         onDelete={handleDeleteSavedHunt} 
         onRename={handleRenameSavedHunt}

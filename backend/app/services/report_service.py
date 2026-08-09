@@ -60,7 +60,7 @@ class ReportService(BaseService):
                 hunt = await hunting_service.get_by_id(db, request.source_id)
                 if hunt:
                     content_kwargs["incident_overview"] = f"Threat Hunt '{hunt.name}' with query: {hunt.query}."
-                    content_kwargs["analyst_findings"] = f"Matches found based on {hunt.type} execution."
+                    content_kwargs["analyst_findings"] = f"Matches found based on Threat Hunt execution."
         except Exception as e:
             # Fallback in case of fetching error, don't crash
             print(f"Error fetching source data for report: {e}")
