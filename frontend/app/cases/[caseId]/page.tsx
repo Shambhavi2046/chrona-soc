@@ -15,10 +15,14 @@ interface PageProps {
 
 export default async function CaseDetailPage({ params }: PageProps) {
   const { caseId } = await params;
-  
+
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   let caseDetail;
   try {
-    caseDetail = await getCaseById(caseId);
+    caseDetail = await getCaseById(caseId, token);
   } catch (e) {
     notFound();
   }
@@ -37,7 +41,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Left Column - Investigation Flow */}
         <div className="lg:col-span-2 flex flex-col gap-8">
           <InvestigationTimeline timeline={caseDetail.timeline} />
@@ -46,14 +50,14 @@ export default async function CaseDetailPage({ params }: PageProps) {
 
         {/* Right Column - Evidence and AI */}
         <div className="flex flex-col gap-8">
-          <AIResponseCard 
-            summary={caseDetail.ai_summary} 
-            recommendations={caseDetail.ai_recommendations} 
+          <AIResponseCard
+            summary={caseDetail.ai_summary}
+            recommendations={caseDetail.ai_recommendations}
           />
-          
+
           {/* Enhancement Blocks */}
           <div className="glass-card rounded-xl p-6 border border-soc-border space-y-6">
-            
+
             {/* MITRE & Alerts */}
             <div>
               <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Alert & MITRE Context</h3>
@@ -64,7 +68,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     <span key={idx} className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs font-mono text-soc-accent">{t}</span>
                   ))}
                 </div>
-                
+
                 <div className="text-xs text-gray-400">Linked Alerts</div>
                 {caseDetail.linked_alerts.map((a, idx) => (
                   <div key={idx} className="text-sm text-gray-200 bg-soc-bg p-2 rounded border border-soc-border flex justify-between">

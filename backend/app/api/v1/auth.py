@@ -34,7 +34,7 @@ async def login(
     device_info = request.headers.get("user-agent")
     ip_address = request.client.host if request.client else None
     
-    token = await auth_service.create_session(db, str(user.id), device_info, ip_address)
+    token = await auth_service.create_session(db, user.id, device_info, ip_address)
     
     # Optionally set refresh token in cookie for security
     response.set_cookie(

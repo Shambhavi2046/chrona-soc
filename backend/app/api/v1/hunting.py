@@ -4,6 +4,8 @@ from typing import List
 import uuid
 from app.db.session import get_db
 from app.services.hunting_service import hunting_service
+from app.middleware.auth import get_current_user
+from app.models.identity import User
 from app.schemas.hunting import SavedHuntCreate, SavedHuntUpdate, SavedHuntSchema, HuntQueryRequest, HuntExecuteResponse
 from app.utils.validation import get_pagination, PaginationParams
 
@@ -42,13 +44,15 @@ async def update_saved_hunt(
 @router.post("/execute", response_model=HuntExecuteResponse)
 async def execute_hunt(
     request: HuntQueryRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    return await hunting_service.execute_hunt(db, request)
+    return await hunting_service.execute_hunt(db, request, current_user.org_id)
 
 @router.post("/copilot/{event_id}")
 async def ask_copilot(
     event_id: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    return await hunting_service.ask_copilot(db, event_id)
+    return await hunting_service.ask_copilot(db, event_id, current_user.org_id)

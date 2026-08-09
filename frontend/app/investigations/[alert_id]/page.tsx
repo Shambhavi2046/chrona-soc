@@ -10,9 +10,14 @@ export default async function InvestigationPage({
   params: Promise<{ alert_id: string }>;
 }) {
   const resolvedParams = await params;
+
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   // Fetch real data based on URL parameter
-  const data = await getInvestigation(resolvedParams.alert_id);
-  
+  const data = await getInvestigation(resolvedParams.alert_id, token);
+
   if (!data) {
     return (
       <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto flex flex-col items-center justify-center h-[50vh]">
@@ -27,10 +32,10 @@ export default async function InvestigationPage({
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      
+
       {/* Dynamic Header section */}
       <div className="bg-soc-card/30 rounded-xl p-6 border border-soc-border glass">
-        <InvestigationHeader 
+        <InvestigationHeader
           investigationId={data.id}
           alertId={data.alert_id}
           threatType={data.threat_type}
@@ -40,7 +45,7 @@ export default async function InvestigationPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Left Column - Main AI Analysis (Takes 2 columns on large screens) */}
         <div className="lg:col-span-2 flex flex-col h-full">
           <ThreatAnalysisCard analysis={data.investigation.analysis} />

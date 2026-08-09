@@ -6,7 +6,11 @@ import NewCaseButton from "@/components/cases/NewCaseButton";
 import { Suspense } from "react";
 
 export default async function CasesDashboardPage() {
-  const cases = await getCases();
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
+  const cases = await getCases(token);
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">

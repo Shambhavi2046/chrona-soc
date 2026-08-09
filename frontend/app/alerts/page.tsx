@@ -7,8 +7,12 @@ import { Suspense } from "react";
 import RefreshButton from "@/components/common/RefreshButton";
 
 export default async function AlertsPage() {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   // Fetch real alerts from backend
-  const alerts = await getAlerts();
+  const alerts = await getAlerts(token);
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">

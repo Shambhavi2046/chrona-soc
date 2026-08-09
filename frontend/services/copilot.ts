@@ -1,9 +1,10 @@
+import { fetchApi } from "./api";
 import { API_URL } from "./config";
 import { CopilotMessage, CopilotResponse, CopilotQuickAction } from "@/types";
 
 export async function sendCopilotMessage(prompt: string, history: CopilotMessage[]): Promise<CopilotResponse> {
   try {
-    const response = await fetch(`${API_URL}/copilot/chat`, {
+    const response = await fetchApi(`${API_URL}/copilot/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, history }),

@@ -6,8 +6,12 @@ import { Search, ShieldAlert, CheckCircle2, Clock } from "lucide-react";
 import GenerateSummaryButton from "@/components/investigation/GenerateSummaryButton";
 
 export default async function InvestigationsOverviewPage() {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   // Fetch real alerts to populate the investigations dashboard
-  const alerts = await getAlerts();
+  const alerts = await getAlerts(token);
 
   // Dynamically calculate statistics
   const totalInvestigations = alerts.length;

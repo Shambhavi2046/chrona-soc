@@ -1,9 +1,11 @@
+import { fetchApi } from "./api";
 import { API_URL } from "./config";
 import { AnalyticsResponse } from "@/types";
 
-export async function getAnalytics(): Promise<any> {
+export async function getAnalytics(token?: string): Promise<any> {
   try {
-    const response = await fetch(`${API_URL}/analytics`, { cache: "no-store" });
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await fetchApi(`${API_URL}/analytics`, { cache: "no-store", headers });
     if (!response.ok) throw new Error("Failed to fetch analytics data");
     const data = await response.json();
     return {

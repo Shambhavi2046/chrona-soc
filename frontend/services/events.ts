@@ -1,3 +1,4 @@
+import { fetchApi } from "./api";
 import { mapToUuid } from "@/utils/idMapping";
 import { API_URL } from "./config";
 
@@ -33,7 +34,7 @@ export interface EventStats {
 
 export const getEvents = async (skip = 0, limit = 100): Promise<SecurityEvent[]> => {
   try {
-    const response = await fetch(`${API_URL}/events?skip=${skip}&limit=${limit}`, { cache: "no-store" });
+    const response = await fetchApi(`${API_URL}/events?skip=${skip}&limit=${limit}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to fetch events");
     return await response.json();
   } catch (error) {
@@ -44,7 +45,7 @@ export const getEvents = async (skip = 0, limit = 100): Promise<SecurityEvent[]>
 
 export const getEventStats = async (): Promise<EventStats> => {
   try {
-    const response = await fetch(`${API_URL}/events/stats`, { cache: "no-store" });
+    const response = await fetchApi(`${API_URL}/events/stats`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to fetch event stats");
     return await response.json();
   } catch (error) {
@@ -60,7 +61,7 @@ export const getEventStats = async (): Promise<EventStats> => {
 export const searchEvents = async (params: Record<string, any>): Promise<SecurityEvent[]> => {
   try {
     const query = new URLSearchParams(params).toString();
-    const response = await fetch(`${API_URL}/events/search?${query}`, { cache: "no-store" });
+    const response = await fetchApi(`${API_URL}/events/search?${query}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to search events");
     return await response.json();
   } catch (error) {
@@ -72,7 +73,7 @@ export const searchEvents = async (params: Record<string, any>): Promise<Securit
 export const getEventById = async (id: string): Promise<SecurityEvent | null> => {
   try {
     const uuid = mapToUuid(id);
-    const response = await fetch(`${API_URL}/events/${uuid}`, { cache: "no-store" });
+    const response = await fetchApi(`${API_URL}/events/${uuid}`, { cache: "no-store" });
     if (!response.ok) throw new Error("Failed to fetch event");
     return await response.json();
   } catch (error) {

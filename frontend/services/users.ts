@@ -1,3 +1,4 @@
+import { fetchApi } from "./api";
 import { API_URL } from "./config";
 export interface User {
   id: string;
@@ -6,7 +7,7 @@ export interface User {
 }
 
 export async function getUsers(): Promise<User[]> {
-  const response = await fetch(`${API_URL}/users`, { cache: "no-store" });
+  const response = await fetchApi(`${API_URL}/users`, { cache: "no-store" });
   if (!response.ok) throw new Error("Failed to fetch users");
   return response.json();
 }

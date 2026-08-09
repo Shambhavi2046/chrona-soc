@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import MockModeBanner from "@/components/common/MockModeBanner";
 import ModuleHeader from "@/components/common/ModuleHeader";
-import { Target, RefreshCw, Download, Save, Plus } from "lucide-react";
+import { Target, RefreshCw, Download, Save, Plus, CheckCircle2 } from "lucide-react";
 import SummaryCards from "@/components/threat-hunting/SummaryCards";
 import SearchBar from "@/components/threat-hunting/SearchBar";
 import FilterPanel from "@/components/threat-hunting/FilterPanel";
@@ -20,7 +20,7 @@ import { getSavedHunts, executeHunt, createSavedHunt, deleteSavedHunt, updateSav
 
 export default function ThreatHuntingWorkspace() {
   const [selectedEvent, setSelectedEvent] = useState<HuntEvent | null>(null);
-  
+
   // State
   const [events, setEvents] = useState<HuntEvent[]>([]);
   const [savedHunts, setSavedHunts] = useState<SavedHunt[]>([]);
@@ -28,6 +28,11 @@ export default function ThreatHuntingWorkspace() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentQuery, setCurrentQuery] = useState<HuntQueryRequest>({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newHuntName, setNewHuntName] = useState("");
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isNewHunt, setIsNewHunt] = useState(false);
+  const [currentHuntName, setCurrentHuntName] = useState<string | null>(null);
 
   const fetchSavedHunts = async () => {
     setSavedHuntsError(null);
@@ -43,10 +48,13 @@ export default function ThreatHuntingWorkspace() {
   const handleExecute = async (queryReq: HuntQueryRequest) => {
     setIsLoading(true);
     setError(null);
+    setSuccessMsg(null);
     try {
       const res = await executeHunt(queryReq);
       setEvents(res.events);
       setCurrentQuery(queryReq);
+      if (res.events.length === 0) setSuccessMsg("Execution Succeeded: 0 matches found.");
+      else setSuccessMsg(`Execution Succeeded: ${res.events.length} matches found.`);
     } catch (err: any) {
       console.error("handleExecute error:", err);
       setError(err.message || "Failed to execute hunt.");
@@ -66,6 +74,8 @@ export default function ThreatHuntingWorkspace() {
     // A real implementation would parse the saved query parameters correctly.
     setCurrentQuery(q);
     handleExecute(q);
+    setIsNewHunt(false);
+    setCurrentHuntName(hunt.name);
   };
 
   const handleDeleteSavedHunt = async (id: string) => {
@@ -86,25 +96,34 @@ export default function ThreatHuntingWorkspace() {
     }
   };
 
-  const handleSaveHunt = async () => {
+  const handleSaveHunt = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newHuntName.trim()) return;
     try {
       await createSavedHunt({
-        name: `New Hunt ${new Date().toLocaleTimeString()}`,
+        name: newHuntName,
         query: currentQuery.query || "",
         author: "admin",
       });
+      setIsModalOpen(false);
+      const savedName = newHuntName;
+      setNewHuntName("");
       fetchSavedHunts();
-    } catch (err) {
+      setSuccessMsg("Hunt saved successfully.");
+      setIsNewHunt(false);
+      setCurrentHuntName(savedName);
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Failed to save hunt.");
     }
   };
-  
+
   const handleExport = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(events));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href",     dataStr);
     downloadAnchorNode.setAttribute("download", "hunt_results.json");
-    document.body.appendChild(downloadAnchorNode); 
+    document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   };
@@ -119,10 +138,14 @@ export default function ThreatHuntingWorkspace() {
     handleExecute(newQ);
   };
 
-  const clearWorkspace = () => {
+  const startNewHunt = () => {
     setCurrentQuery({});
     setEvents([]);
     setSelectedEvent(null);
+    setSuccessMsg(null);
+    setError(null);
+    setIsNewHunt(true);
+    setCurrentHuntName(null);
   };
 
   return (
@@ -135,14 +158,26 @@ export default function ThreatHuntingWorkspace() {
         actions={[
           { label: "Refresh", icon: RefreshCw, onClick: () => handleExecute(currentQuery) },
           { label: "Export", icon: Download, onClick: handleExport },
-          { label: "Save Hunt", icon: Save, variant: "outline", onClick: handleSaveHunt },
-          { label: "New Hunt", icon: Plus, variant: "primary", onClick: clearWorkspace }
+          { label: "Save Hunt", icon: Save, variant: "outline", onClick: () => { setNewHuntName(""); setIsModalOpen(true); } },
+          { label: "New Hunt", icon: Plus, variant: "primary", onClick: startNewHunt }
         ]}
       />
-      
+
+      {/* Visual State Indicator */}
+      {isNewHunt && !currentHuntName && (
+        <div className="bg-soc-accent/10 border border-soc-accent/50 text-soc-accent px-4 py-3 rounded-lg flex items-center mb-6 animate-in fade-in slide-in-from-top-2">
+          <span className="font-bold mr-2 text-white">Unsaved Hunt:</span> Configure your query parameters and click Save Hunt when finished.
+        </div>
+      )}
+      {currentHuntName && (
+        <div className="bg-soc-bg border border-soc-border px-4 py-3 rounded-lg flex items-center mb-6 animate-in fade-in slide-in-from-top-2">
+          <span className="font-bold mr-2 text-gray-400">Active Hunt:</span> <span className="text-white">{currentHuntName}</span>
+        </div>
+      )}
+
       {/* Summary KPI Cards */}
       <SummaryCards events={events} />
-      
+
       {/* Search & Filters */}
       <div className="space-y-4">
         <SearchBar query={currentQuery} onUpdate={updateQuery} onSearch={(updates) => updateAndRun(updates || {})} />
@@ -174,11 +209,11 @@ export default function ThreatHuntingWorkspace() {
       }} />
 
       {/* Saved Hunts */}
-      <SavedHunts 
+      <SavedHunts
         hunts={savedHunts}
         error={savedHuntsError}
-        onRun={handleRunSavedHunt} 
-        onDelete={handleDeleteSavedHunt} 
+        onRun={handleRunSavedHunt}
+        onDelete={handleDeleteSavedHunt}
         onRename={handleRenameSavedHunt}
       />
 
@@ -186,14 +221,15 @@ export default function ThreatHuntingWorkspace() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2">
           {error && <div className="text-red-400 p-4 bg-soc-card border border-red-900 rounded mb-4">{error}</div>}
+          {successMsg && <div className="text-green-400 p-4 bg-soc-card border border-green-900 rounded mb-4 flex items-center"><CheckCircle2 className="w-5 h-5 mr-2" />{successMsg}</div>}
           {isLoading ? (
             <div className="text-center p-8 text-gray-400 glass-card">Executing query...</div>
           ) : events.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 glass-card">No events found matching the criteria.</div>
+            <div className="text-center p-8 text-gray-400 glass-card">No events found matching the criteria. Execution was successful.</div>
           ) : (
-            <ResultsTable 
-              events={events} 
-              onRowClick={(evt) => setSelectedEvent(evt)} 
+            <ResultsTable
+              events={events}
+              onRowClick={(evt) => setSelectedEvent(evt)}
             />
           )}
         </div>
@@ -202,10 +238,38 @@ export default function ThreatHuntingWorkspace() {
         </div>
       </div>
 
+      {/* New Hunt / Save Hunt Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-soc-bg border border-soc-border rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-4">Save Hunt</h3>
+            <form onSubmit={handleSaveHunt}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Hunt Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newHuntName}
+                    onChange={(e) => setNewHuntName(e.target.value)}
+                    className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent"
+                    placeholder="e.g. Suspicious Logins"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-soc-accent hover:bg-soc-accent/90 text-white text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(56,189,248,0.4)]">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Drawer Overlay for Event Details */}
-      <EventDrawer 
-        event={selectedEvent} 
-        onClose={() => setSelectedEvent(null)} 
+      <EventDrawer
+        event={selectedEvent}
+        onClose={() => setSelectedEvent(null)}
       />
     </div>
   );

@@ -1,9 +1,10 @@
+import { fetchApi } from "./api";
 import { API_URL } from './config';
 import { GeneratedReport, ReportTemplate } from '@/types/reports';
 import { mapToUuid } from '@/utils/idMapping';
 
 export const getReports = async (): Promise<GeneratedReport[]> => {
-  const response = await fetch(`${API_URL}/reports/`);
+  const response = await fetchApi(`/reports/`);
   if (!response.ok) {
     throw new Error('Failed to fetch reports');
   }
@@ -11,7 +12,7 @@ export const getReports = async (): Promise<GeneratedReport[]> => {
 };
 
 export const getTemplates = async (): Promise<ReportTemplate[]> => {
-  const response = await fetch(`${API_URL}/reports/templates`);
+  const response = await fetchApi(`/reports/templates`);
   if (!response.ok) {
     throw new Error('Failed to fetch report templates');
   }
@@ -19,7 +20,7 @@ export const getTemplates = async (): Promise<ReportTemplate[]> => {
 };
 
 export const generateReport = async (payload: { name: string, source_type: string, source_id: string, template_id: string }): Promise<GeneratedReport> => {
-  const response = await fetch(`${API_URL}/reports/generate`, {
+  const response = await fetchApi(`${API_URL}/reports/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -32,7 +33,7 @@ export const generateReport = async (payload: { name: string, source_type: strin
 
 export const deleteReport = async (id: string): Promise<void> => {
   const uuid = mapToUuid(id);
-  const response = await fetch(`${API_URL}/reports/${uuid}`, { method: 'DELETE' });
+  const response = await fetchApi(`${API_URL}/reports/${uuid}`, { method: 'DELETE' });
   if (!response.ok) {
     throw new Error('Failed to delete report');
   }

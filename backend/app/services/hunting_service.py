@@ -107,12 +107,12 @@ class HuntingService(BaseService[SavedHuntRepository]):
         await db.delete(db_obj)
         await db.commit()
         
-    async def execute_hunt(self, db: AsyncSession, request: HuntQueryRequest) -> HuntExecuteResponse:
+    async def execute_hunt(self, db: AsyncSession, request: HuntQueryRequest, tenant_id: uuid.UUID) -> HuntExecuteResponse:
         from app.models.event_model import SecurityEvent
         from sqlalchemy import select, func, desc, asc, or_, String
         import json
         
-        query = select(SecurityEvent)
+        query = select(SecurityEvent).where(SecurityEvent.tenant_id == tenant_id)
         
         # Apply filters
         if request.ioc:
@@ -219,7 +219,7 @@ class HuntingService(BaseService[SavedHuntRepository]):
             page_size=request.page_size
         )
 
-    async def ask_copilot(self, db: AsyncSession, event_id: str) -> dict:
+    async def ask_copilot(self, db: AsyncSession, event_id: str, tenant_id: uuid.UUID) -> dict:
         import asyncio
         import uuid
         await asyncio.sleep(1.5) # Simulate AI thinking
@@ -231,7 +231,10 @@ class HuntingService(BaseService[SavedHuntRepository]):
         except ValueError:
             return {"analysis": "Invalid event ID format."}
             
-        query = select(SecurityEvent).where(SecurityEvent.id == evt_uuid)
+        query = select(SecurityEvent).where(
+            SecurityEvent.id == evt_uuid,
+            SecurityEvent.tenant_id == tenant_id
+        )
         result = await db.execute(query)
         event = result.scalar_one_or_none()
         

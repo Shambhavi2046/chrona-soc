@@ -1,15 +1,17 @@
+import { fetchApi } from "./api";
 import { mapToUuid } from "@/utils/idMapping";
 import { API_URL } from "./config";
 import { Case, CaseDetail, TimelineEvent, Evidence } from "@/types";
 
-export async function getCases(): Promise<Case[]> {
-  const response = await fetch(`${API_URL}/cases`, { cache: "no-store" });
+export async function getCases(token?: string): Promise<Case[]> {
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await fetchApi(`${API_URL}/cases`, { cache: "no-store", headers });
   if (!response.ok) throw new Error("Failed to fetch cases");
   return response.json();
 }
 
 export async function createCase(data: { title: string, severity: string, priority?: string, description?: string }): Promise<Case> {
-  const response = await fetch(`${API_URL}/cases`, {
+  const response = await fetchApi(`${API_URL}/cases`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -18,9 +20,10 @@ export async function createCase(data: { title: string, severity: string, priori
   return response.json();
 }
 
-export async function getCaseById(caseId: string | number): Promise<CaseDetail> {
+export async function getCaseById(caseId: string | number, token?: string): Promise<CaseDetail> {
   const uuid = mapToUuid(caseId);
-  const response = await fetch(`${API_URL}/cases/${uuid}`, { cache: "no-store" });
+  const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await fetchApi(`${API_URL}/cases/${uuid}`, { cache: "no-store", headers });
   if (!response.ok) throw new Error("Failed to fetch case detail");
   
   const data = await response.json();
@@ -46,7 +49,7 @@ export async function getCaseById(caseId: string | number): Promise<CaseDetail> 
 
 export async function updateCaseStatus(caseId: number | string, status: string, assignee?: string): Promise<Case> {
   const uuid = mapToUuid(caseId);
-  const response = await fetch(`${API_URL}/cases/${uuid}`, {
+  const response = await fetchApi(`${API_URL}/cases/${uuid}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, assignee }),
@@ -57,7 +60,7 @@ export async function updateCaseStatus(caseId: number | string, status: string, 
 
 export async function escalateCase(caseId: number | string): Promise<Case> {
   const uuid = mapToUuid(caseId);
-  const response = await fetch(`${API_URL}/cases/${uuid}`, {
+  const response = await fetchApi(`${API_URL}/cases/${uuid}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ priority: "High", severity: "Critical" }),
@@ -69,7 +72,7 @@ export async function escalateCase(caseId: number | string): Promise<Case> {
 export async function addCaseComment(caseId: number | string, content: string): Promise<TimelineEvent> {
   try {
     const uuid = mapToUuid(caseId);
-    const response = await fetch(`${API_URL}/cases/${uuid}/comments`, {
+    const response = await fetchApi(`${API_URL}/cases/${uuid}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
@@ -91,7 +94,7 @@ export async function addCaseComment(caseId: number | string, content: string): 
 
 export async function addCaseEvidence(caseId: number | string, evidence_type: string, value: string): Promise<Evidence> {
   const uuid = mapToUuid(caseId);
-  const response = await fetch(`${API_URL}/cases/${uuid}/evidence`, {
+  const response = await fetchApi(`${API_URL}/cases/${uuid}/evidence`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ evidence_type, value }),

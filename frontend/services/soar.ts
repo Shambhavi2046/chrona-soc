@@ -1,8 +1,9 @@
+import { fetchApi } from "./api";
 import { API_URL } from "./config";
 import { Playbook } from "@/types";
 
 export async function getPlaybooks(): Promise<Playbook[]> {
-  const response = await fetch(`${API_URL}/soar/playbooks`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks`, {
     cache: "no-store"
   });
   if (!response.ok) throw new Error("Failed to fetch playbooks");
@@ -10,7 +11,7 @@ export async function getPlaybooks(): Promise<Playbook[]> {
 }
 
 export async function getPlaybook(id: string): Promise<Playbook> {
-  const response = await fetch(`${API_URL}/soar/playbooks/${id}`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks/${id}`, {
     cache: "no-store"
   });
   if (!response.ok) throw new Error("Failed to fetch playbook");
@@ -18,7 +19,7 @@ export async function getPlaybook(id: string): Promise<Playbook> {
 }
 
 export async function createPlaybook(data: Partial<Playbook>): Promise<Playbook> {
-  const response = await fetch(`${API_URL}/soar/playbooks`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -28,7 +29,7 @@ export async function createPlaybook(data: Partial<Playbook>): Promise<Playbook>
 }
 
 export async function updatePlaybook(id: string, data: Partial<Playbook>): Promise<Playbook> {
-  const response = await fetch(`${API_URL}/soar/playbooks/${id}`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -38,14 +39,14 @@ export async function updatePlaybook(id: string, data: Partial<Playbook>): Promi
 }
 
 export async function deletePlaybook(id: string): Promise<void> {
-  const response = await fetch(`${API_URL}/soar/playbooks/${id}`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Failed to delete playbook");
 }
 
 export async function activatePlaybook(id: string): Promise<Playbook> {
-  const response = await fetch(`${API_URL}/soar/playbooks/${id}/activate`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks/${id}/activate`, {
     method: "PATCH",
   });
   if (!response.ok) throw new Error("Failed to activate playbook");
@@ -53,7 +54,7 @@ export async function activatePlaybook(id: string): Promise<Playbook> {
 }
 
 export async function deactivatePlaybook(id: string): Promise<Playbook> {
-  const response = await fetch(`${API_URL}/soar/playbooks/${id}/deactivate`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks/${id}/deactivate`, {
     method: "PATCH",
   });
   if (!response.ok) throw new Error("Failed to deactivate playbook");
@@ -61,7 +62,7 @@ export async function deactivatePlaybook(id: string): Promise<Playbook> {
 }
 
 export const executePlaybook = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/soar/playbooks/${id}/execute`, {
+  const response = await fetchApi(`${API_URL}/soar/playbooks/${id}/execute`, {
     method: "POST",
   });
   if (!response.ok) throw new Error("Failed to execute playbook");
@@ -69,7 +70,7 @@ export const executePlaybook = async (id: string): Promise<any> => {
 };
 
 export const cancelExecution = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/soar/executions/${id}/cancel`, {
+  const response = await fetchApi(`${API_URL}/soar/executions/${id}/cancel`, {
     method: "POST",
   });
   if (!response.ok) {
@@ -81,7 +82,7 @@ export const cancelExecution = async (id: string): Promise<any> => {
 };
 
 export const pauseExecution = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/soar/executions/${id}/pause`, {
+  const response = await fetchApi(`${API_URL}/soar/executions/${id}/pause`, {
     method: "POST",
   });
   if (!response.ok) {
@@ -93,7 +94,7 @@ export const pauseExecution = async (id: string): Promise<any> => {
 };
 
 export const resumeExecution = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/soar/executions/${id}/resume`, {
+  const response = await fetchApi(`${API_URL}/soar/executions/${id}/resume`, {
     method: "POST",
   });
   if (!response.ok) {
@@ -116,7 +117,7 @@ const mapExecution = (ex: any) => ({
 });
 
 export const getExecution = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/soar/executions/${id}`, {
+  const response = await fetchApi(`${API_URL}/soar/executions/${id}`, {
     cache: "no-store"
   });
   if (!response.ok) throw new Error("Failed to fetch execution");
@@ -125,7 +126,7 @@ export const getExecution = async (id: string): Promise<any> => {
 };
 
 export const getExecutions = async (): Promise<any[]> => {
-  const response = await fetch(`${API_URL}/soar/executions`, {
+  const response = await fetchApi(`${API_URL}/soar/executions`, {
     cache: "no-store"
   });
   if (!response.ok) throw new Error("Failed to fetch executions");

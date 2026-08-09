@@ -8,8 +8,12 @@ import ExecutiveInsights from "@/components/analytics/ExecutiveInsights";
 import { BarChart3, Filter } from "lucide-react";
 
 export default async function AnalyticsPage() {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   // Fetch real aggregated analytics from the backend
-  const analyticsData = await getAnalytics();
+  const analyticsData = await getAnalytics(token);
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
@@ -51,9 +55,9 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* Secondary Analytics Blocks (MITRE & Assets) */}
-      <MitreAssetAnalytics 
-        topTactics={analyticsData.mitreAnalytics.topTactics} 
-        assetRisk={analyticsData.assetRisk} 
+      <MitreAssetAnalytics
+        topTactics={analyticsData.mitreAnalytics.topTactics}
+        assetRisk={analyticsData.assetRisk}
       />
 
       {/* Additional Analytics Rows can be modularized here */}

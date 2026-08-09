@@ -25,21 +25,27 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
+
     token = auth_header.split(" ")[1]
     payload = verify_token(token)
     user_id = payload.get("sub")
-    
+
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-        
-    user = await user_repo.get_with_roles(db, user_id)
+
+    try:
+        import uuid
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user ID format")
+
+    user = await user_repo.get_with_roles(db, user_uuid)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        
+
     if user.status != "Active":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
-        
+
     return user
 
 def require_permissions(required_permissions: List[str]):
@@ -50,11 +56,11 @@ def require_permissions(required_permissions: List[str]):
             if role.name == "Super Admin":
                 return current_user
             user_permissions.update(role.permissions)
-            
+
         for req_perm in required_permissions:
             if req_perm not in user_permissions:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, 
+                    status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Not enough permissions: requires {req_perm}"
                 )
         return current_user

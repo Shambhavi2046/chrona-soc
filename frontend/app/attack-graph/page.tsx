@@ -9,15 +9,19 @@ export const metadata = {
 };
 
 export default async function AttackGraphPage() {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   let topology: GraphTopology | null = null;
   let errorMsg: string | null = null;
 
   try {
-    topology = await getGraphTopology();
+    topology = await getGraphTopology(token);
   } catch (error: any) {
     errorMsg = error.message || "Failed to load attack graph";
   }
-  
+
   const isError = errorMsg !== null;
   const isEmpty = !isError && topology && topology.nodes.length === 0;
 
@@ -36,7 +40,7 @@ export default async function AttackGraphPage() {
           </h1>
           <p className="text-gray-400 text-sm">Visualize infrastructure relationships, active threats, and attack paths.</p>
         </div>
-        
+
         <div className="flex gap-4">
           <div className="flex items-center px-4 py-2 bg-soc-bg border border-soc-border rounded-lg">
             <Cpu className="w-4 h-4 text-soc-success mr-2" />
@@ -54,7 +58,7 @@ export default async function AttackGraphPage() {
           </div>
         </div>
       </div>
-      
+
       <div className="flex-1 w-full relative bg-soc-bg rounded-lg border border-soc-border overflow-hidden">
         {isError ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">

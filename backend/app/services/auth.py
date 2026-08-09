@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -18,9 +19,10 @@ class AuthService:
             return None
         return user
 
-    async def create_session(self, db: AsyncSession, user_id: str, device_info: str = None, ip_address: str = None) -> Token:
-        access_token = create_access_token(subject=user_id)
-        refresh_token = create_refresh_token(subject=user_id)
+    async def create_session(self, db: AsyncSession, user_id: uuid.UUID | str, device_info: str = None, ip_address: str = None) -> Token:
+        token_subject = str(user_id)
+        access_token = create_access_token(subject=token_subject)
+        refresh_token = create_refresh_token(subject=token_subject)
         
         # calculate expiry for db entry
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=["HS256"])

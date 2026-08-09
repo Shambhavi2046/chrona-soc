@@ -1,3 +1,4 @@
+import { fetchApi } from "./api";
 import { API_URL } from './config';
 
 export interface CredentialResponse {
@@ -15,7 +16,7 @@ export interface CredentialCreate {
 }
 
 export const listCredentials = async (): Promise<CredentialResponse[]> => {
-  const response = await fetch(`${API_URL}/soar/credentials`);
+  const response = await fetchApi(`/soar/credentials`);
   if (!response.ok) {
     throw new Error('Failed to fetch credentials');
   }
@@ -23,7 +24,7 @@ export const listCredentials = async (): Promise<CredentialResponse[]> => {
 };
 
 export const createCredential = async (data: CredentialCreate): Promise<CredentialResponse> => {
-  const response = await fetch(`${API_URL}/soar/credentials`, {
+  const response = await fetchApi(`${API_URL}/soar/credentials`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -35,7 +36,7 @@ export const createCredential = async (data: CredentialCreate): Promise<Credenti
 };
 
 export const deleteCredential = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_URL}/soar/credentials/${id}`, {
+  const response = await fetchApi(`${API_URL}/soar/credentials/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {

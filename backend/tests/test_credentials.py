@@ -1,3 +1,14 @@
+from app.main import app
+from app.middleware.auth import get_current_user
+from app.models.identity import User
+import uuid
+
+async def mock_get_current_user():
+    return User(id=uuid.uuid4(), email="test@chrona.local", name="Test User")
+
+app.dependency_overrides[get_current_user] = mock_get_current_user
+
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport

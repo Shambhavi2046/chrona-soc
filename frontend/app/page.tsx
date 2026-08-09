@@ -7,9 +7,13 @@ import { ShieldAlert, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
 import Link from "next/link";
 
 export default async function Home() {
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const token = cookieStore.get("access_token")?.value;
+
   // Fetch real data from backend
-  const stats = await getDashboardSummary();
-  const recentAlerts = await getRecentAlerts();
+  const stats = await getDashboardSummary(token);
+  const recentAlerts = await getRecentAlerts(token);
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -75,7 +79,7 @@ export default async function Home() {
         <div className="lg:col-span-2 space-y-6">
           <ThreatOverview />
         </div>
-        
+
         {/* Right column - spans 1 col */}
         <div className="space-y-6">
           <RiskIndicator topThreat={{ title: "Ransomware Detected", source: "EDR", risk_score: 95 }} />
