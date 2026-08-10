@@ -2,8 +2,15 @@ from sqlalchemy.orm import Session
 from app.models.operations import Case, TimelineEvent, Evidence
 from app.models.alert_model import Alert
 from app.schemas.copilot_schema import ChatRequestSchema, ChatResponseSchema, QuickActionSchema, ActiveContextSchema
-import re
+from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional
+
+class LLMResponseSchema(BaseModel):
+    response: str = Field(description="The natural language response to the user's prompt in Markdown format.")
+    suggested_prompts: List[str] = Field(description="A list of 2-3 suggested follow-up questions for the user.")
+    quick_actions: List[QuickActionSchema] = Field(description="A list of UI quick actions related to the response (e.g. view case URL).")
+
+import re
 
 def _extract_case_id_from_text(text: str) -> Optional[str]:
     match = re.search(r'case(?:-|\s+)?([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|\d+)', text.lower())
@@ -20,14 +27,14 @@ def _get_context_case_id(request: ChatRequestSchema) -> Optional[str]:
     # 2. If prompt uses contextual references, check history backwards
     prompt_lower = request.prompt.lower()
     contextual_refs = [
-        "this case", "that case", "it", "previous incident", 
-        "the case", "this incident", "this alert", "that", 
+        "this case", "that case", "it", "previous incident",
+        "the case", "this incident", "this alert", "that",
         "those assets", "explain it", "continue", "next steps",
-        "show evidence", "timeline", "root cause", "contain", 
+        "show evidence", "timeline", "root cause", "contain",
         "isolate", "executive report", "similar cases",
         "threat actor", "impact", "assets", "risk"
     ]
-    
+
     # If the user prompt implies an ongoing context, search history
     if any(ref in prompt_lower for ref in contextual_refs) or len(prompt_lower.split()) < 5:
         for msg in reversed(request.history):
@@ -40,7 +47,7 @@ import uuid
 
 def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUID) -> ChatResponseSchema:
     prompt = request.prompt.lower()
-    
+
     response = ""
     suggested_prompts = []
     quick_actions = []
@@ -92,7 +99,7 @@ def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUID) -> 
             evidence_items = db.query(Evidence).filter(Evidence.case_id == context_case.id).all()
             if evidence_items:
                 for e in evidence_items:
-                    response += f"- **{e.evidence_type}**: `{e.value}` (Added by {e.added_by})\n"
+                    response += f"- **{e.evidence_type}**: `{e.value}`\n"
             else:
                 response += "- No evidence collected yet.\n"
 
@@ -115,7 +122,7 @@ def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUID) -> 
             response = f"### ⏳ Timeline Analysis for CASE-{context_case.id}\n\n"
             if timelines:
                 for t in reversed(timelines):
-                    response += f"- **{t.created_at.strftime('%Y-%m-%d %H:%M:%S')}** [{t.event_type}]: {t.content}\n"
+                    response += f"- **{t.created_at.strftime('%Y-%m-%d %H:%M:%S')}** [{t.action_type}]: {t.content}\n"
             else:
                 response += "No timeline data available."
             suggested_prompts = ["Generate executive report", "What is the root cause?"]
@@ -143,17 +150,23 @@ Review the associated alerts for specific payload drops."""
     # Route: Similar Cases
     elif "similar" in prompt or "related" in prompt:
         if context_case:
-            response = f"""### 🔗 Similar Cases to CASE-{context_case.id}
-I found 2 historical cases with matching TTPs and Threat Actor signatures:
+            similar_cases = db.query(Case).filter(
+                Case.org_id == org_id,
+                Case.id != context_case.id,
+                Case.priority == context_case.priority
+            ).order_by(Case.created_at.desc()).limit(3).all()
 
-| Case ID | Title | Status | Relevance |
-|---------|-------|--------|-----------|
-| `CASE-{max(1, context_case.id - 1)}` | Unauthorized Access Attempt | Closed | 88% Match |
-| `CASE-{max(2, context_case.id - 2)}` | Privilege Escalation Detect | Resolved | 75% Match |
+            if similar_cases:
+                response = f"### 🔗 Similar Cases to CASE-{context_case.id}\nI found {len(similar_cases)} historical cases with matching priority:\n\n| Case ID | Title | Status |\n|---------|-------|--------|\n"
+                for sc in similar_cases:
+                    response += f"| `CASE-{sc.id}` | {sc.title} | {sc.status} |\n"
 
-Would you like me to compare the IOCs between these cases?"""
-            suggested_prompts = ["Compare IOCs", "Show Threat Actor overview"]
-            quick_actions = [QuickActionSchema(label=f"View CASE-{max(1, context_case.id - 1)}", url=f"/cases/{max(1, context_case.id - 1)}", action_type="link")]
+                response += "\nWould you like me to compare the IOCs between these cases?"
+                suggested_prompts = ["Compare IOCs", "Show Threat Actor overview"]
+                quick_actions = [QuickActionSchema(label=f"View CASE-{similar_cases[0].id}", url=f"/cases/{similar_cases[0].id}", action_type="link")]
+            else:
+                response = "No similar historical cases found."
+                suggested_prompts = ["Generate executive report", "What is the root cause?"]
         else:
             response = "Please specify an incident to find similar historical cases."
             suggested_prompts = ["Summarize the latest critical case"]
@@ -233,7 +246,7 @@ I recommend isolating compromised assets immediately."""
         target = "the affected systems"
         if context_case:
             target = f"assets linked to CASE-{context_case.id}"
-        
+
         response = f"""### 🚨 Containment & Recovery Plan
 To neutralize the threat targeting {target}, execute the following:
 
@@ -266,13 +279,93 @@ To neutralize the threat targeting {target}, execute the following:
 
     # Fallback Route
     else:
-        response = "I can help with incident summaries, root cause analysis, timeline extraction, and containment strategies. What would you like to investigate?"
-        
+        llm_response = None
+        from app.core.config import settings
+
+        system_prompt = (
+            "You are Chrona Copilot, an expert AI Security Operations assistant. "
+            "You analyze SOC data, answer cybersecurity questions, and suggest investigation steps. "
+            "Respond in pure JSON containing three keys: 'response' (markdown string), "
+            "'suggested_prompts' (list of strings), and 'quick_actions' (list of objects with label, url, action_type).\n"
+            "CRITICAL RULES FOR quick_actions: For general cybersecurity questions, quick_actions MUST be []. "
+            "Never invent, guess, fabricate, or provide placeholder URLs. Never use example.com or any other fictional URL. "
+            "Only return a quick_action when a real Chrona UI route is explicitly known from the context."
+        )
         if context_case:
-            response = f"I am actively tracking **CASE-{context_case.id}** in our current session. You can ask me to 'summarize it', 'show its timeline', or 'explain the root cause'. "
-            suggested_prompts = ["Generate executive report", "What is the timeline?", "Analyze root cause"]
-        else:
-            suggested_prompts = ["Summarize the latest critical case", "Show top active alerts"]
+            system_prompt += f"\nActive Case context provided for CASE-{context_case.id}: {context_case.title}."
+
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in request.history[-5:]:
+            messages.append({"role": msg.role, "content": msg.content})
+        messages.append({"role": "user", "content": request.prompt})
+
+        def filter_valid_actions(actions: List[QuickActionSchema]) -> List[QuickActionSchema]:
+            valid = []
+            for act in actions:
+                # Only allow internal relative routes, dropping hallucinated absolute external URLs
+                if act.url and act.url.startswith("/"):
+                    valid.append(act)
+            return valid
+
+        try:
+            if getattr(settings, "LLM_PROVIDER", "").lower() == "ollama":
+                import urllib.request
+                import json
+                payload = {
+                    "model": settings.OLLAMA_MODEL,
+                    "messages": messages,
+                    "stream": False,
+                    "format": "json",
+                    "options": {"temperature": 0.2}
+                }
+                req = urllib.request.Request(
+                    f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat",
+                    data=json.dumps(payload).encode('utf-8'),
+                    headers={'Content-Type': 'application/json'},
+                    method='POST'
+                )
+                with urllib.request.urlopen(req, timeout=45) as api_response:
+                    result = json.loads(api_response.read().decode('utf-8'))
+                    msg_content = result.get("message", {}).get("content", "{}")
+
+                    import pydantic
+                    # Assuming LLMResponseSchema is available
+                    llm_parsed = LLMResponseSchema.model_validate_json(msg_content)
+
+                    response = llm_parsed.response
+                    suggested_prompts = llm_parsed.suggested_prompts
+                    quick_actions = filter_valid_actions(llm_parsed.quick_actions)
+                    llm_response = True
+
+            elif getattr(settings, "LLM_PROVIDER", "").lower() == "openai" and getattr(settings, "OPENAI_API_KEY", None):
+                import openai
+                client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
+                completion = client.beta.chat.completions.parse(
+                    model=settings.OPENAI_MODEL,
+                    messages=messages,
+                    response_format=LLMResponseSchema,
+                    max_tokens=1500,
+                    temperature=0.2
+                )
+                parsed_llm = completion.choices[0].message.parsed
+                if parsed_llm:
+                    response = parsed_llm.response
+                    suggested_prompts = parsed_llm.suggested_prompts
+                    quick_actions = filter_valid_actions(parsed_llm.quick_actions)
+                    llm_response = True
+
+        except Exception as e:
+            import logging
+            logging.error(f"Copilot LLM Error: {str(e)}")
+            llm_response = None
+
+        if not llm_response:
+            response = "I can help with incident summaries, root cause analysis, timeline extraction, and containment strategies. What would you like to investigate?"
+            if context_case:
+                response = f"I am actively tracking **CASE-{context_case.id}** in our current session. You can ask me to 'summarize it', 'show its timeline', or 'explain the root cause'. "
+                suggested_prompts = ["Generate executive report", "What is the timeline?", "Analyze root cause"]
+            else:
+                suggested_prompts = ["Summarize the latest critical case", "Show top active alerts"]
 
     return ChatResponseSchema(
         response=response,
