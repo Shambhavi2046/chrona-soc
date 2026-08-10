@@ -1,17 +1,17 @@
 from sqlalchemy.orm import Session
-from app.models.case_model import Case, TimelineEvent, Evidence
+from app.models.operations import Case, TimelineEvent, Evidence
 from app.models.alert_model import Alert
 from app.schemas.copilot_schema import ChatRequestSchema, ChatResponseSchema, QuickActionSchema, ActiveContextSchema
 import re
 from typing import List, Tuple, Optional
 
-def _extract_case_id_from_text(text: str) -> Optional[int]:
-    match = re.search(r'case(?:-|\s+)?(\d+)', text.lower())
+def _extract_case_id_from_text(text: str) -> Optional[str]:
+    match = re.search(r'case(?:-|\s+)?([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|\d+)', text.lower())
     if match:
-        return int(match.group(1))
+        return match.group(1)
     return None
 
-def _get_context_case_id(request: ChatRequestSchema) -> Optional[int]:
+def _get_context_case_id(request: ChatRequestSchema) -> Optional[str]:
     # 1. Try to extract from current prompt
     case_id = _extract_case_id_from_text(request.prompt)
     if case_id:
@@ -36,7 +36,9 @@ def _get_context_case_id(request: ChatRequestSchema) -> Optional[int]:
                 return cid
     return None
 
-def process_chat(db: Session, request: ChatRequestSchema) -> ChatResponseSchema:
+import uuid
+
+def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUID) -> ChatResponseSchema:
     prompt = request.prompt.lower()
     
     response = ""
@@ -44,10 +46,14 @@ def process_chat(db: Session, request: ChatRequestSchema) -> ChatResponseSchema:
     quick_actions = []
     active_context = None
 
-    case_id = _get_context_case_id(request)
+    case_id_str = _get_context_case_id(request)
     context_case = None
-    if case_id:
-        context_case = db.query(Case).filter(Case.id == case_id).first()
+    if case_id_str:
+        try:
+            case_id = uuid.UUID(case_id_str)
+            context_case = db.query(Case).filter(Case.id == case_id, Case.org_id == org_id).first()
+        except ValueError:
+            context_case = None
 
     # Build active context payload if we found a case
     if context_case:
@@ -173,7 +179,7 @@ I highly recommend initiating enterprise-wide credential rotations."""
     elif "summarize" in prompt and ("case" in prompt or "incident" in prompt or "alert" in prompt):
         case_to_summarize = context_case
         if not case_to_summarize:
-            case_to_summarize = db.query(Case).filter(Case.priority.in_(["Critical", "High"])).order_by(Case.id.desc()).first()
+            case_to_summarize = db.query(Case).filter(Case.priority.in_(["Critical", "High"]), Case.org_id == org_id).order_by(Case.id.desc()).first()
             if case_to_summarize:
                 evidence_count = db.query(Evidence).filter(Evidence.case_id == case_to_summarize.id).count()
                 active_context = ActiveContextSchema(

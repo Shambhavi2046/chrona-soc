@@ -82,6 +82,7 @@ class Investigation(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
 class Case(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     __tablename__ = "cases"
 
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     status = Column(String(50), default="Open", index=True)
     severity = Column(String(50), nullable=False)

@@ -1,5 +1,5 @@
 import React from 'react';
-import MockModeBanner from "@/components/common/MockModeBanner";
+
 import ChatInterface from '@/components/copilot/ChatInterface';
 import { Bot, ShieldCheck } from 'lucide-react';
 
@@ -31,7 +31,7 @@ export default function CopilotPage() {
         </div>
       </div>
       
-      <MockModeBanner moduleName="AI Copilot" />
+
       
       <div className="flex-1 w-full relative min-h-0">
         <ChatInterface />

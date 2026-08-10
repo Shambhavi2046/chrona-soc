@@ -5,6 +5,8 @@ from typing import Dict, Any
 from app.core.database import SessionLocal
 from app.schemas.copilot_schema import ChatRequestSchema, ChatResponseSchema
 from app.services import copilot_service
+from app.models.identity import User
+from app.middleware.auth import require_permissions
 import asyncio
 
 router = APIRouter()
@@ -17,7 +19,11 @@ def get_db():
         db.close()
 
 @router.post("/chat", response_model=ChatResponseSchema)
-async def chat_with_copilot(request: ChatRequestSchema, db: Session = Depends(get_db)):
+async def chat_with_copilot(
+    request: ChatRequestSchema, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(["cases:read"]))
+):
     # Simulate AI processing delay
     await asyncio.sleep(1.2)
-    return copilot_service.process_chat(db, request)
+    return copilot_service.process_chat(db, request, current_user.org_id)

@@ -28,3 +28,6 @@ api_router.include_router(graph.router, prefix="/graph", tags=["graph"], depende
 api_router.include_router(hunting.router, prefix="/hunting", tags=["hunting"], dependencies=protected_dependencies)
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"], dependencies=protected_dependencies)
 api_router.include_router(soar.router, prefix="/soar", tags=["soar"], dependencies=protected_dependencies)
+
+from app.api.routes import copilot
+api_router.include_router(copilot.router, prefix="/copilot", tags=["copilot"])

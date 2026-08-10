@@ -3,11 +3,6 @@ from app.middleware.auth import get_current_user
 from app.models.identity import User
 import uuid
 
-async def mock_get_current_user():
-    return User(id=uuid.uuid4(), email="test@chrona.local", name="Test User")
-
-app.dependency_overrides[get_current_user] = mock_get_current_user
-
 
 import pytest
 import pytest_asyncio
@@ -31,7 +26,21 @@ async def db_session():
 @pytest_asyncio.fixture
 async def async_client(db_session):
     from app.db.session import get_db
+    from app.models.identity import Role
+    
+    async def mock_get_current_user():
+        return User(
+            id=uuid.uuid4(), 
+            email="test@chrona.local", 
+            name="Test User",
+            status="Active",
+            org_id=uuid.uuid4(),
+            roles=[Role(name="Super Admin", permissions=[])]
+        )
+
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
