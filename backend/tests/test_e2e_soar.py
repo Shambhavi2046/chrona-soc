@@ -14,12 +14,13 @@ def test_e2e_playbook_execution(monkeypatch):
     monkeypatch.setattr(auth, "verify_token", mock_verify_token)
 
     from app.repositories.user import user_repo
-    from app.models.identity import User
+    from app.models.identity import User, Role
     import uuid
+    static_org_id = uuid.uuid4()
+    static_role = Role(name="Super Admin", permissions=["soar:write", "soar:read", "soar:execute"])
     async def mock_get_with_roles(db, user_id):
-        import uuid
         user_uuid = user_id if isinstance(user_id, uuid.UUID) else uuid.UUID(user_id)
-        return User(id=user_uuid, email="test@chrona.local", name="Test User", status="Active")
+        return User(id=user_uuid, email="test@chrona.local", name="Test User", status="Active", org_id=static_org_id, roles=[static_role])
     monkeypatch.setattr(user_repo, "get_with_roles", mock_get_with_roles)
 
     class MockResponse:

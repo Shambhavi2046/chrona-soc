@@ -28,15 +28,18 @@ async def async_client(db_session):
     from app.db.session import get_db
     from app.models.identity import Role
     
+    from app.models.identity import User, Role
+    import uuid
+    mock_user = User(
+        id=uuid.uuid4(),
+        email="test@chrona.local",
+        name="Test User",
+        status="Active",
+        org_id=uuid.uuid4(),
+        roles=[Role(name="Super Admin", permissions=["soar:read", "soar:write", "soar:delete"])]
+    )
     async def mock_get_current_user():
-        return User(
-            id=uuid.uuid4(), 
-            email="test@chrona.local", 
-            name="Test User",
-            status="Active",
-            org_id=uuid.uuid4(),
-            roles=[Role(name="Super Admin", permissions=[])]
-        )
+        return mock_user
 
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_current_user] = mock_get_current_user

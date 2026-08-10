@@ -29,7 +29,7 @@ async def test_threatfox_integration_handler(mock_get_by_id, db_session):
         name="Test",
         provider="threatfox",
         secret="fake-secret-key-12345"
-    ))
+    ), org_id=uuid.uuid4())
 
     mock_get_by_id.return_value = cred
 

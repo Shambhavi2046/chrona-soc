@@ -43,6 +43,7 @@ threat_actor_iocs_table = Table(
 class Alert(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "alerts"
 
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     threat_type = Column(String(100))

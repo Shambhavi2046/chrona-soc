@@ -6,6 +6,7 @@ from app.models.mixins import UUIDMixin, TimestampMixin
 class Playbook(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "playbooks"
 
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(255), nullable=False, unique=True)
     description = Column(String(500))
     category = Column(String(100), default="General")

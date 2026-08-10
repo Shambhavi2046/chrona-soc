@@ -32,7 +32,7 @@ async def db_session():
 
     async with SessionLocal() as session:
         # Create a dummy playbook
-        pb = Playbook(id=uuid.uuid4(), name="test", trigger_type="Manual", definition={"nodes": []})
+        pb = Playbook(id=uuid.uuid4(), name="test", trigger_type="Manual", definition={"nodes": []}, org_id=uuid.uuid4())
         session.add(pb)
         await session.commit()
 

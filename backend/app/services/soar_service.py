@@ -1,25 +1,29 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import exc
 import uuid
 from fastapi import HTTPException
 
-from app.models.automation import Playbook
+from app.models.automation import Playbook, PlaybookExecution
 from app.schemas.soar import PlaybookCreate, PlaybookUpdate
 
 class SOARService:
-    async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Playbook]:
-        query = select(Playbook).order_by(Playbook.created_at.desc()).offset(skip).limit(limit)
-        result = await db.execute(query)
+    async def get_all(self, db: AsyncSession, skip: int = 0, limit: int = 100, org_id: Optional[Any] = None) -> List[Playbook]:
+        query = select(Playbook).order_by(Playbook.created_at.desc())
+        if org_id:
+            query = query.where(Playbook.org_id == org_id)
+        result = await db.execute(query.offset(skip).limit(limit))
         return result.scalars().all()
 
-    async def get_by_id(self, db: AsyncSession, id: uuid.UUID) -> Optional[Playbook]:
+    async def get_by_id(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> Optional[Playbook]:
         query = select(Playbook).where(Playbook.id == id)
+        if org_id:
+            query = query.where(Playbook.org_id == org_id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def create(self, db: AsyncSession, obj_in: PlaybookCreate) -> Playbook:
+    async def create(self, db: AsyncSession, obj_in: PlaybookCreate, org_id: Optional[Any] = None) -> Playbook:
         try:
             db_obj = Playbook(
                 name=obj_in.name,
@@ -30,6 +34,9 @@ class SOARService:
                 definition=obj_in.workflow_definition,
                 created_by="System"
             )
+            if org_id:
+                db_obj.org_id = org_id
+                
             db.add(db_obj)
             await db.commit()
             await db.refresh(db_obj)
@@ -38,8 +45,8 @@ class SOARService:
             await db.rollback()
             raise HTTPException(status_code=400, detail="Playbook with this name already exists")
 
-    async def update(self, db: AsyncSession, id: uuid.UUID, obj_in: PlaybookUpdate) -> Playbook:
-        db_obj = await self.get_by_id(db, id)
+    async def update(self, db: AsyncSession, id: uuid.UUID, obj_in: PlaybookUpdate, org_id: Optional[Any] = None) -> Playbook:
+        db_obj = await self.get_by_id(db, id, org_id)
         if not db_obj:
             raise HTTPException(status_code=404, detail="Playbook not found")
 
@@ -63,15 +70,15 @@ class SOARService:
             await db.rollback()
             raise HTTPException(status_code=400, detail="Playbook name conflict")
 
-    async def delete(self, db: AsyncSession, id: uuid.UUID) -> None:
-        db_obj = await self.get_by_id(db, id)
+    async def delete(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> None:
+        db_obj = await self.get_by_id(db, id, org_id)
         if not db_obj:
             raise HTTPException(status_code=404, detail="Playbook not found")
         await db.delete(db_obj)
         await db.commit()
 
-    async def activate(self, db: AsyncSession, id: uuid.UUID) -> Playbook:
-        db_obj = await self.get_by_id(db, id)
+    async def activate(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> Playbook:
+        db_obj = await self.get_by_id(db, id, org_id)
         if not db_obj:
             raise HTTPException(status_code=404, detail="Playbook not found")
         db_obj.status = "Active"
@@ -80,8 +87,8 @@ class SOARService:
         await db.refresh(db_obj)
         return db_obj
 
-    async def deactivate(self, db: AsyncSession, id: uuid.UUID) -> Playbook:
-        db_obj = await self.get_by_id(db, id)
+    async def deactivate(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> Playbook:
+        db_obj = await self.get_by_id(db, id, org_id)
         if not db_obj:
             raise HTTPException(status_code=404, detail="Playbook not found")
         db_obj.status = "Disabled"
@@ -90,11 +97,10 @@ class SOARService:
         await db.refresh(db_obj)
         return db_obj
 
-    async def execute_playbook(self, db: AsyncSession, playbook_id: uuid.UUID, background_tasks, user: str = "System") -> dict:
-        from app.models.automation import PlaybookExecution
+    async def execute_playbook(self, db: AsyncSession, playbook_id: uuid.UUID, background_tasks, user: str = "System", org_id: Optional[Any] = None) -> dict:
         from datetime import datetime
         
-        playbook = await self.get_by_id(db, playbook_id)
+        playbook = await self.get_by_id(db, playbook_id, org_id)
         if not playbook:
             raise HTTPException(status_code=404, detail="Playbook not found")
             
@@ -113,7 +119,7 @@ class SOARService:
         await db.commit()
         await db.refresh(execution)
         
-        background_tasks.add_task(self._run_execution_background, execution_id, playbook.id, user)
+        background_tasks.add_task(self._run_execution_background, execution_id, playbook.id, user, org_id)
 
         resp = execution.__dict__.copy()
         resp['playbookName'] = playbook.name
@@ -121,16 +127,15 @@ class SOARService:
         
         return resp
 
-    async def _run_execution_background(self, execution_id: uuid.UUID, playbook_id: uuid.UUID, user: str):
+    async def _run_execution_background(self, execution_id: uuid.UUID, playbook_id: uuid.UUID, user: str, org_id: Optional[Any] = None):
         from app.db.session import async_session_maker
-        from app.models.automation import PlaybookExecution
         from datetime import datetime
         from app.services.soar.context import ExecutionContext
         from app.services.soar.engine import ExecutionEngine
         import asyncio
 
         async with async_session_maker() as db:
-            playbook = await self.get_by_id(db, playbook_id)
+            playbook = await self.get_by_id(db, playbook_id, org_id)
             if not playbook:
                 return
 
@@ -155,9 +160,15 @@ class SOARService:
                 db.add(exec_obj)
                 await db.commit()
 
-    async def cancel_execution(self, db: AsyncSession, id: uuid.UUID) -> dict:
-        from app.models.automation import PlaybookExecution
-        exec_obj = await db.get(PlaybookExecution, id)
+    async def _get_execution_db_obj(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> Optional[PlaybookExecution]:
+        query = select(PlaybookExecution).where(PlaybookExecution.id == id)
+        if org_id:
+            query = query.join(Playbook).where(Playbook.org_id == org_id)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def cancel_execution(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> dict:
+        exec_obj = await self._get_execution_db_obj(db, id, org_id)
         if not exec_obj:
             raise HTTPException(status_code=404, detail="Execution not found")
         if exec_obj.status not in ["Running", "Paused", "Pending"]:
@@ -168,9 +179,8 @@ class SOARService:
         await db.refresh(exec_obj)
         return exec_obj.__dict__
 
-    async def pause_execution(self, db: AsyncSession, id: uuid.UUID) -> dict:
-        from app.models.automation import PlaybookExecution
-        exec_obj = await db.get(PlaybookExecution, id)
+    async def pause_execution(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> dict:
+        exec_obj = await self._get_execution_db_obj(db, id, org_id)
         if not exec_obj:
             raise HTTPException(status_code=404, detail="Execution not found")
         if exec_obj.status != "Running":
@@ -181,9 +191,8 @@ class SOARService:
         await db.refresh(exec_obj)
         return exec_obj.__dict__
 
-    async def resume_execution(self, db: AsyncSession, id: uuid.UUID) -> dict:
-        from app.models.automation import PlaybookExecution
-        exec_obj = await db.get(PlaybookExecution, id)
+    async def resume_execution(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> dict:
+        exec_obj = await self._get_execution_db_obj(db, id, org_id)
         if not exec_obj:
             raise HTTPException(status_code=404, detail="Execution not found")
         if exec_obj.status != "Paused":
@@ -194,10 +203,12 @@ class SOARService:
         await db.refresh(exec_obj)
         return exec_obj.__dict__
 
-    async def get_execution_by_id(self, db: AsyncSession, id: uuid.UUID) -> dict:
-        from app.models.automation import PlaybookExecution
+    async def get_execution_by_id(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> dict:
         from sqlalchemy.orm import selectinload
         query = select(PlaybookExecution).options(selectinload(PlaybookExecution.playbook)).where(PlaybookExecution.id == id)
+        if org_id:
+            query = query.join(Playbook).where(Playbook.org_id == org_id)
+            
         result = await db.execute(query)
         ex = result.scalar_one_or_none()
         if not ex:
@@ -212,11 +223,14 @@ class SOARService:
             d['trigger'] = "Unknown"
         return d
 
-    async def get_executions(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[dict]:
-        from app.models.automation import PlaybookExecution
+    async def get_executions(self, db: AsyncSession, skip: int = 0, limit: int = 100, org_id: Optional[Any] = None) -> List[dict]:
         from sqlalchemy.orm import selectinload
         
-        query = select(PlaybookExecution).options(selectinload(PlaybookExecution.playbook)).order_by(PlaybookExecution.started_at.desc()).offset(skip).limit(limit)
+        query = select(PlaybookExecution).options(selectinload(PlaybookExecution.playbook)).order_by(PlaybookExecution.started_at.desc())
+        if org_id:
+            query = query.join(Playbook).where(Playbook.org_id == org_id)
+            
+        query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         executions = result.scalars().all()
         

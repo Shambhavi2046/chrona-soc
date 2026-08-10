@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 from app.services.base import BaseService
@@ -8,12 +8,12 @@ from app.schemas.operations import AlertCreate, AlertUpdate, InvestigationCreate
 import uuid
 
 class AlertService(BaseService[AlertRepository]):
-    async def create_alert(self, db: AsyncSession, obj_in: AlertCreate):
-        db_obj = await self.repository.create(db, obj_in=obj_in)
-        return await self.repository.get(db, db_obj.id)
+    async def create_alert(self, db: AsyncSession, obj_in: AlertCreate, org_id: Optional[Any] = None):
+        db_obj = await self.repository.create(db, obj_in=obj_in, org_id=org_id)
+        return await self.repository.get(db, db_obj.id, org_id=org_id)
         
-    async def update_alert(self, db: AsyncSession, id: uuid.UUID, obj_in: AlertUpdate):
-        db_obj = await self.repository.get(db, id)
+    async def update_alert(self, db: AsyncSession, id: uuid.UUID, obj_in: AlertUpdate, org_id: Optional[Any] = None):
+        db_obj = await self.repository.get(db, id, org_id=org_id)
         if not db_obj:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
             
@@ -26,19 +26,19 @@ class AlertService(BaseService[AlertRepository]):
         await db.refresh(db_obj)
         return db_obj
         
-    async def delete_alert(self, db: AsyncSession, id: uuid.UUID):
-        db_obj = await self.repository.get(db, id)
+    async def delete_alert(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None):
+        db_obj = await self.repository.get(db, id, org_id=org_id)
         if not db_obj:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
         await db.delete(db_obj)
         await db.commit()
 
 class InvestigationService(BaseService[InvestigationRepository]):
-    async def get_or_create_by_alert_id(self, db: AsyncSession, alert_id: uuid.UUID):
-        db_obj = await self.repository.get_by_alert_id(db, alert_id)
+    async def get_or_create_by_alert_id(self, db: AsyncSession, alert_id: uuid.UUID, org_id: Optional[Any] = None):
+        db_obj = await self.repository.get_by_alert_id(db, alert_id, org_id=org_id)
         if not db_obj:
-            # Check if alert exists
-            alert = await alert_repo.get(db, alert_id)
+            # Check if alert exists and belongs to org
+            alert = await alert_repo.get(db, alert_id, org_id=org_id)
             if not alert:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
             
@@ -51,12 +51,16 @@ class InvestigationService(BaseService[InvestigationRepository]):
             db_obj = await self.repository.create(db, obj_in=obj_in)
         return db_obj
 
-    async def create_investigation(self, db: AsyncSession, obj_in: InvestigationCreate):
+    async def create_investigation(self, db: AsyncSession, obj_in: InvestigationCreate, org_id: Optional[Any] = None):
+        alert = await alert_repo.get(db, obj_in.alert_id, org_id=org_id)
+        if not alert:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
+            
         db_obj = await self.repository.create(db, obj_in=obj_in)
-        return await self.repository.get(db, db_obj.id)
+        return await self.repository.get(db, db_obj.id, org_id=org_id)
         
-    async def update_investigation(self, db: AsyncSession, id: uuid.UUID, obj_in: InvestigationUpdate):
-        db_obj = await self.repository.get(db, id)
+    async def update_investigation(self, db: AsyncSession, id: uuid.UUID, obj_in: InvestigationUpdate, org_id: Optional[Any] = None):
+        db_obj = await self.repository.get(db, id, org_id=org_id)
         if not db_obj:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Investigation not found")
             
@@ -66,7 +70,7 @@ class InvestigationService(BaseService[InvestigationRepository]):
             
         # Sync status with linked alert
         if "status" in update_data and update_data["status"]:
-            alert = await alert_repo.get(db, db_obj.alert_id)
+            alert = await alert_repo.get(db, db_obj.alert_id, org_id=org_id)
             if alert:
                 alert.status = update_data["status"]
                 db.add(alert)
@@ -76,11 +80,15 @@ class InvestigationService(BaseService[InvestigationRepository]):
         await db.refresh(db_obj)
         return db_obj
 
-    async def generate_overview_summary(self, db: AsyncSession) -> dict:
+    async def generate_overview_summary(self, db: AsyncSession, org_id: Optional[Any] = None) -> dict:
         from sqlalchemy import select
         from app.models.operations import Alert
         
-        result = await db.execute(select(Alert))
+        query = select(Alert)
+        if org_id:
+            query = query.filter(Alert.org_id == org_id)
+            
+        result = await db.execute(query)
         alerts = result.scalars().all()
         
         total = len(alerts)
@@ -104,12 +112,12 @@ class InvestigationService(BaseService[InvestigationRepository]):
         return {"summary": summary}
 
 class CaseService(BaseService[CaseRepository]):
-    async def create_case(self, db: AsyncSession, obj_in: CaseCreate):
-        db_obj = await self.repository.create(db, obj_in=obj_in)
-        return await self.repository.get(db, db_obj.id)
+    async def create_case(self, db: AsyncSession, obj_in: CaseCreate, org_id: Optional[Any] = None):
+        db_obj = await self.repository.create(db, obj_in=obj_in, org_id=org_id)
+        return await self.repository.get(db, db_obj.id, org_id=org_id)
         
-    async def update_case(self, db: AsyncSession, id: uuid.UUID, obj_in: CaseUpdate):
-        db_obj = await self.repository.get(db, id)
+    async def update_case(self, db: AsyncSession, id: uuid.UUID, obj_in: CaseUpdate, org_id: Optional[Any] = None):
+        db_obj = await self.repository.get(db, id, org_id=org_id)
         if not db_obj:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
             
@@ -134,13 +142,18 @@ class CaseService(BaseService[CaseRepository]):
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
-        return await self.repository.get(db, db_obj.id)
+        return await self.repository.get(db, db_obj.id, org_id=org_id)
 
 class EvidenceService(BaseService[EvidenceRepository]):
-    async def add_evidence(self, db: AsyncSession, case_id: uuid.UUID, obj_in: EvidenceCreate):
+    async def add_evidence(self, db: AsyncSession, case_id: uuid.UUID, obj_in: EvidenceCreate, org_id: Optional[Any] = None):
+        # Verify case belongs to org
+        case = await case_repo.get(db, case_id, org_id=org_id)
+        if not case:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Case not found")
+            
         obj_in.case_id = case_id
         db_obj = await self.repository.create(db, obj_in=obj_in)
-        return await self.repository.get(db, db_obj.id)
+        return await self.repository.get(db, db_obj.id, org_id=org_id)
 
 alert_service = AlertService(alert_repo)
 investigation_service = InvestigationService(investigation_repo)
