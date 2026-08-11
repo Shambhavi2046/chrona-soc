@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.api.v1 import health, auth, users, organizations, roles, permissions, audit_logs
 from app.api.v1 import alerts, investigations, cases, dashboard, events, detections, graph
-from app.api.v1 import hunting, reports, soar
+from app.api.v1 import hunting, reports, soar, analytics
 from app.middleware.auth import get_current_user
 
 api_router = APIRouter()
@@ -28,6 +28,7 @@ api_router.include_router(graph.router, prefix="/graph", tags=["graph"], depende
 api_router.include_router(hunting.router, prefix="/hunting", tags=["hunting"], dependencies=protected_dependencies)
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"], dependencies=protected_dependencies)
 api_router.include_router(soar.router, prefix="/soar", tags=["soar"], dependencies=protected_dependencies)
+api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"], dependencies=protected_dependencies)
 
 from app.api.routes import copilot
 api_router.include_router(copilot.router, prefix="/copilot", tags=["copilot"])

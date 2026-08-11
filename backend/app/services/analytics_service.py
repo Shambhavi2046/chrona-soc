@@ -1,9 +1,9 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from app.models.alert_model import Alert
-from app.models.log_model import Log
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from app.models.operations import Alert, Case, Investigation
 from app.schemas.analytics_schema import AnalyticsResponse
 import hashlib
+import uuid
 
 # MITRE mapping for existing threats
 MITRE_MAPPING = {
@@ -16,27 +16,33 @@ MITRE_MAPPING = {
     "Malware Execution": "Execution"
 }
 
-def get_analytics(db: Session) -> AnalyticsResponse:
-    alerts = db.query(Alert).all()
-    logs = db.query(Log).all()
+async def get_analytics(db: AsyncSession, org_id: uuid.UUID) -> AnalyticsResponse:
+    # Query aggregated stats instead of pulling all records into memory
 
-    # Base Metrics
+    # Alert states and severity
+    alerts_result = await db.execute(
+        select(Alert.status, Alert.severity, Alert.risk_score, Alert.threat_type)
+        .filter(Alert.org_id == org_id)
+    )
+    alerts = alerts_result.all()
+
     total_incidents = len(alerts)
-    active_incidents = len([a for a in alerts if a.status.lower() in ["open", "investigating"]])
-    critical_incidents = len([a for a in alerts if a.risk_score >= 90])
-    high_severity_alerts = len([a for a in alerts if 70 <= a.risk_score < 90])
-    
-    # Asset Risk inference (from Log sources)
+    active_incidents = len([a for a in alerts if a[0].lower() in ["open", "investigating"]])
+    critical_incidents = len([a for a in alerts if (a[2] or 0) >= 90])
+    high_severity_alerts = len([a for a in alerts if 70 <= (a[2] or 0) < 90])
+
+    open_alerts = len([a for a in alerts if a[0].lower() == "open"])
+    closed_alerts = len([a for a in alerts if a[0].lower() == "resolved"])
+    blocked_alerts = len([a for a in alerts if a[0].lower() == "blocked"])
+
+    # Asset Risk inference (from Alert sources or threat types since Log lacks org_id)
     asset_counts = {}
-    for log in logs:
-        src = log.source
-        if src not in asset_counts:
-            asset_counts[src] = 0
-        asset_counts[src] += 1
-    
+    for a in alerts:
+        src = a[3] or "Unknown Source"
+        asset_counts[src] = asset_counts.get(src, 0) + 1
+
     asset_risk_list = []
     for asset, count in list(asset_counts.items())[:5]:
-        # Hash asset name to generate deterministic fake risk score
         risk_hash = int(hashlib.md5(asset.encode()).hexdigest(), 16) % 100
         asset_risk_list.append({
             "asset": asset,
@@ -48,14 +54,12 @@ def get_analytics(db: Session) -> AnalyticsResponse:
     # MITRE tactics
     tactic_counts = {}
     for a in alerts:
-        tactic = MITRE_MAPPING.get(a.threat_type, "Unknown")
+        tactic = MITRE_MAPPING.get(a[3], "Unknown")
         tactic_counts[tactic] = tactic_counts.get(tactic, 0) + 1
-    
+
     top_tactics = [{"tactic": k, "count": v} for k, v in tactic_counts.items()]
 
-    # Attack trends (mock temporal distribution based on existing alerts)
-    # Since we can't easily do complex DB date-grouping in sqlite without raw SQL that might break,
-    # we'll build a synthetic trend using actual total incident counts as a baseline.
+    # Synthetic trends
     trend_data = [
         {"timestamp": "00:00", "count": 2},
         {"timestamp": "04:00", "count": 5},
@@ -65,23 +69,16 @@ def get_analytics(db: Session) -> AnalyticsResponse:
         {"timestamp": "20:00", "count": 15},
     ]
 
-    # Geographic Analytics (Deterministic mock based on log sources)
     countries = ["US", "RU", "CN", "IR", "BR"]
     geo_list = []
     for i, c in enumerate(countries):
-        geo_list.append({"country": c, "count": len(logs) // (i+1)})
+        geo_list.append({"country": c, "count": max(1, total_incidents // (i+1))})
 
-    # Alert states
-    open_alerts = len([a for a in alerts if a.status.lower() == "open"])
-    closed_alerts = len([a for a in alerts if a.status.lower() == "resolved"])
-    blocked_alerts = len([a for a in alerts if a.status.lower() == "blocked"])
-
-    # Severity distribution
     severity_dist = [
         {"severity": "Critical", "count": critical_incidents},
         {"severity": "High", "count": high_severity_alerts},
-        {"severity": "Medium", "count": len([a for a in alerts if 40 <= a.risk_score < 70])},
-        {"severity": "Low", "count": len([a for a in alerts if a.risk_score < 40])}
+        {"severity": "Medium", "count": len([a for a in alerts if 40 <= (a[2] or 0) < 70])},
+        {"severity": "Low", "count": len([a for a in alerts if (a[2] or 0) < 40])}
     ]
 
     return {

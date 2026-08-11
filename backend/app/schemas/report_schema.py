@@ -32,7 +32,7 @@ class ReportTemplateSchema(ReportTemplateBase):
 class ReportBase(BaseModel):
     name: str
     type: str
-    source_id: Optional[uuid.UUID] = None
+    source_id: Optional[str] = None
     template_id: Optional[uuid.UUID] = None
     generated_by: str
     status: str = "Ready"
@@ -53,6 +53,6 @@ class ReportSchema(ReportBase):
 class ReportGenerateRequest(BaseModel):
     name: str
     source_type: str # 'Alert', 'Investigation', 'Threat Hunt'
-    source_id: uuid.UUID
-    template_id: uuid.UUID
+    source_id: str
+    template_id: Optional[uuid.UUID] = None
     generated_by: str = "System"

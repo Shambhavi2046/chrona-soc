@@ -16,10 +16,10 @@ class ReportService(BaseService):
         super().__init__(report_repo)
         self.template_repo = report_template_repo
 
-    async def generate_report_from_source(self, db: AsyncSession, request: ReportGenerateRequest):
+    async def generate_report_from_source(self, db: AsyncSession, request: ReportGenerateRequest, org_id: uuid.UUID):
         from app.services.operations import alert_service, investigation_service, case_service
         from app.services.hunting_service import hunting_service
-        
+
         # Default empty content
         content_kwargs = {
             "executive_summary": f"Automated {request.source_type} report generated.",
@@ -32,23 +32,23 @@ class ReportService(BaseService):
             "recommendations": "Review system logs for more details.",
             "appendix": ""
         }
-        
+
         try:
             if request.source_type.lower() == "alert":
-                alert = await alert_service.get_by_id(db, request.source_id)
+                alert = await alert_service.get_by_id(db, request.source_id, org_id=org_id)
                 if alert:
                     content_kwargs["incident_overview"] = f"Alert '{alert.title}' (Severity: {alert.severity}) triggered at {alert.created_at}."
                     content_kwargs["affected_assets"] = [alert.asset] if alert.asset else []
                     if alert.mitre_tactic or alert.mitre_technique:
                         content_kwargs["mitre_mapping"] = [f"{alert.mitre_tactic or ''} - {alert.mitre_technique or ''}"]
             elif request.source_type.lower() == "investigation":
-                investigation = await investigation_service.get_by_id(db, request.source_id)
+                investigation = await investigation_service.get_by_id(db, request.source_id, org_id=org_id)
                 if investigation:
                     content_kwargs["incident_overview"] = f"Investigation initiated for alert {investigation.alert_id}."
                     content_kwargs["analyst_findings"] = str(investigation.findings) if investigation.findings else ""
                     content_kwargs["executive_summary"] = investigation.summary or content_kwargs["executive_summary"]
             elif request.source_type.lower() == "case":
-                case = await case_service.get_by_id(db, request.source_id)
+                case = await case_service.get_by_id(db, request.source_id, org_id=org_id)
                 if case:
                     content_kwargs["incident_overview"] = f"Case '{case.title}' (Priority: {case.priority}) currently {case.status}."
                     content_kwargs["executive_summary"] = case.description or content_kwargs["executive_summary"]
@@ -57,56 +57,65 @@ class ReportService(BaseService):
                     if getattr(case, 'evidence', None):
                         content_kwargs["indicators_of_compromise"] = [{"type": e.type, "value": e.value} for e in case.evidence]
             elif request.source_type.lower() == "threat hunt":
-                hunt = await hunting_service.get_by_id(db, request.source_id)
+                from sqlalchemy import select
+                from app.models.hunting_model import SavedHunt
+                result = await db.execute(select(SavedHunt).filter_by(id=request.source_id, org_id=org_id))
+                hunt = result.scalar_one_or_none()
                 if hunt:
                     content_kwargs["incident_overview"] = f"Threat Hunt '{hunt.name}' with query: {hunt.query}."
                     content_kwargs["analyst_findings"] = f"Matches found based on Threat Hunt execution."
         except Exception as e:
             # Fallback in case of fetching error, don't crash
             print(f"Error fetching source data for report: {e}")
-        
+
         content = ReportContentSchema(**content_kwargs)
 
-        obj_in = ReportCreate(
-            name=request.name,
-            type=request.source_type,
-            source_id=request.source_id,
-            template_id=request.template_id,
-            generated_by=request.generated_by,
-            status="Ready",
-            pages=3,
-            content=content
-        )
+        obj_in_data = {
+            "name": request.name,
+            "type": request.source_type,
+            "source_id": request.source_id,
+            "template_id": request.template_id,
+            "generated_by": request.generated_by,
+            "status": "Ready",
+            "pages": 3,
+            "content": content.model_dump(),
+            "org_id": org_id
+        }
 
-        db_obj = await self.repository.create(db, obj_in=obj_in)
-        return await self.repository.get(db, db_obj.id)
+        db_obj = self.repository.model(**obj_in_data)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
-    async def get_pdf_bytes(self, db: AsyncSession, report_id: uuid.UUID) -> bytes:
-        report = await self.repository.get(db, report_id)
+    async def get_pdf_bytes(self, db: AsyncSession, report_id: uuid.UUID, org_id: uuid.UUID) -> bytes:
+        from sqlalchemy import select
+        result = await db.execute(select(self.repository.model).filter_by(id=report_id, org_id=org_id))
+        report = result.scalar_one_or_none()
         if not report:
             raise ValueError("Report not found")
-        
+
         content = report.content or {}
-        
+
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
         styles = getSampleStyleSheet()
-        
+
         title_style = styles['Heading1']
         title_style.alignment = TA_CENTER
-        
+
         h2 = styles['Heading2']
         body = styles['BodyText']
-        
+
         Story = []
-        
+
         Story.append(Paragraph(f"Chrona SOC - {report.name}", title_style))
         Story.append(Spacer(1, 12))
-        
+
         Story.append(Paragraph(f"Type: {report.type}", body))
         Story.append(Paragraph(f"Generated By: {report.generated_by}", body))
         Story.append(Spacer(1, 12))
-        
+
         sections = [
             ("Executive Summary", content.get("executive_summary", "")),
             ("Incident Overview", content.get("incident_overview", "")),
@@ -114,12 +123,12 @@ class ReportService(BaseService):
             ("Recommendations", content.get("recommendations", "")),
             ("Appendix", content.get("appendix", ""))
         ]
-        
+
         for heading, text in sections:
             Story.append(Paragraph(heading, h2))
             Story.append(Paragraph(str(text), body))
             Story.append(Spacer(1, 12))
-            
+
         doc.build(Story)
         pdf_value = buffer.getvalue()
         buffer.close()

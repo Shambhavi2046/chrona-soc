@@ -1,45 +1,65 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.models.operations import Case, Alert, Investigation, Evidence, Asset, MitreTechnique, ThreatActor, Malware, IOC, alert_assets_table, alert_mitre_table, threat_actor_malware_table, threat_actor_iocs_table, malware_iocs_table
 from app.schemas.graph_schema import GraphNodeSchema, GraphEdgeSchema, GraphTopologySchema
+import uuid
 
-def generate_topology(db: Session) -> GraphTopologySchema:
+async def generate_topology(db: AsyncSession, org_id: uuid.UUID) -> GraphTopologySchema:
     nodes_dict = {}
     edges_dict = {}
-    
+
     def add_node(node_id: str, node_type: str, data: dict):
         if node_id not in nodes_dict:
             nodes_dict[node_id] = GraphNodeSchema(id=node_id, type=node_type, data=data)
-            
+
     def add_edge(source: str, target: str, edge_type: str = "default", label: str = None):
         edge_id = f"{source}-{target}"
         if edge_id not in edges_dict:
             edges_dict[edge_id] = GraphEdgeSchema(id=edge_id, source=source, target=target, type=edge_type, label=label)
 
-    # 1. Transactional Entities (Cases, Alerts, Investigations, Evidence)
-    cases = db.query(Case).filter(Case.status != "Closed").all()
+    # 1. Transactional Entities (Cases, Alerts, Investigations, Evidence) - Tenant Isolated
+    cases_result = await db.execute(select(Case).filter(Case.status != "Closed", Case.org_id == org_id))
+    cases = cases_result.scalars().all()
     case_ids = [c.id for c in cases]
-    
-    # Fetch active alerts, plus alerts linked to the active cases
-    alerts = db.query(Alert).filter(Alert.status != "Closed").all()
+
+    # Fetch active alerts
+    alerts_result = await db.execute(select(Alert).filter(Alert.status != "Closed", Alert.org_id == org_id))
+    alerts = list(alerts_result.scalars().all())
     alert_ids = [a.id for a in alerts]
-    
+
     if case_ids:
-        linked_alerts = db.query(Alert).filter(Alert.case_id.in_(case_ids)).all()
+        linked_alerts_result = await db.execute(select(Alert).filter(Alert.case_id.in_(case_ids), Alert.org_id == org_id))
+        linked_alerts = linked_alerts_result.scalars().all()
         for a in linked_alerts:
             if a.id not in alert_ids:
                 alerts.append(a)
                 alert_ids.append(a.id)
-                
-    investigations = db.query(Investigation).filter(Investigation.alert_id.in_(alert_ids)).all() if alert_ids else []
-    evidence_list = db.query(Evidence).filter(Evidence.case_id.in_(case_ids)).all() if case_ids else []
-    
-    # 2. Knowledge Base Entities (Attack Graph Entities)
-    # We fetch these comprehensively to represent the threat landscape regardless of active cases.
-    assets = db.query(Asset).all()
-    mitres = db.query(MitreTechnique).all()
-    threat_actors = db.query(ThreatActor).all()
-    malwares = db.query(Malware).all()
-    iocs = db.query(IOC).all()
+
+    investigations = []
+    if alert_ids:
+        inv_result = await db.execute(select(Investigation).filter(Investigation.alert_id.in_(alert_ids)))
+        investigations = inv_result.scalars().all()
+
+    evidence_list = []
+    if case_ids:
+        ev_result = await db.execute(select(Evidence).filter(Evidence.case_id.in_(case_ids)))
+        evidence_list = ev_result.scalars().all()
+
+    # 2. Knowledge Base Entities (Attack Graph Entities) - Global / Shared
+    assets_res = await db.execute(select(Asset))
+    assets = assets_res.scalars().all()
+
+    mitres_res = await db.execute(select(MitreTechnique))
+    mitres = mitres_res.scalars().all()
+
+    ta_res = await db.execute(select(ThreatActor))
+    threat_actors = ta_res.scalars().all()
+
+    mal_res = await db.execute(select(Malware))
+    malwares = mal_res.scalars().all()
+
+    ioc_res = await db.execute(select(IOC))
+    iocs = ioc_res.scalars().all()
 
     # 3. Add Nodes
     for case in cases:
@@ -96,7 +116,7 @@ def generate_topology(db: Session) -> GraphTopologySchema:
             "status": asset.status,
             "criticality": asset.criticality
         })
-        
+
     for mitre in mitres:
         mitre_id = f"mitre-{mitre.id}"
         add_node(mitre_id, "mitre", {
@@ -136,24 +156,24 @@ def generate_topology(db: Session) -> GraphTopologySchema:
 
     # 4. Association Table Edges
     if alert_ids:
-        alert_asset_links = db.query(alert_assets_table).filter(alert_assets_table.c.alert_id.in_(alert_ids)).all()
-        for link in alert_asset_links:
+        alert_asset_res = await db.execute(select(alert_assets_table).filter(alert_assets_table.c.alert_id.in_(alert_ids)))
+        for link in alert_asset_res.all():
             add_edge(f"alert-{link.alert_id}", f"asset-{link.asset_id}", "dashed", "Affects")
-            
-        alert_mitre_links = db.query(alert_mitre_table).filter(alert_mitre_table.c.alert_id.in_(alert_ids)).all()
-        for link in alert_mitre_links:
+
+        alert_mitre_res = await db.execute(select(alert_mitre_table).filter(alert_mitre_table.c.alert_id.in_(alert_ids)))
+        for link in alert_mitre_res.all():
             add_edge(f"alert-{link.alert_id}", f"mitre-{link.mitre_id}", "dashed", "Maps To")
 
-    ta_ioc_links = db.query(threat_actor_iocs_table).all()
-    for link in ta_ioc_links:
+    ta_ioc_res = await db.execute(select(threat_actor_iocs_table))
+    for link in ta_ioc_res.all():
         add_edge(f"threat_actor-{link.threat_actor_id}", f"ioc-{link.ioc_id}", "dashed", "Associated With")
 
-    mal_ioc_links = db.query(malware_iocs_table).all()
-    for link in mal_ioc_links:
+    mal_ioc_res = await db.execute(select(malware_iocs_table))
+    for link in mal_ioc_res.all():
         add_edge(f"malware-{link.malware_id}", f"ioc-{link.ioc_id}", "dashed", "Associated With")
 
-    ta_mal_links = db.query(threat_actor_malware_table).all()
-    for link in ta_mal_links:
+    ta_mal_res = await db.execute(select(threat_actor_malware_table))
+    for link in ta_mal_res.all():
         add_edge(f"threat_actor-{link.threat_actor_id}", f"malware-{link.malware_id}", "solid", "Uses")
 
     return GraphTopologySchema(

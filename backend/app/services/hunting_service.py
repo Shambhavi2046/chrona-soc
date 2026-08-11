@@ -83,37 +83,48 @@ MOCK_TELEMETRY = [
 ]
 
 class HuntingService(BaseService[SavedHuntRepository]):
-    async def create_saved_hunt(self, db: AsyncSession, obj_in: SavedHuntCreate):
-        return await self.repository.create(db, obj_in=obj_in)
-        
-    async def update_saved_hunt(self, db: AsyncSession, id: uuid.UUID, obj_in: SavedHuntUpdate):
-        db_obj = await self.repository.get(db, id)
-        if not db_obj:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Saved hunt not found")
-            
-        update_data = obj_in.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(db_obj, field, value)
-            
+    async def create_saved_hunt(self, db: AsyncSession, obj_in: SavedHuntCreate, org_id: uuid.UUID):
+        obj_in_data = obj_in.model_dump()
+        obj_in_data["org_id"] = org_id
+        db_obj = self.repository.model(**obj_in_data)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
-        
-    async def delete_saved_hunt(self, db: AsyncSession, id: uuid.UUID):
-        db_obj = await self.repository.get(db, id)
+
+    async def update_saved_hunt(self, db: AsyncSession, id: uuid.UUID, obj_in: SavedHuntUpdate, org_id: uuid.UUID):
+        from sqlalchemy import select
+        result = await db.execute(select(self.repository.model).filter_by(id=id, org_id=org_id))
+        db_obj = result.scalar_one_or_none()
+
+        if not db_obj:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Saved hunt not found")
+
+        update_data = obj_in.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(db_obj, field, value)
+
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
+
+    async def delete_saved_hunt(self, db: AsyncSession, id: uuid.UUID, org_id: uuid.UUID):
+        from sqlalchemy import select
+        result = await db.execute(select(self.repository.model).filter_by(id=id, org_id=org_id))
+        db_obj = result.scalar_one_or_none()
         if not db_obj:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Saved hunt not found")
         await db.delete(db_obj)
         await db.commit()
-        
+
     async def execute_hunt(self, db: AsyncSession, request: HuntQueryRequest, tenant_id: uuid.UUID) -> HuntExecuteResponse:
         from app.models.event_model import SecurityEvent
         from sqlalchemy import select, func, desc, asc, or_, String
         import json
-        
+
         query = select(SecurityEvent).where(SecurityEvent.tenant_id == tenant_id)
-        
+
         # Apply filters
         if request.ioc:
             ioc_q = f"%{request.ioc}%"
@@ -123,24 +134,24 @@ class HuntingService(BaseService[SavedHuntRepository]):
                 SecurityEvent.hostname.ilike(ioc_q),
                 func.cast(SecurityEvent.raw_event, String).ilike(ioc_q)
             ))
-            
+
         if request.hostname:
             query = query.filter(SecurityEvent.hostname.ilike(f"%{request.hostname}%"))
-            
+
         if request.username:
             query = query.filter(SecurityEvent.user_account.ilike(f"%{request.username}%"))
-            
+
         if request.severity:
             query = query.filter(SecurityEvent.severity.ilike(request.severity))
-            
+
         # For JSON containment, depending on dialect, but we can do a simple string matching for now
         # since SQLite JSON operators might be limited, we'll cast to string if needed.
         if request.mitre_tactic:
             query = query.filter(func.cast(SecurityEvent.mitre_techniques, String).ilike(f"%{request.mitre_tactic}%"))
-            
+
         if request.mitre_technique:
             query = query.filter(func.cast(SecurityEvent.mitre_techniques, String).ilike(f"%{request.mitre_technique}%"))
-            
+
         if request.query:
             q = f"%{request.query}%"
             query = query.filter(or_(
@@ -150,12 +161,12 @@ class HuntingService(BaseService[SavedHuntRepository]):
                 SecurityEvent.process_name.ilike(q),
                 SecurityEvent.command_line.ilike(q)
             ))
-            
+
         # Count total
         count_query = select(func.count()).select_from(query.subquery())
         total_res = await db.execute(count_query)
         total = total_res.scalar() or 0
-        
+
         # Sorting
         if request.sort_by:
             # Map standard frontend sort keys to db columns
@@ -173,14 +184,14 @@ class HuntingService(BaseService[SavedHuntRepository]):
                 query = query.order_by(asc(sort_col))
         else:
             query = query.order_by(desc(SecurityEvent.timestamp))
-            
+
         # Pagination
         start = (request.page - 1) * request.page_size
         query = query.offset(start).limit(request.page_size)
-        
+
         result = await db.execute(query)
         events_db = result.scalars().all()
-        
+
         results = []
         for e in events_db:
             mitre_t = None
@@ -192,11 +203,11 @@ class HuntingService(BaseService[SavedHuntRepository]):
                 mitre_t = 'Execution'
             elif e.event_type == 'network_traffic':
                 mitre_t = 'Command and Control'
-                
+
             raw_data = e.raw_event if isinstance(e.raw_event, dict) else {}
             host = e.hostname or e.ip_address or raw_data.get('host') or raw_data.get('Computer') or "Unknown"
             user = e.user_account or raw_data.get('user') or raw_data.get('AccountName') or "Unknown"
-            
+
             results.append(HuntEventSchema(
                 id=str(e.id),
                 timestamp=e.timestamp.isoformat() if e.timestamp else "",
@@ -211,7 +222,7 @@ class HuntingService(BaseService[SavedHuntRepository]):
                 status=e.status or "Logged",
                 raw_log=json.dumps(e.raw_event) if e.raw_event else ""
             ))
-            
+
         return HuntExecuteResponse(
             events=results,
             total=total,
@@ -225,22 +236,22 @@ class HuntingService(BaseService[SavedHuntRepository]):
         await asyncio.sleep(1.5) # Simulate AI thinking
         from app.models.event_model import SecurityEvent
         from sqlalchemy import select
-        
+
         try:
             evt_uuid = uuid.UUID(event_id)
         except ValueError:
             return {"analysis": "Invalid event ID format."}
-            
+
         query = select(SecurityEvent).where(
             SecurityEvent.id == evt_uuid,
             SecurityEvent.tenant_id == tenant_id
         )
         result = await db.execute(query)
         event = result.scalar_one_or_none()
-        
+
         if not event:
             return {"analysis": "Event not found. Unable to provide analysis."}
-            
+
         return {
             "analysis": f"AI Copilot Analysis for {event.event_type}:\n\nThis event appears to be part of a larger sequence. Based on the {event.source} logs, the user '{event.user_account or 'Unknown'}' performed an action on host '{event.hostname or 'Unknown'}'. I recommend correlating this with recent authentication attempts and checking for lateral movement indicators."
         }

@@ -8,6 +8,7 @@ class ReportTemplate(Base, TimestampMixin):
     __tablename__ = "report_templates"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False, index=True)
     description = Column(String, nullable=True)
     estimated_pages = Column(Integer, default=1)
@@ -17,9 +18,10 @@ class Report(Base, TimestampMixin):
     __tablename__ = "reports"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    org_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False, index=True)
     type = Column(String, nullable=False) # e.g. "Investigation", "Alert", "Threat Hunt"
-    source_id = Column(UUID(as_uuid=True), nullable=True) # ID of the alert, investigation, etc.
+    source_id = Column(String, nullable=True) # ID of the alert, investigation, etc.
     template_id = Column(UUID(as_uuid=True), ForeignKey("report_templates.id"), nullable=True)
     generated_by = Column(String, nullable=False)
     status = Column(String, nullable=False, default="Ready") # Ready, Generating, Failed

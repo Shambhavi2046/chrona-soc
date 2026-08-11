@@ -9,35 +9,44 @@ from app.schemas.report_schema import ReportSchema, ReportGenerateRequest, Repor
 from app.utils.validation import get_pagination, PaginationParams
 import json
 
+from app.middleware.auth import require_permissions
+from app.models.identity import User
+
 router = APIRouter()
 
 @router.get("/", response_model=List[ReportSchema])
 async def list_reports(
     db: AsyncSession = Depends(get_db),
-    pagination: PaginationParams = Depends(get_pagination)
+    pagination: PaginationParams = Depends(get_pagination),
+    current_user: User = Depends(require_permissions(["reports:read"]))
 ):
-    return await report_service.repository.get_all(db, skip=pagination.skip, limit=pagination.limit)
+    return await report_service.repository.get_all(db, skip=pagination.skip, limit=pagination.limit, org_id=current_user.org_id)
 
 @router.get("/templates", response_model=List[ReportTemplateSchema])
 async def list_templates(
     db: AsyncSession = Depends(get_db),
-    pagination: PaginationParams = Depends(get_pagination)
+    pagination: PaginationParams = Depends(get_pagination),
+    current_user: User = Depends(require_permissions(["reports:read"]))
 ):
-    return await report_service.template_repo.get_all(db, skip=pagination.skip, limit=pagination.limit)
+    return await report_service.template_repo.get_all(db, skip=pagination.skip, limit=pagination.limit, org_id=current_user.org_id)
 
 @router.post("/generate", response_model=ReportSchema)
 async def generate_report(
     request: ReportGenerateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["reports:write"]))
 ):
-    return await report_service.generate_report_from_source(db, request)
+    return await report_service.generate_report_from_source(db, request, org_id=current_user.org_id)
 
 @router.delete("/{id}")
 async def delete_report(
     id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["reports:delete"]))
 ):
-    report = await report_service.repository.get(db, id=id)
+    from sqlalchemy import select
+    result = await db.execute(select(report_service.repository.model).filter_by(id=id, org_id=current_user.org_id))
+    report = result.scalar_one_or_none()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     await db.delete(report)
@@ -47,9 +56,12 @@ async def delete_report(
 @router.get("/{id}/export/json")
 async def export_report_json(
     id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["reports:read"]))
 ):
-    report = await report_service.repository.get(db, id=id)
+    from sqlalchemy import select
+    result = await db.execute(select(report_service.repository.model).filter_by(id=id, org_id=current_user.org_id))
+    report = result.scalar_one_or_none()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     
@@ -71,10 +83,11 @@ async def export_report_json(
 @router.get("/{id}/export/pdf")
 async def export_report_pdf(
     id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["reports:read"]))
 ):
     try:
-        pdf_bytes = await report_service.get_pdf_bytes(db, id)
+        pdf_bytes = await report_service.get_pdf_bytes(db, id, org_id=current_user.org_id)
     except ValueError:
         raise HTTPException(status_code=404, detail="Report not found")
         
