@@ -2,21 +2,14 @@ import { Network, Search } from "lucide-react";
 import SeverityBadge from "@/components/alerts/SeverityBadge";
 import ClientDate from "@/components/common/ClientDate";
 
-export interface IOC {
-  id: string;
-  type: "IP" | "Domain" | "Hash";
-  value: string;
-  category: string;
-  severity: number; // 0-100
-  status: "Active" | "Blocked" | "Monitoring";
-  lastDetected: string;
-}
+import { IOC } from "@/services/threat-intel";
 
 interface IOCTableProps {
   iocs: IOC[];
+  onSearch?: (query: string) => void;
 }
 
-export default function IOCTable({ iocs }: IOCTableProps) {
+export default function IOCTable({ iocs, onSearch }: IOCTableProps) {
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col h-full">
       <div className="p-6 border-b border-soc-border flex items-center justify-between">
@@ -29,6 +22,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
           <input 
             type="text" 
             placeholder="Search IOCs..." 
+            onChange={(e) => onSearch?.(e.target.value)}
             className="bg-soc-bg border border-soc-border rounded-lg pl-9 pr-4 py-1.5 text-sm text-white focus:outline-none focus:border-soc-accent transition-colors"
           />
         </div>
@@ -47,36 +41,47 @@ export default function IOCTable({ iocs }: IOCTableProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-soc-border">
-            {iocs.map((ioc) => (
-              <tr key={ioc.id} className="hover:bg-soc-card-hover/50 transition-colors group">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs font-medium text-gray-300">
-                    {ioc.type}
-                  </span>
-                </td>
-                <td className="px-6 py-4 font-mono text-sm text-gray-300 group-hover:text-white transition-colors">
-                  {ioc.value}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="font-medium text-gray-300">{ioc.category}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <SeverityBadge score={ioc.severity} />
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`text-sm flex items-center ${
-                    ioc.status === 'Blocked' ? 'text-soc-success' : 
-                    ioc.status === 'Active' ? 'text-soc-danger' : 'text-soc-warning'
-                  }`}>
-                    {ioc.status === 'Active' && <span className="w-2 h-2 rounded-full bg-soc-danger mr-2 animate-pulse"></span>}
-                    {ioc.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                  <ClientDate date={ioc.lastDetected} format="full" />
+            {iocs.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <div className="flex flex-col items-center justify-center">
+                    <Search className="w-8 h-8 mb-3 opacity-50" />
+                    <p>No indicators found</p>
+                  </div>
                 </td>
               </tr>
-            ))}
+            ) : (
+              iocs.map((ioc) => (
+                <tr key={ioc.id} className="hover:bg-soc-card-hover/50 transition-colors group">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs font-medium text-gray-300">
+                      {ioc.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-mono text-sm text-gray-300 group-hover:text-white transition-colors">
+                    {ioc.value}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-gray-300">{ioc.category}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <SeverityBadge score={ioc.severity} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`text-sm flex items-center ${
+                      ioc.status === 'Blocked' ? 'text-soc-success' : 
+                      ioc.status === 'Active' ? 'text-soc-danger' : 'text-soc-warning'
+                    }`}>
+                      {ioc.status === 'Active' && <span className="w-2 h-2 rounded-full bg-soc-danger mr-2 animate-pulse"></span>}
+                      {ioc.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                    <ClientDate date={ioc.lastDetected} format="full" />
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

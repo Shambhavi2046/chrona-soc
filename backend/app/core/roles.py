@@ -15,6 +15,10 @@ class Permission(str, Enum):
     USERS_WRITE = "users:write"
     ROLES_WRITE = "roles:write"
 
+    # Threat Intelligence
+    THREAT_INTEL_READ = "threat_intel:read"
+    THREAT_INTEL_WRITE = "threat_intel:write"
+
 class Role(str, Enum):
     SUPER_ADMIN = "Super Admin"
     SOC_MANAGER = "SOC Manager"
@@ -29,13 +33,25 @@ ROLE_PERMISSIONS_MAPPING = {
     Role.SOC_MANAGER: [
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
         Permission.CASES_READ, Permission.CASES_WRITE,
-        Permission.USERS_READ
+        Permission.USERS_READ,
+        Permission.THREAT_INTEL_READ, Permission.THREAT_INTEL_WRITE
+    ],
+    Role.THREAT_HUNTER: [
+        Permission.ALERTS_READ, Permission.CASES_READ,
+        Permission.THREAT_INTEL_READ
+    ],
+    Role.TIER_2_ANALYST: [
+        Permission.ALERTS_READ, Permission.ALERTS_WRITE,
+        Permission.CASES_READ, Permission.CASES_WRITE,
+        Permission.THREAT_INTEL_READ
     ],
     Role.TIER_1_ANALYST: [
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
-        Permission.CASES_READ
+        Permission.CASES_READ,
+        Permission.THREAT_INTEL_READ
     ],
     Role.READ_ONLY: [
-        Permission.ALERTS_READ, Permission.CASES_READ, Permission.USERS_READ
+        Permission.ALERTS_READ, Permission.CASES_READ, Permission.USERS_READ,
+        Permission.THREAT_INTEL_READ
     ]
 }

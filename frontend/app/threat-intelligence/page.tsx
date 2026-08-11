@@ -1,84 +1,48 @@
-import { Network, RefreshCcw } from "lucide-react";
-import ThreatStats from "@/components/threat-intelligence/ThreatStats";
-import IOCTable, { IOC } from "@/components/threat-intelligence/IOCTable";
-import ThreatActivityCard from "@/components/threat-intelligence/ThreatActivityCard";
-import MockModeBanner from "@/components/common/MockModeBanner";
+"use client";
 
-// Realistic mock data structured for future API integration
-const MOCK_IOCS: IOC[] = [
-  {
-    id: "IOC-1092",
-    type: "IP",
-    value: "185.15.22.1",
-    category: "Command and Control",
-    severity: 95,
-    status: "Active",
-    lastDetected: new Date(Date.now() - 5 * 60000).toISOString(),
-  },
-  {
-    id: "IOC-1091",
-    type: "Domain",
-    value: "secure-auth-update.net",
-    category: "Phishing",
-    severity: 85,
-    status: "Active",
-    lastDetected: new Date(Date.now() - 15 * 60000).toISOString(),
-  },
-  {
-    id: "IOC-1090",
-    type: "Hash",
-    value: "a3b9...4f1c",
-    category: "Ransomware Payload",
-    severity: 100,
-    status: "Blocked",
-    lastDetected: new Date(Date.now() - 45 * 60000).toISOString(),
-  },
-  {
-    id: "IOC-1089",
-    type: "IP",
-    value: "45.33.12.90",
-    category: "Botnet Scanner",
-    severity: 60,
-    status: "Monitoring",
-    lastDetected: new Date(Date.now() - 120 * 60000).toISOString(),
-  },
-];
-
-const MOCK_FEED = [
-  {
-    id: "F-1",
-    source: "ChronaAI Network Sensor",
-    message: "New C2 infrastructure detected targeting financial sectors.",
-    time: "2 mins ago",
-    isHighPriority: true,
-  },
-  {
-    id: "F-2",
-    source: "Global Threat Intel Feed",
-    message: "Suspicious DNS tunneling activities observed globally.",
-    time: "14 mins ago",
-    isHighPriority: false,
-  },
-  {
-    id: "F-3",
-    source: "Endpoint Agent",
-    message: "Multiple ransomware payloads blocked matching known signatures.",
-    time: "45 mins ago",
-    isHighPriority: true,
-  },
-  {
-    id: "F-4",
-    source: "ChronaAI Analytics",
-    message: "Baseline deviation established for remote access protocols.",
-    time: "1 hr ago",
-    isHighPriority: false,
-  },
-];
+import { useState, useEffect, useCallback } from "react";
+import { Network, RefreshCcw, Radio } from "lucide-react";
+import ThreatStatsComponent from "@/components/threat-intelligence/ThreatStats";
+import IOCTable from "@/components/threat-intelligence/IOCTable";
+import { getIOCs, getThreatStats, IOC, ThreatStats } from "@/services/threat-intel";
 
 export default function ThreatIntelligencePage() {
+  const [iocs, setIocs] = useState<IOC[]>([]);
+  const [stats, setStats] = useState<ThreatStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const fetchData = useCallback(async (search?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const [iocsData, statsData] = await Promise.all([
+        getIOCs(search),
+        getThreatStats(),
+      ]);
+      setIocs(iocsData);
+      setStats(statsData);
+    } catch (err: any) {
+      setError(err.message || "Failed to load threat intelligence data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchData(searchQuery);
+    }, 300); // 300ms debounce
+    return () => clearTimeout(handler);
+  }, [searchQuery, fetchData]);
+
+  const handleRefresh = () => {
+    fetchData(searchQuery);
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
-      <MockModeBanner moduleName="Threat Intelligence" />
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -92,30 +56,52 @@ export default function ThreatIntelligencePage() {
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-500">Live Global Feed</span>
-          <button className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors">
-            <RefreshCcw className="w-4 h-4 mr-2" />
+          <button 
+            onClick={handleRefresh}
+            disabled={loading}
+            className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          >
+            <RefreshCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Sync Intel
           </button>
         </div>
       </div>
 
+      {error && (
+        <div className="p-4 bg-soc-danger/10 border border-soc-danger text-soc-danger rounded-xl">
+          <p>{error}</p>
+        </div>
+      )}
+
       {/* KPI Cards */}
-      <ThreatStats
-        activeThreats={24}
-        criticalIndicators={8}
-        blockedIocs={142}
-        threatScore={78}
+      <ThreatStatsComponent
+        activeThreats={stats?.activeThreats || 0}
+        criticalIndicators={stats?.criticalIndicators || 0}
+        blockedIocs={stats?.blockedIocs || 0}
+        threatScore={stats?.threatScore || 0}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main IOC Table */}
         <div className="lg:col-span-2 flex flex-col h-full">
-          <IOCTable iocs={MOCK_IOCS} />
+          <IOCTable iocs={iocs} onSearch={setSearchQuery} />
         </div>
         
-        {/* Activity Feed */}
+        {/* Activity Feed Placeholder */}
         <div className="flex flex-col h-full">
-          <ThreatActivityCard feed={MOCK_FEED} />
+          <div className="glass-card rounded-xl overflow-hidden flex flex-col h-full border-t-2 border-t-soc-warning/50">
+            <div className="p-6 border-b border-soc-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white flex items-center">
+                <Radio className="w-5 h-5 mr-2 text-soc-warning" />
+                Global Threat Activity
+              </h3>
+            </div>
+            <div className="p-6 flex-1 flex flex-col items-center justify-center text-center text-gray-500">
+              <Radio className="w-8 h-8 mb-4 opacity-50" />
+              <p className="text-sm">Threat Activity feed ingestion engine is not yet connected.</p>
+              <p className="text-xs mt-2 opacity-75">Scheduled for Milestone 3.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

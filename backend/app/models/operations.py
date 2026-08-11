@@ -122,11 +122,14 @@ class Evidence(Base, UUIDMixin, TimestampMixin):
 class IOC(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "iocs"
 
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     type = Column(String(50), nullable=False, index=True)
     value = Column(String(255), nullable=False, unique=True, index=True)
     confidence = Column(Integer, default=50)
     source = Column(String(255))
     tags = Column(JSON, default=list)
+    status = Column(String(50), default="Active")
+    category = Column(String(100), nullable=True)
     
     threat_actors = relationship("ThreatActor", secondary=threat_actor_iocs_table, back_populates="iocs")
     malware = relationship("Malware", secondary=malware_iocs_table, back_populates="iocs")
@@ -134,6 +137,7 @@ class IOC(Base, UUIDMixin, TimestampMixin):
 class ThreatFeed(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "threat_feeds"
 
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(255), nullable=False, unique=True)
     url = Column(String(500), nullable=False)
     status = Column(String(50), default="Active")
@@ -155,6 +159,7 @@ class Asset(Base, UUIDMixin, TimestampMixin):
 class ThreatActor(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "threat_actors"
     
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(255), nullable=False, unique=True, index=True)
     aliases = Column(JSON, default=list)
     reputation = Column(String(100), default="Unknown")
@@ -166,6 +171,7 @@ class ThreatActor(Base, UUIDMixin, TimestampMixin):
 class Malware(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "malware"
     
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     name = Column(String(255), nullable=False, unique=True, index=True)
     family = Column(String(255), nullable=True)
     
