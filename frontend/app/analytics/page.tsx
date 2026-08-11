@@ -1,5 +1,6 @@
+export const dynamic = 'force-dynamic';
+
 import { getAnalytics } from "@/services";
-import MockModeBanner from "@/components/common/MockModeBanner";
 import KPIGrid from "@/components/analytics/KPIGrid";
 import AttackTrendChart from "@/components/analytics/AttackTrendChart";
 import SeverityAnalytics from "@/components/analytics/SeverityAnalytics";
@@ -7,13 +8,16 @@ import MitreAssetAnalytics from "@/components/analytics/MitreAssetAnalytics";
 import ExecutiveInsights from "@/components/analytics/ExecutiveInsights";
 import { BarChart3, Filter } from "lucide-react";
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage(props: { searchParams: Promise<{ period?: string }> }) {
   const { cookies } = await import("next/headers");
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
+  
+  const searchParams = await props.searchParams;
+  const period = searchParams.period || "week";
 
   // Fetch real aggregated analytics from the backend
-  const analyticsData = await getAnalytics(token);
+  const analyticsData = await getAnalytics(token, period);
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
@@ -29,17 +33,17 @@ export default async function AnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button className="flex items-center px-4 py-2 bg-soc-bg border border-soc-border hover:border-soc-accent text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+          <button disabled className="flex items-center px-4 py-2 bg-soc-bg/50 border border-soc-border text-gray-500 text-sm font-medium rounded-lg opacity-50 cursor-not-allowed shadow-sm" title="Advanced filtering is currently unavailable">
             <Filter className="w-4 h-4 mr-2" />
             Interactive Filters
           </button>
         </div>
       </div>
 
-      <MockModeBanner moduleName="Analytics" />
-
-      {/* AI Insights (Top-level contextual summary) */}
-      <ExecutiveInsights insights={analyticsData.aiInsights} />
+      {/* AI Insights (Top-level contextual summary) - Hidden if empty */}
+      {analyticsData.aiInsights && analyticsData.aiInsights.length > 0 && (
+        <ExecutiveInsights insights={analyticsData.aiInsights} />
+      )}
 
       {/* High-level KPIs */}
       <KPIGrid data={analyticsData.kpis} />
@@ -47,7 +51,7 @@ export default async function AnalyticsPage() {
       {/* Primary Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <AttackTrendChart data={analyticsData.attackTrends} />
+          <AttackTrendChart data={analyticsData.attackTrends} currentPeriod={period} />
         </div>
         <div>
           <SeverityAnalytics data={analyticsData.threatSeverity} />

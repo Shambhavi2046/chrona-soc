@@ -16,12 +16,15 @@ MITRE_MAPPING = {
     "Malware Execution": "Execution"
 }
 
-async def get_analytics(db: AsyncSession, org_id: uuid.UUID) -> AnalyticsResponse:
-    # Query aggregated stats instead of pulling all records into memory
+from datetime import datetime, timedelta, timezone
+from collections import defaultdict
 
+async def get_analytics(db: AsyncSession, org_id: uuid.UUID, period: str = "week") -> AnalyticsResponse:
+    # Query aggregated stats instead of pulling all records into memory
+    
     # Alert states and severity
     alerts_result = await db.execute(
-        select(Alert.status, Alert.severity, Alert.risk_score, Alert.threat_type)
+        select(Alert.status, Alert.severity, Alert.risk_score, Alert.threat_type, Alert.created_at)
         .filter(Alert.org_id == org_id)
     )
     alerts = alerts_result.all()
@@ -36,20 +39,25 @@ async def get_analytics(db: AsyncSession, org_id: uuid.UUID) -> AnalyticsRespons
     blocked_alerts = len([a for a in alerts if a[0].lower() == "blocked"])
 
     # Asset Risk inference (from Alert sources or threat types since Log lacks org_id)
-    asset_counts = {}
+    asset_data = {}
     for a in alerts:
         src = a[3] or "Unknown Source"
-        asset_counts[src] = asset_counts.get(src, 0) + 1
+        risk = a[2] or 0
+        if src not in asset_data:
+            asset_data[src] = {"count": 0, "total_risk": 0}
+        asset_data[src]["count"] += 1
+        asset_data[src]["total_risk"] += risk
 
     asset_risk_list = []
-    for asset, count in list(asset_counts.items())[:5]:
-        risk_hash = int(hashlib.md5(asset.encode()).hexdigest(), 16) % 100
+    for asset, data in asset_data.items():
+        avg_risk = data["total_risk"] // data["count"] if data["count"] > 0 else 0
         asset_risk_list.append({
             "asset": asset,
-            "riskScore": risk_hash,
-            "incidents": count
+            "riskScore": avg_risk,
+            "incidents": data["count"]
         })
     asset_risk_list.sort(key=lambda x: x["riskScore"], reverse=True)
+    asset_risk_list = asset_risk_list[:5]
 
     # MITRE tactics
     tactic_counts = {}
@@ -59,20 +67,42 @@ async def get_analytics(db: AsyncSession, org_id: uuid.UUID) -> AnalyticsRespons
 
     top_tactics = [{"tactic": k, "count": v} for k, v in tactic_counts.items()]
 
-    # Synthetic trends
-    trend_data = [
-        {"timestamp": "00:00", "count": 2},
-        {"timestamp": "04:00", "count": 5},
-        {"timestamp": "08:00", "count": 12},
-        {"timestamp": "12:00", "count": 18},
-        {"timestamp": "16:00", "count": 24},
-        {"timestamp": "20:00", "count": 15},
-    ]
+    # Real Attack Trends
+    now = datetime.now(timezone.utc)
+    if period == "hour":
+        start_time = now - timedelta(hours=1)
+        bucket_format = "%H:%M" # per minute or 5 min
+    elif period == "day":
+        start_time = now - timedelta(days=1)
+        bucket_format = "%H:00"
+    elif period == "month":
+        start_time = now - timedelta(days=30)
+        bucket_format = "%m-%d"
+    else: # week
+        start_time = now - timedelta(days=7)
+        bucket_format = "%m-%d"
 
-    countries = ["US", "RU", "CN", "IR", "BR"]
-    geo_list = []
-    for i, c in enumerate(countries):
-        geo_list.append({"country": c, "count": max(1, total_incidents // (i+1))})
+    trend_counts = defaultdict(int)
+    for a in alerts:
+        created_at = a[4]
+        # if created_at is naive, assume utc
+        if created_at and created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        
+        if created_at and created_at >= start_time:
+            bucket = created_at.strftime(bucket_format)
+            trend_counts[bucket] += 1
+            
+    # Sort buckets
+    trend_data = [{"timestamp": k, "count": v} for k, v in sorted(trend_counts.items())]
+
+    # Calculate real risk scores based on alert averages
+    if total_incidents > 0:
+        overall_risk = sum((a[2] or 0) for a in alerts) // total_incidents
+    else:
+        overall_risk = 0
+        
+    security_score = max(0, 100 - overall_risk)
 
     severity_dist = [
         {"severity": "Critical", "count": critical_incidents},
@@ -90,11 +120,11 @@ async def get_analytics(db: AsyncSession, org_id: uuid.UUID) -> AnalyticsRespons
             "openInvestigations": open_alerts,
             "activeThreats": active_incidents + blocked_alerts,
             "highRiskAssets": len([a for a in asset_risk_list if a["riskScore"] >= 80]),
-            "securityScore": 82,
-            "overallRiskScore": 65,
-            "threatIntelMatches": 14,
-            "mttd": "4m 12s",
-            "mttr": "18m 45s"
+            "securityScore": security_score,
+            "overallRiskScore": overall_risk,
+            "threatIntelMatches": 0,
+            "mttd": "",
+            "mttr": ""
         },
         "attackTrends": trend_data,
         "threatSeverity": severity_dist,
@@ -102,17 +132,12 @@ async def get_analytics(db: AsyncSession, org_id: uuid.UUID) -> AnalyticsRespons
             "topTactics": sorted(top_tactics, key=lambda x: x["count"], reverse=True)
         },
         "assetRisk": asset_risk_list,
-        "geographicAnalytics": geo_list,
+        "geographicAnalytics": [],
         "alertAnalytics": {
             "open": open_alerts,
             "closed": closed_alerts,
-            "falsePositive": 2,
-            "suppressed": 1
+            "falsePositive": len([a for a in alerts if a[0].lower() == "false positive"]),
+            "suppressed": len([a for a in alerts if a[0].lower() == "suppressed"])
         },
-        "aiInsights": [
-            "Credential Access attacks represent 45% of recent activity.",
-            "Finance servers remain highest risk due to continuous scanning.",
-            "Suggest immediate MFA hardening on all external gateways.",
-            "Detection latency improved by 12% over last week."
-        ]
+        "aiInsights": []
     }

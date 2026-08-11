@@ -18,6 +18,9 @@ class Permission(str, Enum):
     # Threat Intelligence
     THREAT_INTEL_READ = "threat_intel:read"
     THREAT_INTEL_WRITE = "threat_intel:write"
+    
+    # Dashboard/Analytics
+    DASHBOARD_READ = "dashboard:read"
 
 class Role(str, Enum):
     SUPER_ADMIN = "Super Admin"
@@ -34,24 +37,25 @@ ROLE_PERMISSIONS_MAPPING = {
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
         Permission.CASES_READ, Permission.CASES_WRITE,
         Permission.USERS_READ,
-        Permission.THREAT_INTEL_READ, Permission.THREAT_INTEL_WRITE
+        Permission.THREAT_INTEL_READ, Permission.THREAT_INTEL_WRITE,
+        Permission.DASHBOARD_READ
     ],
     Role.THREAT_HUNTER: [
         Permission.ALERTS_READ, Permission.CASES_READ,
-        Permission.THREAT_INTEL_READ
+        Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ
     ],
     Role.TIER_2_ANALYST: [
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
         Permission.CASES_READ, Permission.CASES_WRITE,
-        Permission.THREAT_INTEL_READ
+        Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ
     ],
     Role.TIER_1_ANALYST: [
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
         Permission.CASES_READ,
-        Permission.THREAT_INTEL_READ
+        Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ
     ],
     Role.READ_ONLY: [
         Permission.ALERTS_READ, Permission.CASES_READ, Permission.USERS_READ,
-        Permission.THREAT_INTEL_READ
+        Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ
     ]
 }

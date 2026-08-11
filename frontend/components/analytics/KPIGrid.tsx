@@ -44,13 +44,21 @@ export default function KPIGrid({ data }: KPIGridProps) {
     { label: "High Sev Alerts", value: data.highSeverityAlerts, icon: Zap, color: "text-soc-warning", link: "/alerts?severity=high" },
     { label: "Open Investigations", value: data.openInvestigations, icon: FileSearch, color: "text-soc-accent", link: "/investigations" },
     { label: "Active Threats", value: data.activeThreats, icon: Crosshair, color: "text-soc-danger", link: "/threat-intelligence" },
-    { label: "High Risk Assets", value: data.highRiskAssets, icon: Server, color: "text-soc-danger", link: "/analytics" },
-    { label: "Security Score", value: `${data.securityScore}/100`, icon: ShieldCheck, color: "text-soc-success", link: "/analytics" },
-    { label: "Risk Score", value: `${data.overallRiskScore}/100`, icon: Shield, color: "text-soc-warning", link: "/analytics" },
-    { label: "Intel Matches", value: data.threatIntelMatches, icon: Target, color: "text-soc-accent", link: "/threat-intelligence" },
-    { label: "MTTD", value: data.mttd, icon: Clock, color: "text-gray-400", link: "/analytics" },
-    { label: "MTTR", value: data.mttr, icon: Clock, color: "text-gray-400", link: "/analytics" },
+    { label: "High Risk Assets", value: data.highRiskAssets, icon: Server, color: "text-soc-danger" },
+    { label: "Security Score", value: `${data.securityScore}/100`, icon: ShieldCheck, color: "text-soc-success" },
+    { label: "Risk Score", value: `${data.overallRiskScore}/100`, icon: Shield, color: "text-soc-warning" }
   ];
+
+  // Only push deferred synthetic metrics if they actually contain data
+  if (data.threatIntelMatches > 0) {
+    kpis.push({ label: "Intel Matches", value: data.threatIntelMatches as any, icon: Target, color: "text-soc-accent", link: "/threat-intelligence" });
+  }
+  if (data.mttd) {
+    kpis.push({ label: "MTTD", value: data.mttd as any, icon: Clock, color: "text-gray-400" });
+  }
+  if (data.mttr) {
+    kpis.push({ label: "MTTR", value: data.mttr as any, icon: Clock, color: "text-gray-400" });
+  }
 
   return (
     <motion.div 
@@ -61,19 +69,21 @@ export default function KPIGrid({ data }: KPIGridProps) {
     >
       {kpis.map((kpi, index) => {
         const Icon = kpi.icon;
+        const cardContent = (
+          <div className={`glass-card p-4 rounded-xl flex flex-col h-full hover:bg-soc-card-hover/50 hover:border-soc-accent/50 transition-all duration-300 group shadow-lg hover:shadow-soc-accent/10 ${kpi.link ? 'cursor-pointer' : 'cursor-default'}`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-400 group-hover:text-gray-300 transition-colors">{kpi.label}</span>
+              <Icon className={`w-4 h-4 ${kpi.color} opacity-70 group-hover:opacity-100 transition-opacity`} />
+            </div>
+            <div className="mt-auto">
+              <span className="text-2xl font-bold text-white tracking-tight">{kpi.value}</span>
+            </div>
+          </div>
+        );
+
         return (
           <motion.div key={index} variants={itemVariants}>
-            <Link href={kpi.link}>
-              <div className="glass-card p-4 rounded-xl flex flex-col h-full hover:bg-soc-card-hover/50 hover:border-soc-accent/50 transition-all duration-300 group cursor-pointer shadow-lg hover:shadow-soc-accent/10">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-400 group-hover:text-gray-300 transition-colors">{kpi.label}</span>
-                  <Icon className={`w-4 h-4 ${kpi.color} opacity-70 group-hover:opacity-100 transition-opacity`} />
-                </div>
-                <div className="mt-auto">
-                  <span className="text-2xl font-bold text-white tracking-tight">{kpi.value}</span>
-                </div>
-              </div>
-            </Link>
+            {kpi.link ? <Link href={kpi.link}>{cardContent}</Link> : cardContent}
           </motion.div>
         );
       })}
