@@ -13,9 +13,11 @@ router = APIRouter()
 async def list_organizations(
     db: AsyncSession = Depends(get_db),
     pagination: PaginationParams = Depends(get_pagination),
-    _=Depends(require_permissions(["users:read"]))
+    current_user = Depends(require_permissions(["users:read"]))
 ):
-    return await organization_service.repository.get_all(db, skip=pagination.skip, limit=pagination.limit)
+    # Only return the user's organization
+    org = await organization_service.repository.get(db, current_user.org_id)
+    return [org] if org else []
 
 @router.post("", response_model=OrganizationResponse)
 async def create_organization(

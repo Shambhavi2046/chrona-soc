@@ -1,81 +1,65 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import ModuleHeader from "@/components/common/ModuleHeader";
-import { Users, RefreshCw, ShieldPlus, UserPlus } from "lucide-react";
-import SummaryCards from "@/components/administration/SummaryCards";
-import OrganisationManagement from "@/components/administration/OrganisationManagement";
+import { Users, RefreshCw } from "lucide-react";
 import UserManagement from "@/components/administration/UserManagement";
 import RolesPermissions from "@/components/administration/RolesPermissions";
-import TeamManagement from "@/components/administration/TeamManagement";
-import AuditLog from "@/components/administration/AuditLog";
-import ActiveSessions from "@/components/administration/ActiveSessions";
-import SecuritySettings from "@/components/administration/SecuritySettings";
-import Analytics from "@/components/administration/Analytics";
-
-import { 
-  mockOrganisations, 
-  mockUsers, 
-  mockTeams, 
-  mockAuditLogs, 
-  mockSessions 
-} from "@/lib/mocks/admin";
-
-import MockModeBanner from "@/components/common/MockModeBanner";
+import { getAdminUsers, getAdminRoles, AdminUser, AdminRole } from "@/services/admin";
 
 export default function AdministrationWorkspace() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [fetchedUsers, fetchedRoles] = await Promise.all([
+        getAdminUsers(),
+        getAdminRoles()
+      ]);
+      setUsers(fetchedUsers);
+      setRoles(fetchedRoles);
+    } catch (error) {
+      console.error("Failed to load administration data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500 pb-24">
       {/* Header */}
       <ModuleHeader
         title="Administration"
-        subtitle="Manage organisations, users, roles and permissions."
+        subtitle="Manage users, roles and permissions for your organization."
         icon={Users}
         actions={[
-          { label: "Refresh", icon: RefreshCw },
-          { label: "Create Role", icon: ShieldPlus },
-          { label: "Invite User", icon: UserPlus, variant: "primary" }
+          { label: "Refresh", icon: RefreshCw, onClick: loadData },
         ]}
       />
 
-      <MockModeBanner moduleName="Administration" />
-
-      {/* Summary KPI Cards */}
-      <SummaryCards />
-
-      {/* Security Policies & Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SecuritySettings />
-        <Analytics />
-      </div>
-
-      {/* Organisation Management */}
-      <OrganisationManagement organisations={mockOrganisations} />
-
-      {/* Users and Teams */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 h-[450px]">
-          <UserManagement users={mockUsers} />
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-soc-accent"></div>
         </div>
-        <div className="xl:col-span-1 h-[450px] overflow-y-auto">
-          <TeamManagement teams={mockTeams} />
-        </div>
-      </div>
-
-      {/* Roles & Permissions Builder */}
-      <div className="h-[500px]">
-        <RolesPermissions />
-      </div>
-
-      {/* Logs & Sessions */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 h-[500px]">
-        <div className="xl:col-span-2 h-full">
-          <AuditLog logs={mockAuditLogs} />
-        </div>
-        <div className="xl:col-span-1 h-full">
-          <ActiveSessions sessions={mockSessions} />
-        </div>
-      </div>
-
+      ) : (
+        <>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="h-[600px]">
+              <UserManagement users={users as any} onRefresh={loadData} />
+            </div>
+            <div className="h-[600px]">
+              <RolesPermissions roles={roles as any} onRefresh={loadData} />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

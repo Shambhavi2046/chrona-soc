@@ -13,7 +13,6 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(min_length=8)
-    org_id: uuid.UUID
     role_ids: List[uuid.UUID] = []
 
 class UserUpdate(BaseModel):

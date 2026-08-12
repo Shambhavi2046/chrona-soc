@@ -13,7 +13,9 @@ router = APIRouter()
 async def list_audit_logs(
     db: AsyncSession = Depends(get_db),
     pagination: PaginationParams = Depends(get_pagination),
-    _=Depends(require_permissions(["users:read"]))
+    current_user = Depends(require_permissions(["users:read"]))
 ):
-    result = await db.execute(select(AuditLog).offset(pagination.skip).limit(pagination.limit))
+    result = await db.execute(
+        select(AuditLog).filter(AuditLog.org_id == current_user.org_id).offset(pagination.skip).limit(pagination.limit)
+    )
     return result.scalars().all()

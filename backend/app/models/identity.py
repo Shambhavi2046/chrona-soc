@@ -21,9 +21,14 @@ class UserRole(Base, TimestampMixin):
 class Role(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "roles"
 
-    name = Column(String(100), nullable=False, unique=True)
+    name = Column(String(100), nullable=False)
     description = Column(String(255))
     permissions = Column(JSON, default=list)
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
+
+    @property
+    def is_system(self) -> bool:
+        return self.org_id is None
 
     users = relationship("User", secondary="user_roles", back_populates="roles")
 
@@ -58,6 +63,7 @@ class AuditLog(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "audit_logs"
 
     user_id = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     action = Column(String(100), nullable=False, index=True)
     resource = Column(String(255), nullable=False)
     ip_address = Column(String(50))

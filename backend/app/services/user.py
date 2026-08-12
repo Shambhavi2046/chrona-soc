@@ -11,14 +11,14 @@ from app.models.identity import UserRole
 import uuid
 
 class UserService(BaseService[UserRepository]):
-    async def create_user(self, db: AsyncSession, user_in: UserCreate) -> dict:
+    async def create_user(self, db: AsyncSession, user_in: UserCreate, org_id: uuid.UUID) -> dict:
         # Check if email exists
         existing_user = await self.repository.get_by_email(db, user_in.email)
         if existing_user:
             raise BadRequestException("User with this email already exists")
             
         # Check org exists
-        org = await organization_repo.get(db, user_in.org_id)
+        org = await organization_repo.get(db, org_id)
         if not org:
             raise BadRequestException("Organization does not exist")
 
@@ -26,7 +26,7 @@ class UserService(BaseService[UserRepository]):
             email=user_in.email,
             name=user_in.name,
             hashed_password=get_password_hash(user_in.password),
-            org_id=user_in.org_id,
+            org_id=org_id,
             status=user_in.status,
             mfa_enabled=user_in.mfa_enabled
         )
@@ -38,12 +38,12 @@ class UserService(BaseService[UserRepository]):
             db.add(UserRole(user_id=db_user.id, role_id=role_id))
             
         await db.commit()
-        await db.refresh(db_user)
+        await db.refresh(db_user, attribute_names=["roles"])
         return db_user
 
-    async def update_user(self, db: AsyncSession, user_id: uuid.UUID, user_in: UserUpdate) -> dict:
+    async def update_user(self, db: AsyncSession, user_id: uuid.UUID, user_in: UserUpdate, org_id: uuid.UUID) -> dict:
         db_user = await self.repository.get(db, user_id)
-        if not db_user:
+        if not db_user or str(db_user.org_id) != str(org_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
             
         update_data = user_in.dict(exclude_unset=True)
@@ -59,7 +59,7 @@ class UserService(BaseService[UserRepository]):
             
         db.add(db_user)
         await db.commit()
-        await db.refresh(db_user)
+        await db.refresh(db_user, attribute_names=["roles"])
         return db_user
 
 user_service = UserService(user_repo)

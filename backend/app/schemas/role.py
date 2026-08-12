@@ -19,5 +19,6 @@ class RoleUpdate(BaseModel):
 class RoleResponse(RoleBase):
     id: uuid.UUID
     created_at: datetime
+    is_system: bool
     
     model_config = ConfigDict(from_attributes=True)
