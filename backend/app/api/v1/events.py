@@ -8,6 +8,7 @@ from app.schemas.events import EventCreate, EventResponse, EventSearch
 from app.services.events import event_service
 from app.repositories.event_repository import event_repository
 from app.utils.validation import get_pagination, PaginationParams
+from app.middleware.auth import get_current_user
 from app.services.detection.engine import detection_engine
 import asyncio
 
@@ -32,14 +33,18 @@ async def run_detections_for_batch(event_ids: List[uuid.UUID]):
 async def ingest_event(
     event_in: EventCreate,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Any = Depends(get_current_user)
 ):
     """Ingest a single security event."""
     try:
-        event = await event_service.ingest_single_event(db, event_in)
-        if event:
-            background_tasks.add_task(run_detections_for_event, event.id)
+        event = await event_service.ingest_single_event(db, event_in, current_user.org_id)
+        if not event:
+            raise HTTPException(status_code=409, detail="Event conflict")
+        background_tasks.add_task(run_detections_for_event, event.id)
         return event
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to ingest event: {str(e)}")
 
@@ -47,44 +52,36 @@ async def ingest_event(
 async def ingest_bulk_events(
     events_in: List[EventCreate],
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Any = Depends(get_current_user)
 ):
     """Bulk ingest security events."""
     try:
-        # Since ingest_bulk_events returns number of inserted, we modify it to return events if we want exact IDs,
-        # or we can just fetch the most recent N events. But for phase 2E, bulk ingestion is mainly for seed script.
-        # Actually, let's just trigger a background task to process the last N events or we can just process all events in the batch.
-        # It's better if `event_service.ingest_bulk_events` returned the list of inserted models.
-        # Since we don't want to rewrite `event_service`, we can just fetch the events by their event_id provided in the input payload.
-        inserted = await event_service.ingest_bulk_events(db, events_in)
+        inserted = await event_service.ingest_bulk_events(db, events_in, current_user.org_id)
         
         # After bulk ingest, fetch the inserted events by event_id to pass to engine
         event_ids = [e.event_id for e in events_in]
         # We need their UUIDs for the background task
-        # Let's just create a simpler task that fetches by event_id
-        async def process_by_event_ids(e_ids: List[str]):
-            async with async_session_maker() as session:
-                for chunk in [e_ids[i:i + 50] for i in range(0, len(e_ids), 50)]:
-                    for e_id in chunk:
-                        # Find event
-                        # Not heavily optimized but fine for background
-                        result = await event_repository.search(session, source=None, skip=0, limit=1) # Need specific method
-                        # To avoid writing a new repo method, we can just let seed script trigger engine directly,
-                        # or we can write a tiny query here.
-                        # Wait, we can just use a raw query
-                        pass
-
-        # Since it's a bit complex to fetch by event_id efficiently without a repo method,
-        # we will add a small query here for the background task.
+        org_id = current_user.org_id
         async def async_bulk_detect(e_ids: List[str]):
             from sqlalchemy import select
             from app.models.event_model import SecurityEvent
+            import logging
+            logger = logging.getLogger(__name__)
             async with async_session_maker() as session:
                 for e_id in e_ids:
-                    result = await session.execute(select(SecurityEvent).where(SecurityEvent.event_id == e_id))
-                    ev = result.scalar_one_or_none()
-                    if ev:
-                        await detection_engine.evaluate_event(session, ev)
+                    try:
+                        result = await session.execute(
+                            select(SecurityEvent).where(
+                                SecurityEvent.event_id == e_id,
+                                SecurityEvent.tenant_id == org_id
+                            )
+                        )
+                        ev = result.scalar_one_or_none()
+                        if ev:
+                            await detection_engine.evaluate_event(session, ev)
+                    except Exception as e:
+                        logger.error(f"Failed to process event {e_id} during bulk detection: {e}", exc_info=True)
                         
         background_tasks.add_task(async_bulk_detect, event_ids)
         return {"message": f"Successfully processed {len(events_in)} events. Inserted {inserted} new events."}
@@ -94,22 +91,25 @@ async def ingest_bulk_events(
 @router.get("", response_model=List[EventResponse])
 async def list_events(
     db: AsyncSession = Depends(get_db),
-    pagination: PaginationParams = Depends(get_pagination)
+    pagination: PaginationParams = Depends(get_pagination),
+    current_user: Any = Depends(get_current_user)
 ):
     """List most recent security events."""
-    return await event_repository.search(db, skip=pagination.skip, limit=pagination.limit)
+    return await event_repository.search(db, skip=pagination.skip, limit=pagination.limit, org_id=current_user.org_id)
 
 @router.get("/stats", response_model=dict)
 async def get_event_stats(
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Any = Depends(get_current_user)
 ):
     """Get aggregated event statistics."""
-    return await event_repository.get_stats(db)
+    return await event_repository.get_stats(db, org_id=current_user.org_id)
 
 @router.get("/search", response_model=List[EventResponse])
 async def search_events(
     search_params: EventSearch = Depends(),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Any = Depends(get_current_user)
 ):
     """Search security events with filters."""
     return await event_repository.search(
@@ -121,16 +121,18 @@ async def search_events(
         hostname=search_params.hostname,
         user_account=search_params.user_account,
         start_time=search_params.start_time,
-        end_time=search_params.end_time
+        end_time=search_params.end_time,
+        org_id=current_user.org_id
     )
 
 @router.get("/{id}", response_model=EventResponse)
 async def get_event(
     id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Any = Depends(get_current_user)
 ):
     """Get a specific security event by ID."""
-    event = await event_repository.get_by_id(db, id)
+    event = await event_repository.get_by_id(db, id, org_id=current_user.org_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     return event
