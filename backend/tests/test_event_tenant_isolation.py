@@ -215,3 +215,69 @@ async def test_bulk_detection_tenant_isolation(async_client: AsyncClient, monkey
     # Org B's valid event should be processed, but Org A's should be ignored
     assert "EVT-BULK-B1" in processed_events
     assert "EVT-BULK-A1" not in processed_events
+
+@pytest.mark.asyncio
+async def test_detection_engine_tenant_isolation(async_client: AsyncClient, monkeypatch, db_session):
+    """TEST H: Detection engine persistence and tenant isolation"""
+    from app.models.operations import Alert
+    from sqlalchemy import select
+
+    # Mock async_session_maker to use our test db_session so background task writes to our test DB
+    from contextlib import asynccontextmanager
+    @asynccontextmanager
+    async def mock_async_session_maker():
+        yield db_session
+    monkeypatch.setattr("app.api.v1.events.async_session_maker", mock_async_session_maker)
+
+    # 1. Org A Event triggering brute force rule
+    switch_user(user_a)
+    resp_a = await async_client.post("/api/v1/events/ingest", json={
+        "event_id": "EVT-DET-A-1",
+        "timestamp": "2023-10-01T12:00:00Z",
+        "source": "aws",
+        "event_type": "logon",
+        "severity": "low",
+        "status": "failure",
+        "normalized_data": {"threat": "brute_force"},
+        "raw_event": {}
+    })
+    assert resp_a.status_code == 201
+
+    await asyncio.sleep(0.2) # Allow background detection task to run
+
+    # 2. Org B Event triggering brute force rule
+    switch_user(user_b)
+    resp_b = await async_client.post("/api/v1/events/ingest", json={
+        "event_id": "EVT-DET-B-1",
+        "timestamp": "2023-10-01T12:00:00Z",
+        "source": "aws",
+        "event_type": "logon",
+        "severity": "low",
+        "status": "failure",
+        "normalized_data": {"threat": "brute_force"},
+        "raw_event": {}
+    })
+    assert resp_b.status_code == 201
+
+    await asyncio.sleep(0.2) # Allow background detection task to run
+
+    # 3. Verify DB persistence and tenant assignment
+    alerts_result = await db_session.execute(select(Alert).filter(Alert.org_id == org_a_id))
+    alerts_a = alerts_result.scalars().all()
+    alert_a = next((a for a in alerts_a if a.raw_log.get("event_id") == "EVT-DET-A-1"), None)
+    assert alert_a is not None, "Detection failed to create Alert for Org A (IntegrityError?)"
+    assert alert_a.org_id == org_a_id, "Alert A org_id does not match Event A tenant_id"
+
+    alerts_result_b = await db_session.execute(select(Alert).filter(Alert.org_id == org_b_id))
+    alerts_b = alerts_result_b.scalars().all()
+    alert_b = next((a for a in alerts_b if a.raw_log.get("event_id") == "EVT-DET-B-1"), None)
+    assert alert_b is not None, "Detection failed to create Alert for Org B"
+    assert alert_b.org_id == org_b_id, "Alert B org_id does not match Event B tenant_id"
+
+    # 4. Verify API Tenant Isolation (Org B cannot fetch Org A's alerts)
+    switch_user(user_b)
+    resp = await async_client.get("/api/v1/alerts")
+    if resp.status_code == 200:
+        alert_ids = [a["id"] for a in resp.json()]
+        assert str(alert_a.id) not in alert_ids, "Org B can see Org A's alert!"
+        assert str(alert_b.id) in alert_ids, "Org B cannot see its own alert!"

@@ -48,6 +48,7 @@ class DetectionEngine:
                     
                     new_alert = Alert(
                         id=uuid.uuid4(),
+                        org_id=event.tenant_id,
                         title=f"{meta['name']} Detected",
                         description=meta["description"],
                         threat_type=meta.get("threat_type", "Suspicious Activity"),
