@@ -37,11 +37,11 @@ export default function AlertTable({ alerts }: AlertTableProps) {
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col">
       <div className="p-6 border-b border-soc-border flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center">
+        <h3 className="text-lg font-semibold text-soc-text-primary flex items-center">
           <AlertTriangle className="w-5 h-5 mr-2 text-soc-warning" />
           Detected Alerts
         </h3>
-        <span className="text-sm font-medium text-gray-400">
+        <span className="text-sm font-medium text-soc-text-secondary">
           Showing {filteredAlerts.length} {filteredAlerts.length === 1 ? 'alert' : 'alerts'}
           {query && " (filtered)"}
         </span>
@@ -50,7 +50,7 @@ export default function AlertTable({ alerts }: AlertTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-soc-bg/50 text-gray-400 text-xs uppercase tracking-wider">
+            <tr className="bg-soc-bg/50 text-soc-text-secondary text-xs uppercase tracking-wider">
               <th className="px-6 py-4 font-medium">Alert ID</th>
               <th className="px-6 py-4 font-medium">Severity</th>
               <th className="px-6 py-4 font-medium">Threat Type</th>
@@ -64,21 +64,21 @@ export default function AlertTable({ alerts }: AlertTableProps) {
           <tbody className="divide-y divide-soc-border">
             {filteredAlerts.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-8 text-center text-soc-text-muted">
                   {query ? "No alerts match your search." : "No alerts detected. All clear."}
                 </td>
               </tr>
             ) : (
               filteredAlerts.map((alert) => (
                 <tr key={alert.id} className="hover:bg-soc-card-hover/50 transition-colors group">
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-400 font-mono text-sm">
+                  <td className="px-6 py-4 whitespace-nowrap text-soc-text-secondary font-mono text-sm">
                     {alert.id.toString().split('-')[0].toUpperCase()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <SeverityBadge score={alert.risk_score} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-white">{alert.threat_type}</div>
+                    <div className="font-medium text-soc-text-primary">{alert.threat_type}</div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
@@ -88,23 +88,23 @@ export default function AlertTable({ alerts }: AlertTableProps) {
                           style={{ width: `${alert.risk_score}%` }}
                         ></div>
                       </div>
-                      <span className={`font-mono text-sm ${alert.risk_score > 80 ? 'text-soc-danger font-bold' : 'text-gray-400'}`}>
+                      <span className={`font-mono text-sm ${alert.risk_score > 80 ? 'text-soc-danger font-bold' : 'text-soc-text-secondary'}`}>
                         {alert.risk_score}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-300 flex items-center capitalize">
+                    <span className="text-sm text-soc-text-secondary flex items-center capitalize">
                       {alert.status.toLowerCase() === 'resolved' && <ShieldCheck className="w-4 h-4 mr-1 text-soc-success" />}
                       {alert.status.toLowerCase() === 'blocked' && <Shield className="w-4 h-4 mr-1 text-soc-accent" />}
                       {(alert.status.toLowerCase() === 'open' || alert.status.toLowerCase() === 'investigating') && <ShieldAlert className="w-4 h-4 mr-1 text-soc-warning animate-pulse" />}
                       {alert.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">
+                  <td className="px-6 py-4 text-sm text-soc-text-secondary whitespace-nowrap">
                     <ClientDate date={alert.created_at} format="full" />
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">
+                  <td className="px-6 py-4 text-sm text-soc-text-muted font-mono">
                     {alert.log_id ? `LOG-${alert.log_id}` : `SYS`}
                   </td>
                   <td className="px-6 py-4 text-right">

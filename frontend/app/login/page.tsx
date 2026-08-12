@@ -58,10 +58,10 @@ export default function LoginPage() {
       <div className="glass max-w-md w-full p-8 rounded-2xl border border-soc-border relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="flex flex-col items-center mb-8">
           <div className="h-14 w-14 bg-gradient-to-br from-soc-accent to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-soc-accent/20 mb-4">
-            <Shield className="w-8 h-8 text-white" />
+            <Shield className="w-8 h-8 text-soc-text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Welcome to Chrona</h1>
-          <p className="text-sm text-gray-400 mt-2">Sign in to the Security Operations Center</p>
+          <h1 className="text-2xl font-bold text-soc-text-primary">Welcome to Chrona</h1>
+          <p className="text-sm text-soc-text-secondary mt-2">Sign in to the Security Operations Center</p>
         </div>
 
         {error && (
@@ -73,30 +73,30 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Email Address</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-soc-text-muted" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
+                className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-4 text-soc-text-primary focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
                 placeholder="analyst@chrona.local"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Password</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-soc-text-muted" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
+                className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-4 text-soc-text-primary focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
                 placeholder="••••••••"
               />
             </div>
@@ -118,7 +118,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-gray-500">
+        <div className="mt-6 text-center text-xs text-soc-text-muted">
           For demo purposes, the default admin account is pre-filled.
         </div>
       </div>

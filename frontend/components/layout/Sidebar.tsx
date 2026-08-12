@@ -43,12 +43,12 @@ export default function Sidebar() {
       {/* Logo Area */}
       <div className="h-16 flex items-center px-6 border-b border-soc-border">
         <Shield className="w-6 h-6 text-soc-accent mr-3" />
-        <span className="font-bold text-lg tracking-wide text-white">Chrona SOC</span>
+        <span className="font-bold text-lg tracking-wide text-soc-text-primary">Chrona SOC</span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 px-2">
+        <div className="text-xs font-semibold text-soc-text-muted uppercase tracking-wider mb-4 px-2">
           Menu
         </div>
         {navItems.map((item) => {
@@ -78,7 +78,7 @@ export default function Sidebar() {
       
       {/* Bottom version info */}
       <div className="p-4 border-t border-soc-border">
-        <div className="text-xs text-gray-500 text-center">
+        <div className="text-xs text-soc-text-muted text-center">
           v2.4.1 (Enterprise)
         </div>
       </div>

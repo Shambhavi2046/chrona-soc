@@ -16,10 +16,10 @@ export default function ThreatAnalysisCard({ analysis }: ThreatAnalysisCardProps
         <div className="p-2 bg-soc-accent/20 rounded-lg mr-3 glow-accent">
           <BrainCircuit className="w-6 h-6 text-soc-accent animate-pulse" />
         </div>
-        <h3 className="text-lg font-semibold text-white">AI Threat Analysis</h3>
+        <h3 className="text-lg font-semibold text-soc-text-primary">AI Threat Analysis</h3>
       </div>
 
-      <div className="relative z-10 text-gray-300 leading-relaxed space-y-4 font-medium">
+      <div className="relative z-10 text-soc-text-secondary leading-relaxed space-y-4 font-medium">
         {analysis.split('\n').map((paragraph, index) => (
           <p key={index}>{paragraph}</p>
         ))}

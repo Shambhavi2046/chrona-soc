@@ -1,21 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import MockModeBanner from "@/components/common/MockModeBanner";
 import ModuleHeader from "@/components/common/ModuleHeader";
-import { Settings, Save, RotateCcw } from "lucide-react";
+import { Settings } from "lucide-react";
 import SettingsSidebar, { SettingsTab } from "@/components/settings/SettingsSidebar";
 import ProfileSettings from "@/components/settings/ProfileSettings";
-import SecuritySettings from "@/components/settings/SecuritySettings";
-import NotificationSettings from "@/components/settings/NotificationSettings";
 import AppearanceSettings from "@/components/settings/AppearanceSettings";
-import AICopilotSettings from "@/components/settings/AICopilotSettings";
-import IntegrationSettings from "@/components/settings/IntegrationSettings";
-import SystemPreferences from "@/components/settings/SystemPreferences";
-import DataBackupSettings from "@/components/settings/DataBackupSettings";
 import AboutSettings from "@/components/settings/AboutSettings";
-
-import { mockProfile, mockDevices, mockIntegrationStatuses, mockHealth } from "@/lib/mocks/settings";
 
 export default function SettingsWorkspace() {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
@@ -23,25 +14,13 @@ export default function SettingsWorkspace() {
   const renderActiveTab = () => {
     switch (activeTab) {
       case "profile":
-        return <ProfileSettings profile={mockProfile} />;
-      case "security":
-        return <SecuritySettings devices={mockDevices} />;
-      case "notifications":
-        return <NotificationSettings />;
+        return <ProfileSettings />;
       case "appearance":
         return <AppearanceSettings />;
-      case "copilot":
-        return <AICopilotSettings />;
-      case "integrations":
-        return <IntegrationSettings />;
-      case "system":
-        return <SystemPreferences />;
-      case "backup":
-        return <DataBackupSettings />;
       case "about":
-        return <AboutSettings health={mockHealth} />;
+        return <AboutSettings />;
       default:
-        return <ProfileSettings profile={mockProfile} />;
+        return <ProfileSettings />;
     }
   };
 
@@ -50,15 +29,9 @@ export default function SettingsWorkspace() {
       {/* Header */}
       <ModuleHeader
         title="Platform Settings"
-        subtitle="Manage your account, security, preferences, integrations, and system configuration."
+        subtitle="Manage your account, appearance, and view system information."
         icon={Settings}
-        actions={[
-          { label: "Reset Defaults", icon: RotateCcw },
-          { label: "Save Changes", icon: Save, variant: "primary" }
-        ]}
       />
-
-      <MockModeBanner moduleName="Platform Settings" />
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Sidebar Navigation */}

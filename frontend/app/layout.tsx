@@ -13,6 +13,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import ThemeScript from "@/components/layout/ThemeScript";
+
 export const metadata: Metadata = {
   title: "Chrona SOC - AI Security Platform",
   description: "Enterprise Security Operations Center",
@@ -26,8 +28,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="min-h-full flex flex-col bg-soc-bg text-foreground">
         <DashboardLayout>{children}</DashboardLayout>
       </body>

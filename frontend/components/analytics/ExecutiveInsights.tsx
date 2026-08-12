@@ -18,8 +18,8 @@ export default function ExecutiveInsights({ insights }: ExecutiveInsightsProps) 
           <BrainCircuit className="w-5 h-5 text-soc-accent" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Executive AI Insights</h3>
-          <p className="text-xs text-gray-400">Automated synthesis of current SOC telemetry</p>
+          <h3 className="text-lg font-semibold text-soc-text-primary">Executive AI Insights</h3>
+          <p className="text-xs text-soc-text-secondary">Automated synthesis of current SOC telemetry</p>
         </div>
       </div>
 
@@ -27,7 +27,7 @@ export default function ExecutiveInsights({ insights }: ExecutiveInsightsProps) 
         {insights.map((insight, idx) => (
           <div key={idx} className="bg-soc-bg border border-soc-border rounded-lg p-4 flex items-start">
             <span className="text-soc-accent mr-3 mt-1 text-lg leading-none">•</span>
-            <p className="text-sm text-gray-300 font-medium leading-relaxed">{insight}</p>
+            <p className="text-sm text-soc-text-secondary font-medium leading-relaxed">{insight}</p>
           </div>
         ))}
       </div>

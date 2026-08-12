@@ -70,27 +70,27 @@ export default function InvestigationHeader({
       <div>
         <Link 
           href="/alerts" 
-          className="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors mb-4 group"
+          className="inline-flex items-center text-sm font-medium text-soc-text-secondary hover:text-soc-text-primary transition-colors mb-4 group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           Back to Alerts
         </Link>
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center">
+          <h1 className="text-3xl font-bold text-soc-text-primary tracking-tight flex items-center">
             Incident Investigation
           </h1>
           <SeverityBadge score={riskScore} />
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-400">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-soc-text-secondary">
           <span className="font-mono bg-soc-card px-2 py-1 rounded border border-soc-border">
             ALT-{String(alertId).padStart(4, '0')}
           </span>
           <span className="flex items-center">
-            <ShieldAlert className="w-4 h-4 mr-1 text-gray-500" />
-            Threat: <strong className="text-white ml-1">{threatType}</strong>
+            <ShieldAlert className="w-4 h-4 mr-1 text-soc-text-muted" />
+            Threat: <strong className="text-soc-text-primary ml-1">{threatType}</strong>
           </span>
           <span className="flex items-center capitalize">
-            Status: <strong className="text-white ml-1">{status}</strong>
+            Status: <strong className="text-soc-text-primary ml-1">{status}</strong>
           </span>
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function InvestigationHeader({
         <button 
           onClick={handleExport}
           disabled={isExporting || !investigationId}
-          className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
+          className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-soc-text-primary text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
         >
           {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
           {isExporting ? "Exporting..." : "Export Report"}

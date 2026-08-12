@@ -24,16 +24,16 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ per
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center">
+          <h1 className="text-2xl font-bold text-soc-text-primary tracking-tight flex items-center">
             <BarChart3 className="w-6 h-6 mr-3 text-soc-accent" />
             Analytics & Security Intelligence
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-soc-text-secondary mt-1">
             Enterprise threat correlation, MITRE mappings, and risk analytics
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button disabled className="flex items-center px-4 py-2 bg-soc-bg/50 border border-soc-border text-gray-500 text-sm font-medium rounded-lg opacity-50 cursor-not-allowed shadow-sm" title="Advanced filtering is currently unavailable">
+          <button disabled className="flex items-center px-4 py-2 bg-soc-bg/50 border border-soc-border text-soc-text-muted text-sm font-medium rounded-lg opacity-50 cursor-not-allowed shadow-sm" title="Advanced filtering is currently unavailable">
             <Filter className="w-4 h-4 mr-2" />
             Interactive Filters
           </button>
@@ -67,11 +67,11 @@ export default async function AnalyticsPage(props: { searchParams: Promise<{ per
       {/* Additional Analytics Rows can be modularized here */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 opacity-75">
         <div className="glass-card p-4 rounded-lg flex items-center justify-between border border-soc-border">
-          <span className="text-sm text-gray-400">Open Alerts</span>
-          <span className="font-mono text-white font-bold">{analyticsData.alertAnalytics.open}</span>
+          <span className="text-sm text-soc-text-secondary">Open Alerts</span>
+          <span className="font-mono text-soc-text-primary font-bold">{analyticsData.alertAnalytics.open}</span>
         </div>
         <div className="glass-card p-4 rounded-lg flex items-center justify-between border border-soc-border">
-          <span className="text-sm text-gray-400">False Positives (Auto-suppressed)</span>
+          <span className="text-sm text-soc-text-secondary">False Positives (Auto-suppressed)</span>
           <span className="font-mono text-soc-success font-bold">{analyticsData.alertAnalytics.falsePositive}</span>
         </div>
       </div>

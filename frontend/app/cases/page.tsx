@@ -17,11 +17,11 @@ export default async function CasesDashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center">
+          <h1 className="text-2xl font-bold text-soc-text-primary tracking-tight flex items-center">
             <Briefcase className="w-6 h-6 mr-3 text-soc-accent" />
             Case Management
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-soc-text-secondary mt-1">
             Enterprise incident response, evidence tracking, and SLA monitoring
           </p>
         </div>

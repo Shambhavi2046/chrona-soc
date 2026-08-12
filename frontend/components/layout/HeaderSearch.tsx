@@ -31,13 +31,13 @@ function SearchInput() {
   return (
     <div className="relative w-full max-w-md">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Search className="h-4 w-4 text-gray-500" />
+        <Search className="h-4 w-4 text-soc-text-muted" />
       </div>
       <input
         type="text"
         value={query}
         onChange={handleSearch}
-        className="block w-full pl-10 pr-3 py-1.5 border border-soc-border rounded-lg leading-5 bg-soc-bg text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-soc-accent focus:border-soc-accent sm:text-sm transition-colors"
+        className="block w-full pl-10 pr-3 py-1.5 border border-soc-border rounded-lg leading-5 bg-soc-bg text-soc-text-secondary placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-soc-accent focus:border-soc-accent sm:text-sm transition-colors"
         placeholder="Search alerts, IPs, domains, hashes..."
       />
     </div>

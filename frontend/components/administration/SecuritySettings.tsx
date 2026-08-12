@@ -11,11 +11,11 @@ export default function SecuritySettings() {
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 h-full">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-white font-medium">
+        <div className="flex items-center gap-2 text-soc-text-primary font-medium">
           <ShieldCheck className="w-5 h-5 text-soc-accent" />
           Security Policies
         </div>
-        <button className="text-xs text-soc-accent hover:text-white transition-colors">
+        <button className="text-xs text-soc-accent hover:text-soc-text-primary transition-colors">
           Configure
         </button>
       </div>
@@ -26,12 +26,12 @@ export default function SecuritySettings() {
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
                 <policy.icon className={`w-4 h-4 ${policy.color}`} />
-                <h4 className="text-sm font-medium text-white">{policy.title}</h4>
+                <h4 className="text-sm font-medium text-soc-text-primary">{policy.title}</h4>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mb-3">{policy.desc}</p>
+            <p className="text-xs text-soc-text-muted mb-3">{policy.desc}</p>
             <div className="flex justify-between items-center text-xs">
-              <span className="text-gray-400 font-medium">{policy.status}</span>
+              <span className="text-soc-text-secondary font-medium">{policy.status}</span>
               <button className="text-soc-accent opacity-0 group-hover:opacity-100 transition-opacity">Edit</button>
             </div>
           </div>

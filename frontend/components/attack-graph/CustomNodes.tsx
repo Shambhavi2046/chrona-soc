@@ -15,8 +15,8 @@ const BaseNode = ({ icon: Icon, label, type, selected, color, badge }: any) => {
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[9px] uppercase tracking-wider font-semibold text-gray-500">{type}</span>
-          <span className="text-xs font-bold text-gray-200 truncate max-w-[150px]">{label}</span>
+          <span className="text-[9px] uppercase tracking-wider font-semibold text-soc-text-muted">{type}</span>
+          <span className="text-xs font-bold text-soc-text-primary truncate max-w-[150px]">{label}</span>
         </div>
       </div>
       

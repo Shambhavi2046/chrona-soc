@@ -158,7 +158,7 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
         proOptions={{ hideAttribution: true }}
       >
         <Background color="#374151" gap={24} size={2} />
-        <Controls className="!bg-soc-card !border-soc-border !text-gray-300 fill-gray-300" />
+        <Controls className="!bg-soc-card !border-soc-border !text-soc-text-secondary fill-gray-300" />
         <MiniMap 
           nodeColor={(n) => {
             if (n.type === 'alert' || n.type === 'threat_actor') return '#ef4444';
@@ -172,10 +172,10 @@ export default function AttackGraphViewer({ topology }: AttackGraphViewerProps) 
         
         <Panel position="top-left" className="m-4">
           <div className="flex gap-2">
-            <button onClick={() => onLayout('LR')} className="px-3 py-1.5 bg-soc-card border border-soc-border hover:border-soc-accent rounded text-xs text-gray-300 hover:text-white transition-colors flex items-center gap-2">
+            <button onClick={() => onLayout('LR')} className="px-3 py-1.5 bg-soc-card border border-soc-border hover:border-soc-accent rounded text-xs text-soc-text-secondary hover:text-soc-text-primary transition-colors flex items-center gap-2">
               <RefreshCw className="w-3 h-3" /> Horizontal
             </button>
-            <button onClick={() => onLayout('TB')} className="px-3 py-1.5 bg-soc-card border border-soc-border hover:border-soc-accent rounded text-xs text-gray-300 hover:text-white transition-colors flex items-center gap-2">
+            <button onClick={() => onLayout('TB')} className="px-3 py-1.5 bg-soc-card border border-soc-border hover:border-soc-accent rounded text-xs text-soc-text-secondary hover:text-soc-text-primary transition-colors flex items-center gap-2">
               <RefreshCw className="w-3 h-3" /> Vertical
             </button>
           </div>

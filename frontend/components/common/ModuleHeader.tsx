@@ -19,11 +19,11 @@ export default function ModuleHeader({ title, subtitle, icon: Icon, actions = []
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center">
+        <h1 className="text-2xl font-bold text-soc-text-primary flex items-center">
           <Icon className="w-7 h-7 text-soc-accent mr-3" />
           {title}
         </h1>
-        <p className="text-gray-400 mt-1">{subtitle}</p>
+        <p className="text-soc-text-secondary mt-1">{subtitle}</p>
       </div>
       
       {actions.length > 0 && (

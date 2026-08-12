@@ -74,15 +74,15 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-soc-border bg-soc-card flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <h2 className="text-lg font-bold text-soc-text-primary flex items-center gap-2">
               <Activity className="w-5 h-5 text-soc-accent" />
               Event Details
             </h2>
-            <p className="text-sm font-mono text-gray-500 mt-0.5">{event.id}</p>
+            <p className="text-sm font-mono text-soc-text-muted mt-0.5">{event.id}</p>
           </div>
           <button 
             onClick={() => { setCopilotResponse(null); onClose(); }}
-            className="p-2 text-gray-400 hover:text-white hover:bg-soc-bg rounded-lg transition-colors"
+            className="p-2 text-soc-text-secondary hover:text-soc-text-primary hover:bg-soc-bg rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -94,11 +94,11 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 gap-4">
             <div className="glass-card p-4 rounded-xl border border-soc-border">
-              <p className="text-xs text-gray-500 mb-1">Timestamp</p>
-              <p className="text-sm text-gray-200"><ClientDate date={event.timestamp} format="full" /></p>
+              <p className="text-xs text-soc-text-muted mb-1">Timestamp</p>
+              <p className="text-sm text-soc-text-primary"><ClientDate date={event.timestamp} format="full" /></p>
             </div>
             <div className="glass-card p-4 rounded-xl border border-soc-border">
-              <p className="text-xs text-gray-500 mb-1">Severity</p>
+              <p className="text-xs text-soc-text-muted mb-1">Severity</p>
               <p className={`text-sm font-medium ${
                 event.severity === 'Critical' ? 'text-red-400' :
                 event.severity === 'High' ? 'text-orange-400' :
@@ -106,12 +106,12 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
               }`}>{event.severity}</p>
             </div>
             <div className="glass-card p-4 rounded-xl border border-soc-border">
-              <p className="text-xs text-gray-500 mb-1">Host</p>
-              <p className="text-sm font-mono text-gray-200">{event.host}</p>
+              <p className="text-xs text-soc-text-muted mb-1">Host</p>
+              <p className="text-sm font-mono text-soc-text-primary">{event.host}</p>
             </div>
             <div className="glass-card p-4 rounded-xl border border-soc-border">
-              <p className="text-xs text-gray-500 mb-1">User</p>
-              <p className="text-sm font-mono text-gray-200">{event.user}</p>
+              <p className="text-xs text-soc-text-muted mb-1">User</p>
+              <p className="text-sm font-mono text-soc-text-primary">{event.user}</p>
             </div>
           </div>
 
@@ -122,21 +122,21 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
                 <Bot className="w-4 h-4" />
                 Copilot Analysis
               </h3>
-              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">{copilotResponse}</p>
+              <p className="text-sm text-soc-text-secondary leading-relaxed whitespace-pre-wrap">{copilotResponse}</p>
             </div>
           )}
 
           {/* MITRE & IOC */}
           <div className="glass-card p-5 rounded-xl border border-soc-border">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+            <h3 className="text-sm font-bold text-soc-text-primary flex items-center gap-2 mb-4">
               <Target className="w-4 h-4 text-soc-accent" />
               Threat Intelligence
             </h3>
             <div className="space-y-4">
               <div>
-                <p className="text-xs text-gray-500 mb-1">MITRE ATT&CK Mapping</p>
+                <p className="text-xs text-soc-text-muted mb-1">MITRE ATT&CK Mapping</p>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs text-gray-300">
+                  <span className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs text-soc-text-secondary">
                     {event.mitre_tactic || "None"}
                   </span>
                   {event.mitre_technique && (
@@ -148,7 +148,7 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
               </div>
               {event.ioc_match && (
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">IOC Match</p>
+                  <p className="text-xs text-soc-text-muted mb-1">IOC Match</p>
                   <p className="text-sm font-mono text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">
                     {event.ioc_match}
                   </p>
@@ -159,17 +159,17 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
 
           {/* Raw Log */}
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-bold text-soc-text-primary flex items-center gap-2 mb-3">
               <Shield className="w-4 h-4 text-soc-accent" />
               Raw Event Payload
             </h3>
             <div className="bg-[#0D1117] border border-soc-border rounded-xl p-4 overflow-x-auto relative group">
-              <pre className="text-xs font-mono text-gray-300 leading-relaxed">
+              <pre className="text-xs font-mono text-soc-text-secondary leading-relaxed">
                 {event.raw_log ? JSON.stringify(JSON.parse(event.raw_log), null, 2) : "{}"}
               </pre>
               <button 
                 onClick={() => navigator.clipboard.writeText(event.raw_log)}
-                className="absolute top-2 right-2 px-3 py-1 bg-soc-card border border-soc-border hover:border-gray-500 rounded text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-all"
+                className="absolute top-2 right-2 px-3 py-1 bg-soc-card border border-soc-border hover:border-gray-500 rounded text-xs text-soc-text-secondary opacity-0 group-hover:opacity-100 transition-all"
               >
                 Copy JSON
               </button>
@@ -190,7 +190,7 @@ export default function EventDrawer({ event, onClose }: EventDrawerProps) {
           <button 
             onClick={handleAskCopilot}
             disabled={isAskingCopilot}
-            className="flex-1 py-2.5 bg-soc-bg hover:bg-soc-card-hover border border-soc-border disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 bg-soc-bg hover:bg-soc-card-hover border border-soc-border disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium text-soc-text-primary transition-colors flex items-center justify-center gap-2"
           >
             {isAskingCopilot ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Bot className="w-4 h-4" /> Ask Copilot</>}
           </button>

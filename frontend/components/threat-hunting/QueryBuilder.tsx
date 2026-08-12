@@ -37,13 +37,13 @@ export default function QueryBuilder({ query, onUpdate, onRun }: Props) {
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-white font-medium">
+        <div className="flex items-center gap-2 text-soc-text-primary font-medium">
           <Code2 className="w-5 h-5 text-soc-accent" />
           {isRaw ? "Raw KQL Editor" : "Visual Query Builder"}
         </div>
         <button 
           onClick={() => setIsRaw(!isRaw)}
-          className="text-xs text-soc-accent hover:text-white transition-colors flex items-center"
+          className="text-xs text-soc-accent hover:text-soc-text-primary transition-colors flex items-center"
         >
           {isRaw ? "Switch to Visual Builder" : "Switch to Raw KQL"}
         </button>
@@ -52,7 +52,7 @@ export default function QueryBuilder({ query, onUpdate, onRun }: Props) {
       <div className="space-y-3 bg-soc-bg/50 p-4 rounded-lg border border-soc-border/50">
         {isRaw ? (
           <textarea 
-            className="w-full bg-soc-card border border-soc-border rounded p-3 text-sm text-gray-200 font-mono h-32 focus:outline-none focus:border-soc-accent"
+            className="w-full bg-soc-card border border-soc-border rounded p-3 text-sm text-soc-text-primary font-mono h-32 focus:outline-none focus:border-soc-accent"
             value={rawText}
             onChange={e => setRawText(e.target.value)}
             placeholder="Enter search query..."
@@ -65,7 +65,7 @@ export default function QueryBuilder({ query, onUpdate, onRun }: Props) {
                   {idx === 0 ? "Where" : "And"}
                 </span>
                 <select 
-                  className="bg-soc-card border border-soc-border rounded px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-soc-accent min-w-[150px]"
+                  className="bg-soc-card border border-soc-border rounded px-3 py-1.5 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent min-w-[150px]"
                   value={rule.field}
                   onChange={(e) => {
                     const newRules = [...rules];
@@ -99,7 +99,7 @@ export default function QueryBuilder({ query, onUpdate, onRun }: Props) {
                       setRules(rules.filter((_, i) => i !== idx));
                     }
                   }}
-                  className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-soc-card rounded transition-colors"
+                  className="p-1.5 text-soc-text-muted hover:text-red-400 hover:bg-soc-card rounded transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -109,7 +109,7 @@ export default function QueryBuilder({ query, onUpdate, onRun }: Props) {
             <div className="flex items-center gap-3 pt-2 mt-2 border-t border-soc-border/50">
               <button 
                 onClick={() => setRules([...rules, { field: "Username", operator: "=", value: "" }])}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-soc-card hover:bg-soc-accent/10 border border-soc-border hover:border-soc-accent rounded text-sm text-gray-400 hover:text-soc-accent transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-soc-card hover:bg-soc-accent/10 border border-soc-border hover:border-soc-accent rounded text-sm text-soc-text-secondary hover:text-soc-accent transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Rule
               </button>

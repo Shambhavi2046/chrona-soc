@@ -34,26 +34,26 @@ export default async function AttackGraphPage() {
     <div className="p-6 md:p-8 animate-in fade-in duration-500 flex flex-col h-[calc(100vh-theme(spacing.16))] max-w-[1920px] mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1 flex items-center">
+          <h1 className="text-2xl font-bold text-soc-text-primary mb-1 flex items-center">
             <Network className="w-6 h-6 mr-3 text-soc-accent" />
             Attack Graph & Topology
           </h1>
-          <p className="text-gray-400 text-sm">Visualize infrastructure relationships, active threats, and attack paths.</p>
+          <p className="text-soc-text-secondary text-sm">Visualize infrastructure relationships, active threats, and attack paths.</p>
         </div>
 
         <div className="flex gap-4">
           <div className="flex items-center px-4 py-2 bg-soc-bg border border-soc-border rounded-lg">
             <Cpu className="w-4 h-4 text-soc-success mr-2" />
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Assets</span>
-              <span className="text-sm font-mono font-bold text-white">{totalAssets}</span>
+              <span className="text-[10px] uppercase text-soc-text-muted font-bold tracking-wider">Assets</span>
+              <span className="text-sm font-mono font-bold text-soc-text-primary">{totalAssets}</span>
             </div>
           </div>
           <div className="flex items-center px-4 py-2 bg-soc-bg border border-soc-border rounded-lg">
             <ShieldAlert className="w-4 h-4 text-soc-danger mr-2" />
             <div className="flex flex-col">
-              <span className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Alerts</span>
-              <span className="text-sm font-mono font-bold text-white">{totalAlerts}</span>
+              <span className="text-[10px] uppercase text-soc-text-muted font-bold tracking-wider">Alerts</span>
+              <span className="text-sm font-mono font-bold text-soc-text-primary">{totalAlerts}</span>
             </div>
           </div>
         </div>
@@ -63,13 +63,13 @@ export default async function AttackGraphPage() {
         {isError ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <AlertTriangle className="w-12 h-12 text-soc-danger mb-4 opacity-80" />
-            <h2 className="text-xl font-bold text-white mb-2">API Connection Error</h2>
+            <h2 className="text-xl font-bold text-soc-text-primary mb-2">API Connection Error</h2>
             <p className="text-soc-muted max-w-md">{errorMsg}</p>
           </div>
         ) : isEmpty ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <Database className="w-12 h-12 text-soc-muted mb-4 opacity-50" />
-            <h2 className="text-xl font-bold text-white mb-2">No Topology Data</h2>
+            <h2 className="text-xl font-bold text-soc-text-primary mb-2">No Topology Data</h2>
             <p className="text-soc-muted max-w-md">There are currently no assets, alerts, or threat intelligence records to visualize in the attack graph.</p>
           </div>
         ) : (

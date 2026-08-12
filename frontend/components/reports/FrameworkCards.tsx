@@ -9,11 +9,11 @@ export default function FrameworkCards({ frameworks }: FrameworkCardsProps) {
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 h-full">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-white font-medium">
+        <div className="flex items-center gap-2 text-soc-text-primary font-medium">
           <Shield className="w-5 h-5 text-soc-accent" />
           Framework Coverage
         </div>
-        <button className="text-xs text-soc-accent hover:text-white transition-colors">
+        <button className="text-xs text-soc-accent hover:text-soc-text-primary transition-colors">
           Manage Mappings
         </button>
       </div>
@@ -23,8 +23,8 @@ export default function FrameworkCards({ frameworks }: FrameworkCardsProps) {
           <div key={fw.id} className="bg-soc-bg border border-soc-border rounded-lg p-4 group hover:border-soc-accent/50 transition-colors cursor-pointer">
             <div className="flex justify-between items-start mb-3">
               <div>
-                <h4 className="text-sm font-bold text-white group-hover:text-soc-accent transition-colors">{fw.name}</h4>
-                <p className="text-xs text-gray-500 mt-1">{fw.mappedControls} Mapped Controls</p>
+                <h4 className="text-sm font-bold text-soc-text-primary group-hover:text-soc-accent transition-colors">{fw.name}</h4>
+                <p className="text-xs text-soc-text-muted mt-1">{fw.mappedControls} Mapped Controls</p>
               </div>
               <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
                 fw.status === 'Pass' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
@@ -37,8 +37,8 @@ export default function FrameworkCards({ frameworks }: FrameworkCardsProps) {
 
             <div className="mb-3">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-400">Coverage</span>
-                <span className="text-white font-medium">{fw.coverage}%</span>
+                <span className="text-soc-text-secondary">Coverage</span>
+                <span className="text-soc-text-primary font-medium">{fw.coverage}%</span>
               </div>
               <div className="w-full bg-soc-card rounded-full h-1.5">
                 <div 
@@ -57,7 +57,7 @@ export default function FrameworkCards({ frameworks }: FrameworkCardsProps) {
               ) : (
                 <span className="text-xs text-emerald-400">All controls passing</span>
               )}
-              <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors" />
+              <ChevronRight className="w-4 h-4 text-soc-text-muted group-hover:text-soc-text-primary transition-colors" />
             </div>
           </div>
         ))}

@@ -25,12 +25,12 @@ export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
         <div className="p-2 bg-soc-accent/20 rounded-lg mr-3 glow-accent">
           <Cpu className="w-6 h-6 text-soc-accent" />
         </div>
-        <h3 className="text-lg font-semibold text-white">AI Threat Intelligence Engine</h3>
+        <h3 className="text-lg font-semibold text-soc-text-primary">AI Threat Intelligence Engine</h3>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6 relative z-10 flex-1">
         <div className="bg-soc-bg/50 p-4 rounded-lg border border-soc-border">
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">
+          <span className="text-xs font-medium text-soc-text-muted uppercase tracking-wider mb-1 block">
             Detected Threat
           </span>
           <div className="flex items-center text-soc-danger font-bold">
@@ -41,10 +41,10 @@ export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
 
         <div className="bg-soc-bg/50 p-4 rounded-lg border border-soc-border flex items-center justify-between">
           <div>
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1 block">
+            <span className="text-xs font-medium text-soc-text-muted uppercase tracking-wider mb-1 block">
               AI Confidence
             </span>
-            <div className="text-2xl font-bold text-white">{riskScore}/100</div>
+            <div className="text-2xl font-bold text-soc-text-primary">{riskScore}/100</div>
           </div>
           {/* Circular progress representation */}
           <div className="relative w-12 h-12 flex items-center justify-center">
@@ -74,13 +74,13 @@ export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
           <Target className="w-4 h-4 mr-2" />
           Recommended Actions
         </div>
-        <ul className="text-sm text-gray-300 space-y-2">
-          <li className="flex items-center group cursor-pointer hover:text-white transition-colors">
+        <ul className="text-sm text-soc-text-secondary space-y-2">
+          <li className="flex items-center group cursor-pointer hover:text-soc-text-primary transition-colors">
             <span className="w-1.5 h-1.5 bg-soc-accent rounded-full mr-2"></span>
             Investigate source IP activity
             <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-soc-accent" />
           </li>
-          <li className="flex items-center group cursor-pointer hover:text-white transition-colors">
+          <li className="flex items-center group cursor-pointer hover:text-soc-text-primary transition-colors">
             <span className="w-1.5 h-1.5 bg-soc-accent rounded-full mr-2"></span>
             Isolate affected authentication server
             <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-soc-accent" />

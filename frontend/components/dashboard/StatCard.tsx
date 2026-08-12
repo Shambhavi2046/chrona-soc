@@ -24,8 +24,8 @@ export default function StatCard({
     <div className={`glass-card rounded-xl p-6 transition-all duration-300 ${href ? "hover:-translate-y-1 hover:shadow-lg cursor-pointer" : ""} group`}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-400 mb-1">{title}</p>
-          <h3 className="text-3xl font-bold text-white tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">
+          <p className="text-sm font-medium text-soc-text-secondary mb-1">{title}</p>
+          <h3 className="text-3xl font-bold text-soc-text-primary tracking-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all">
             {value}
           </h3>
         </div>
@@ -43,7 +43,7 @@ export default function StatCard({
           >
             {trend === "up" ? "↑" : trend === "down" ? "↓" : "•"} {trendValue}
           </span>
-          <span className="text-gray-500 ml-2">vs last 24h</span>
+          <span className="text-soc-text-muted ml-2">vs last 24h</span>
         </div>
       )}
     </div>

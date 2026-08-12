@@ -13,7 +13,7 @@ export default function MitrePanel({ onApply }: Props) {
 
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 h-full">
-      <div className="flex items-center gap-2 mb-4 text-white font-medium">
+      <div className="flex items-center gap-2 mb-4 text-soc-text-primary font-medium">
         <Crosshair className="w-5 h-5 text-soc-accent" />
         MITRE ATT&CK Hunting
       </div>
@@ -22,7 +22,7 @@ export default function MitrePanel({ onApply }: Props) {
           <button 
             key={idx}
             onClick={() => onApply(tactic)}
-            className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:border-soc-accent hover:bg-soc-accent/10 rounded-lg text-xs text-gray-300 hover:text-white transition-all shadow-sm"
+            className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:border-soc-accent hover:bg-soc-accent/10 rounded-lg text-xs text-soc-text-secondary hover:text-white transition-all shadow-sm"
           >
             {tactic}
           </button>

@@ -60,18 +60,18 @@ export default async function CaseDetailPage({ params }: PageProps) {
 
             {/* MITRE & Alerts */}
             <div>
-              <h3 className="text-sm font-semibold text-white uppercase tracking-wider mb-3">Alert & MITRE Context</h3>
+              <h3 className="text-sm font-semibold text-soc-text-primary uppercase tracking-wider mb-3">Alert & MITRE Context</h3>
               <div className="space-y-2">
-                <div className="text-xs text-gray-400">MITRE Tactics</div>
+                <div className="text-xs text-soc-text-secondary">MITRE Tactics</div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {caseDetail.mitre_tactics.map((t, idx) => (
                     <span key={idx} className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs font-mono text-soc-accent">{t}</span>
                   ))}
                 </div>
 
-                <div className="text-xs text-gray-400">Linked Alerts</div>
+                <div className="text-xs text-soc-text-secondary">Linked Alerts</div>
                 {caseDetail.linked_alerts.map((a, idx) => (
-                  <div key={idx} className="text-sm text-gray-200 bg-soc-bg p-2 rounded border border-soc-border flex justify-between">
+                  <div key={idx} className="text-sm text-soc-text-primary bg-soc-bg p-2 rounded border border-soc-border flex justify-between">
                     <span>{a.threat_type}</span>
                     <span className="text-soc-danger font-mono font-bold">{a.risk_score}</span>
                   </div>
@@ -82,18 +82,18 @@ export default async function CaseDetailPage({ params }: PageProps) {
             {/* Assets & Related Cases */}
             <div className="pt-4 border-t border-soc-border">
               <div className="space-y-2">
-                <div className="text-xs text-gray-400">Affected Assets</div>
+                <div className="text-xs text-soc-text-secondary">Affected Assets</div>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {caseDetail.affected_assets.map((asset, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs font-mono text-gray-300">{asset}</span>
+                    <span key={idx} className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-xs font-mono text-soc-text-secondary">{asset}</span>
                   ))}
                 </div>
 
-                <div className="text-xs text-gray-400">Related Cases</div>
+                <div className="text-xs text-soc-text-secondary">Related Cases</div>
                 {caseDetail.related_cases.map((rc, idx) => (
-                  <div key={idx} className="text-sm text-gray-200 bg-soc-bg p-2 rounded border border-soc-border flex justify-between items-center cursor-pointer hover:border-soc-accent transition-colors">
+                  <div key={idx} className="text-sm text-soc-text-primary bg-soc-bg p-2 rounded border border-soc-border flex justify-between items-center cursor-pointer hover:border-soc-accent transition-colors">
                     <span className="truncate flex-1 pr-2">CASE-{rc.id}: {rc.title}</span>
-                    <span className="text-xs font-bold text-gray-400">{rc.status}</span>
+                    <span className="text-xs font-bold text-soc-text-secondary">{rc.status}</span>
                   </div>
                 ))}
               </div>

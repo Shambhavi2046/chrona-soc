@@ -10,15 +10,15 @@ interface Props {
 export default function FilterPanel({ query, onUpdate, onRun }: Props) {
   return (
     <div className="glass-card border border-soc-border rounded-xl p-4">
-      <div className="flex items-center gap-2 mb-4 text-white font-medium">
+      <div className="flex items-center gap-2 mb-4 text-soc-text-primary font-medium">
         <Filter className="w-4 h-4 text-soc-accent" />
         Filters
       </div>
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <div className="relative">
-          <label className="block text-xs text-gray-500 mb-1">Time Range</label>
+          <label className="block text-xs text-soc-text-muted mb-1">Time Range</label>
           <select 
-            className="w-full px-3 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm text-gray-300 transition-colors focus:outline-none focus:border-soc-accent appearance-none"
+            className="w-full px-3 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm text-soc-text-secondary transition-colors focus:outline-none focus:border-soc-accent appearance-none"
             value={query.start_time || ""}
             onChange={(e) => {
                const val = { start_time: e.target.value };
@@ -33,9 +33,9 @@ export default function FilterPanel({ query, onUpdate, onRun }: Props) {
         </div>
 
         <div className="relative">
-          <label className="block text-xs text-gray-500 mb-1">Severity</label>
+          <label className="block text-xs text-soc-text-muted mb-1">Severity</label>
           <select 
-            className="w-full px-3 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm text-gray-300 transition-colors focus:outline-none focus:border-soc-accent appearance-none"
+            className="w-full px-3 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm text-soc-text-secondary transition-colors focus:outline-none focus:border-soc-accent appearance-none"
             value={query.severity || ""}
             onChange={(e) => {
                const val = { severity: e.target.value };
@@ -52,9 +52,9 @@ export default function FilterPanel({ query, onUpdate, onRun }: Props) {
         </div>
 
         <div className="relative">
-          <label className="block text-xs text-gray-500 mb-1">MITRE Tactic</label>
+          <label className="block text-xs text-soc-text-muted mb-1">MITRE Tactic</label>
           <select 
-            className="w-full px-3 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm text-gray-300 transition-colors focus:outline-none focus:border-soc-accent appearance-none"
+            className="w-full px-3 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm text-soc-text-secondary transition-colors focus:outline-none focus:border-soc-accent appearance-none"
             value={query.mitre_tactic || ""}
             onChange={(e) => {
                const val = { mitre_tactic: e.target.value };

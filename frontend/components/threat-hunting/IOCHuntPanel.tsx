@@ -11,18 +11,18 @@ export default function IOCHuntPanel({ onApply }: Props) {
 
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 h-full">
-      <div className="flex items-center gap-2 mb-4 text-white font-medium">
+      <div className="flex items-center gap-2 mb-4 text-soc-text-primary font-medium">
         <ShieldAlert className="w-5 h-5 text-soc-accent" />
         Quick IOC Search
       </div>
       <div className="flex flex-col gap-3">
         <div className="flex gap-2">
-          <select className="bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-soc-accent">
+          <select className="bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-secondary focus:outline-none focus:border-soc-accent">
             {iocTypes.map(t => <option key={t}>{t}</option>)}
           </select>
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-500" />
+              <Search className="h-4 w-4 text-soc-text-muted" />
             </div>
             <input 
               type="text" 
@@ -30,7 +30,7 @@ export default function IOCHuntPanel({ onApply }: Props) {
               value={ioc}
               onChange={(e) => setIoc(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && onApply(ioc)}
-              className="w-full pl-9 pr-3 py-2 bg-soc-bg border border-soc-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-soc-accent" 
+              className="w-full pl-9 pr-3 py-2 bg-soc-bg border border-soc-border rounded-lg text-sm text-soc-text-primary placeholder-gray-500 focus:outline-none focus:border-soc-accent" 
             />
           </div>
         </div>

@@ -17,8 +17,8 @@ export default function SeverityAnalytics({ data }: SeverityAnalyticsProps) {
   return (
     <div className="glass-card rounded-xl p-6 h-[400px] flex flex-col">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white">Threat Severity Distribution</h3>
-        <p className="text-sm text-gray-400">Categorization of active threats</p>
+        <h3 className="text-lg font-semibold text-soc-text-primary">Threat Severity Distribution</h3>
+        <p className="text-sm text-soc-text-secondary">Categorization of active threats</p>
       </div>
       
       <div className="flex-1 w-full h-full">

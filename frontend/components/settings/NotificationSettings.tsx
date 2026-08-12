@@ -21,21 +21,21 @@ export default function NotificationSettings() {
       
       <section>
         <div className="mb-6">
-          <h2 className="text-lg font-bold text-white">Notifications</h2>
-          <p className="text-sm text-gray-400 mt-1">Configure how and when you want to be alerted across channels.</p>
+          <h2 className="text-lg font-bold text-soc-text-primary">Notifications</h2>
+          <p className="text-sm text-soc-text-secondary mt-1">Configure how and when you want to be alerted across channels.</p>
         </div>
 
-        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Bell className="w-4 h-4 text-soc-accent" /> Delivery Channels</h3>
+        <h3 className="text-sm font-bold text-soc-text-primary mb-4 flex items-center gap-2"><Bell className="w-4 h-4 text-soc-accent" /> Delivery Channels</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {notificationTypes.map((channel) => (
             <div key={channel.id} className="p-4 bg-soc-bg border border-soc-border rounded-lg flex items-center justify-between group">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-soc-card rounded-lg">
-                  <channel.icon className="w-4 h-4 text-gray-400" />
+                  <channel.icon className="w-4 h-4 text-soc-text-secondary" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-white">{channel.label}</h4>
-                  <p className="text-xs text-gray-500 mt-0.5">{channel.desc}</p>
+                  <h4 className="text-sm font-medium text-soc-text-primary">{channel.label}</h4>
+                  <p className="text-xs text-soc-text-muted mt-0.5">{channel.desc}</p>
                 </div>
               </div>
               <button className={`w-8 h-4 rounded-full relative transition-colors ${channel.enabled ? 'bg-soc-accent' : 'bg-gray-700'}`}>
@@ -47,13 +47,13 @@ export default function NotificationSettings() {
       </section>
 
       <section>
-        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-soc-accent" /> Alert Preferences</h3>
+        <h3 className="text-sm font-bold text-soc-text-primary mb-4 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-soc-accent" /> Alert Preferences</h3>
         <div className="space-y-3">
           {alertPreferences.map((pref, idx) => (
             <div key={idx} className="p-3 bg-soc-bg border border-soc-border rounded-lg flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-medium text-white">{pref.label}</h4>
-                <p className="text-xs text-gray-500 mt-0.5">{pref.desc}</p>
+                <h4 className="text-sm font-medium text-soc-text-primary">{pref.label}</h4>
+                <p className="text-xs text-soc-text-muted mt-0.5">{pref.desc}</p>
               </div>
               <button className={`w-8 h-4 rounded-full relative transition-colors ${pref.enabled ? 'bg-soc-accent' : 'bg-gray-700'}`}>
                 <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${pref.enabled ? 'left-4' : 'left-0.5'}`} />
@@ -64,15 +64,15 @@ export default function NotificationSettings() {
       </section>
 
       <section>
-        <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><FileText className="w-4 h-4 text-soc-accent" /> Automated Reports</h3>
+        <h3 className="text-sm font-bold text-soc-text-primary mb-4 flex items-center gap-2"><FileText className="w-4 h-4 text-soc-accent" /> Automated Reports</h3>
         <div className="p-4 bg-soc-bg border border-soc-border rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h4 className="text-sm font-medium text-white">Daily SOC Summary Digest</h4>
-            <p className="text-xs text-gray-500 mt-1">Receive a compiled PDF of overnight activity at 08:00 AM.</p>
+            <h4 className="text-sm font-medium text-soc-text-primary">Daily SOC Summary Digest</h4>
+            <p className="text-xs text-soc-text-muted mt-1">Receive a compiled PDF of overnight activity at 08:00 AM.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-medium text-emerald-400">Subscribed</span>
-            <button className="px-3 py-1.5 bg-soc-card hover:bg-soc-border border border-soc-border rounded text-xs font-medium text-white transition-colors">Manage Schedule</button>
+            <button className="px-3 py-1.5 bg-soc-card hover:bg-soc-border border border-soc-border rounded text-xs font-medium text-soc-text-primary transition-colors">Manage Schedule</button>
           </div>
         </div>
       </section>

@@ -24,11 +24,11 @@ export default async function InvestigationsOverviewPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center">
+          <h1 className="text-2xl font-bold text-soc-text-primary tracking-tight flex items-center">
             <Search className="w-6 h-6 mr-3 text-soc-accent" />
             Investigations Overview
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-soc-text-secondary mt-1">
             Manage and track AI threat analyses and incident response workflows
           </p>
         </div>

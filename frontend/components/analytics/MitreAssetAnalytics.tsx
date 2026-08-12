@@ -15,13 +15,13 @@ export default function MitreAssetAnalytics({ topTactics, assetRisk }: MitreAsse
       <div className="glass-card rounded-xl p-6">
         <div className="mb-6 flex items-center">
           <Zap className="w-5 h-5 text-soc-warning mr-2" />
-          <h3 className="text-lg font-semibold text-white">MITRE ATT&CK Tactics</h3>
+          <h3 className="text-lg font-semibold text-soc-text-primary">MITRE ATT&CK Tactics</h3>
         </div>
         <div className="space-y-4">
           {topTactics.map((t, idx) => (
             <div key={idx} className="flex flex-col">
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-300 font-medium">{t.tactic}</span>
+                <span className="text-soc-text-secondary font-medium">{t.tactic}</span>
                 <span className="text-soc-warning font-mono">{t.count} hits</span>
               </div>
               <div className="w-full bg-soc-bg rounded-full h-2">
@@ -39,12 +39,12 @@ export default function MitreAssetAnalytics({ topTactics, assetRisk }: MitreAsse
       <div className="glass-card rounded-xl p-6">
         <div className="mb-6 flex items-center">
           <Server className="w-5 h-5 text-soc-danger mr-2" />
-          <h3 className="text-lg font-semibold text-white">Highest Risk Assets</h3>
+          <h3 className="text-lg font-semibold text-soc-text-primary">Highest Risk Assets</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-gray-500 text-xs border-b border-soc-border">
+              <tr className="text-soc-text-muted text-xs border-b border-soc-border">
                 <th className="pb-3 font-medium">Asset Name</th>
                 <th className="pb-3 font-medium text-center">Incidents</th>
                 <th className="pb-3 font-medium text-right">Risk Score</th>
@@ -53,10 +53,10 @@ export default function MitreAssetAnalytics({ topTactics, assetRisk }: MitreAsse
             <tbody className="divide-y divide-soc-border/50">
               {assetRisk.map((asset, idx) => (
                 <tr key={idx} className="group">
-                  <td className="py-3 font-mono text-sm text-gray-300 group-hover:text-white transition-colors">
+                  <td className="py-3 font-mono text-sm text-soc-text-secondary group-hover:text-soc-text-primary transition-colors">
                     {asset.asset}
                   </td>
-                  <td className="py-3 text-sm text-gray-400 text-center">
+                  <td className="py-3 text-sm text-soc-text-secondary text-center">
                     {asset.incidents}
                   </td>
                   <td className="py-3 text-right">

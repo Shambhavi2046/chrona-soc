@@ -64,7 +64,7 @@ export default function ReportsWorkspace() {
       />
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-24 text-soc-text-secondary">
           <Loader2 className="w-8 h-8 animate-spin text-soc-accent mb-4" />
           <p>Loading reports workspace...</p>
         </div>

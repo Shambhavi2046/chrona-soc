@@ -12,7 +12,7 @@ export default function TimelineView({ events }: TimelineViewProps) {
 
   return (
     <div className="glass-card rounded-xl border border-soc-border p-6 h-[400px] flex flex-col">
-      <div className="flex items-center gap-2 mb-6 text-white font-medium">
+      <div className="flex items-center gap-2 mb-6 text-soc-text-primary font-medium">
         <Activity className="w-5 h-5 text-soc-accent" />
         Execution Timeline
       </div>
@@ -28,13 +28,13 @@ export default function TimelineView({ events }: TimelineViewProps) {
               }`} />
               
               <div className="flex flex-col gap-1 text-sm">
-                <span className="text-xs text-gray-500 font-mono">
+                <span className="text-xs text-soc-text-muted font-mono">
                   <ClientDate date={event.timestamp} format="full" />
                 </span>
-                <span className="text-gray-200 font-medium">{event.description}</span>
+                <span className="text-soc-text-primary font-medium">{event.description}</span>
                 <div className="flex gap-3 mt-1">
                   <span className="text-xs text-soc-accent font-mono">{event.host}</span>
-                  <span className="text-xs text-gray-400 font-mono">{event.mitre_tactic}</span>
+                  <span className="text-xs text-soc-text-secondary font-mono">{event.mitre_tactic}</span>
                 </div>
               </div>
             </div>

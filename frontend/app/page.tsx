@@ -20,11 +20,11 @@ export default async function Home() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Security Command Center</h1>
-          <p className="text-sm text-gray-400 mt-1">Real-time threat monitoring and incident response</p>
+          <h1 className="text-2xl font-bold text-soc-text-primary tracking-tight">Security Command Center</h1>
+          <p className="text-sm text-soc-text-secondary mt-1">Real-time threat monitoring and incident response</p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-sm text-gray-500">Last updated: Just now</span>
+          <span className="text-sm text-soc-text-muted">Last updated: Just now</span>
           <Link href="/reports">
             <button className="px-4 py-2 bg-soc-accent hover:bg-soc-accent/90 text-white text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(56,189,248,0.4)]">
               Generate Report

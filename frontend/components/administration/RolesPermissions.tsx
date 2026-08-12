@@ -89,7 +89,7 @@ export default function RolesPermissions({ roles, onRefresh }: RolesPermissionsP
       {/* Roles List */}
       <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-soc-border bg-soc-bg flex flex-col max-h-[600px]">
         <div className="p-4 border-b border-soc-border flex items-center justify-between">
-          <h3 className="font-semibold text-white flex items-center gap-2 text-sm">
+          <h3 className="font-semibold text-soc-text-primary flex items-center gap-2 text-sm">
             <Shield className="w-4 h-4 text-soc-accent" />
             Roles
           </h3>
@@ -113,7 +113,7 @@ export default function RolesPermissions({ roles, onRefresh }: RolesPermissionsP
               }`}
             >
               {role.name}
-              <ChevronRight className={`w-4 h-4 ${activeRole?.id === role.id ? "text-soc-accent" : "text-gray-600 group-hover:text-gray-400"}`} />
+              <ChevronRight className={`w-4 h-4 ${activeRole?.id === role.id ? "text-soc-accent" : "text-soc-text-muted group-hover:text-soc-text-secondary"}`} />
             </button>
           ))}
         </div>
@@ -123,7 +123,7 @@ export default function RolesPermissions({ roles, onRefresh }: RolesPermissionsP
       <div className="w-full md:w-2/3 flex flex-col bg-soc-card max-h-[600px]">
         <div className="p-4 border-b border-soc-border flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
-            <h3 className="font-semibold text-white text-sm">Permissions: {activeRole?.name}</h3>
+            <h3 className="font-semibold text-soc-text-primary text-sm">Permissions: {activeRole?.name}</h3>
             {activeRole?.is_system && (
               <span className="text-[10px] uppercase font-bold tracking-wider bg-soc-accent/20 text-soc-accent px-2 py-0.5 rounded">
                 System role — permissions cannot be modified
@@ -133,7 +133,7 @@ export default function RolesPermissions({ roles, onRefresh }: RolesPermissionsP
           <button 
             onClick={handleSaveChanges}
             disabled={!hasChanges || loading || activeRole?.is_system}
-            className="px-3 py-1.5 bg-soc-accent border border-soc-accent disabled:bg-soc-bg disabled:border-soc-border rounded text-xs font-medium text-white disabled:text-gray-500 transition-colors"
+            className="px-3 py-1.5 bg-soc-accent border border-soc-accent disabled:bg-soc-bg disabled:border-soc-border rounded text-xs font-medium text-white disabled:text-soc-text-muted transition-colors"
           >
             Save Changes
           </button>
@@ -141,17 +141,17 @@ export default function RolesPermissions({ roles, onRefresh }: RolesPermissionsP
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {permissions.map((group) => (
             <div key={group.category}>
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">{group.category}</h4>
+              <h4 className="text-xs font-bold text-soc-text-muted uppercase tracking-wider mb-3">{group.category}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {group.items.map((item) => {
                   const isEnabled = editedPermissions.includes(item);
                   return (
                     <div key={item} className="flex items-center justify-between p-3 bg-soc-bg border border-soc-border rounded-lg group hover:border-gray-500 transition-colors">
-                      <span className="text-sm text-gray-300">{item}</span>
+                      <span className="text-sm text-soc-text-secondary">{item}</span>
                       <button 
                         onClick={() => togglePermission(item)}
                         disabled={activeRole?.is_system}
-                        className={`w-8 h-4 rounded-full relative transition-colors ${activeRole?.is_system ? (isEnabled ? 'bg-soc-accent/50' : 'bg-gray-800') : (isEnabled ? 'bg-soc-accent' : 'bg-gray-700')} ${activeRole?.is_system ? 'cursor-not-allowed opacity-70' : ''}`}
+                        className={`w-8 h-4 rounded-full relative transition-colors ${activeRole?.is_system ? (isEnabled ? 'bg-soc-accent/50' : 'bg-soc-card') : (isEnabled ? 'bg-soc-accent' : 'bg-gray-700')} ${activeRole?.is_system ? 'cursor-not-allowed opacity-70' : ''}`}
                       >
                         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
                       </button>
@@ -169,22 +169,22 @@ export default function RolesPermissions({ roles, onRefresh }: RolesPermissionsP
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-soc-bg border border-soc-border rounded-xl w-full max-w-sm shadow-2xl flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-soc-border">
-              <h3 className="text-white font-medium">Create Custom Role</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-white">
+              <h3 className="text-soc-text-primary font-medium">Create Custom Role</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-soc-text-secondary hover:text-soc-text-primary">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleCreateSubmit} className="p-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Role Name</label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-white" placeholder="e.g. Audit Viewer" />
+                <label className="block text-xs font-medium text-soc-text-secondary mb-1">Role Name</label>
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-soc-text-primary" placeholder="e.g. Audit Viewer" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Description</label>
-                <input type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-white" placeholder="Optional description" />
+                <label className="block text-xs font-medium text-soc-text-secondary mb-1">Description</label>
+                <input type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-soc-text-primary" placeholder="Optional description" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white">Cancel</button>
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 text-sm font-medium text-soc-text-secondary hover:text-soc-text-primary">Cancel</button>
                 <button type="submit" disabled={loading} className="px-4 py-2 bg-soc-accent hover:bg-soc-accent/80 text-white text-sm font-medium rounded transition-colors disabled:opacity-50">Create Role</button>
               </div>
             </form>

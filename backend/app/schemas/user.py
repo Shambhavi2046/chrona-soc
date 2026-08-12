@@ -23,6 +23,11 @@ class UserUpdate(BaseModel):
     mfa_enabled: Optional[bool] = None
     role_ids: Optional[List[uuid.UUID]] = None
 
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    
+    model_config = ConfigDict(extra="forbid")
+
 class UserResponse(UserBase):
     id: uuid.UUID
     org_id: uuid.UUID

@@ -72,11 +72,11 @@ export default function KPIGrid({ data }: KPIGridProps) {
         const cardContent = (
           <div className={`glass-card p-4 rounded-xl flex flex-col h-full hover:bg-soc-card-hover/50 hover:border-soc-accent/50 transition-all duration-300 group shadow-lg hover:shadow-soc-accent/10 ${kpi.link ? 'cursor-pointer' : 'cursor-default'}`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-400 group-hover:text-gray-300 transition-colors">{kpi.label}</span>
+              <span className="text-xs font-medium text-soc-text-secondary group-hover:text-soc-text-secondary transition-colors">{kpi.label}</span>
               <Icon className={`w-4 h-4 ${kpi.color} opacity-70 group-hover:opacity-100 transition-opacity`} />
             </div>
             <div className="mt-auto">
-              <span className="text-2xl font-bold text-white tracking-tight">{kpi.value}</span>
+              <span className="text-2xl font-bold text-soc-text-primary tracking-tight">{kpi.value}</span>
             </div>
           </div>
         );

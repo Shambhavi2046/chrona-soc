@@ -11,11 +11,11 @@ export default function ExecutionHistory({ executions, onRowClick }: ExecutionHi
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col h-full">
       <div className="p-4 border-b border-soc-border flex items-center justify-between bg-soc-bg">
-        <h3 className="font-semibold text-white flex items-center gap-2">
+        <h3 className="font-semibold text-soc-text-primary flex items-center gap-2">
           <Activity className="w-5 h-5 text-soc-accent" />
           Execution History
         </h3>
-        <span className="text-sm font-medium text-gray-400">
+        <span className="text-sm font-medium text-soc-text-secondary">
           Showing {executions.length} runs
         </span>
       </div>
@@ -23,7 +23,7 @@ export default function ExecutionHistory({ executions, onRowClick }: ExecutionHi
       <div className="overflow-x-auto flex-1">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-soc-bg/50 text-gray-400 text-xs uppercase tracking-wider">
+            <tr className="bg-soc-bg/50 text-soc-text-secondary text-xs uppercase tracking-wider">
               <th className="px-6 py-3 font-medium">Playbook</th>
               <th className="px-6 py-3 font-medium">Trigger</th>
               <th className="px-6 py-3 font-medium">Start Time</th>
@@ -41,18 +41,18 @@ export default function ExecutionHistory({ executions, onRowClick }: ExecutionHi
                 onClick={() => onRowClick(exec)}
               >
                 <td className="px-6 py-4">
-                  <div className="font-medium text-white text-sm">{exec.playbookName}</div>
-                  <div className="text-xs text-gray-500 font-mono mt-0.5">{exec.id}</div>
+                  <div className="font-medium text-soc-text-primary text-sm">{exec.playbookName}</div>
+                  <div className="text-xs text-soc-text-muted font-mono mt-0.5">{exec.id}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-300">
-                  <span className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-xs text-soc-text-secondary">
+                  <span className="px-2 py-1 bg-soc-bg border border-soc-border rounded text-soc-text-secondary">
                     {exec.trigger}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-xs text-gray-400 whitespace-nowrap">
+                <td className="px-6 py-4 text-xs text-soc-text-secondary whitespace-nowrap">
                   <ClientDate date={exec.startTime} format="full" />
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-400 font-mono">
+                <td className="px-6 py-4 text-sm text-soc-text-secondary font-mono">
                   {exec.duration}
                 </td>
                 <td className="px-6 py-4">
@@ -69,11 +69,11 @@ export default function ExecutionHistory({ executions, onRowClick }: ExecutionHi
                     {exec.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-400">
+                <td className="px-6 py-4 text-sm text-soc-text-secondary">
                   {exec.initiatedBy}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <ChevronRight className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-soc-text-muted group-hover:text-soc-text-primary transition-colors" />
                 </td>
               </tr>
             ))}

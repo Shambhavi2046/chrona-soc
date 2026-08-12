@@ -81,9 +81,9 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 flex flex-col h-[500px]">
       <div className="flex items-center justify-between mb-4 pb-4 border-b border-soc-border">
-        <div className="flex items-center gap-2 text-white font-medium">
+        <div className="flex items-center gap-2 text-soc-text-primary font-medium">
           <Zap className="w-5 h-5 text-soc-accent" />
-          Playbook Builder: <span className="text-gray-400 font-normal">{playbook ? playbook.name : 'Select a Playbook'}</span>
+          Playbook Builder: <span className="text-soc-text-secondary font-normal">{playbook ? playbook.name : 'Select a Playbook'}</span>
         </div>
         <div className="flex gap-2">
           <button
@@ -95,7 +95,7 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
                 setNodes(JSON.parse(JSON.stringify(defaultNodes)));
               }
             }}
-            className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:border-gray-500 rounded text-xs font-medium text-gray-300 transition-colors"
+            className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:border-gray-500 rounded text-xs font-medium text-soc-text-secondary transition-colors"
           >
             Discard
           </button>
@@ -110,7 +110,7 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
       </div>
 
       {/* Canvas Area */}
-      <div className="flex-1 overflow-y-auto bg-gray-900/30 rounded-lg border border-soc-border/50 relative p-8 flex flex-col items-center">
+      <div className="flex-1 overflow-y-auto bg-soc-bg/30 rounded-lg border border-soc-border/50 relative p-8 flex flex-col items-center">
 
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
@@ -134,13 +134,13 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
                       <Icon className={`w-4 h-4 ${visual.color}`} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{node.category || node.type}</p>
-                      <h4 className="text-sm font-medium text-white">{node.title}</h4>
+                      <p className="text-[10px] font-bold text-soc-text-muted uppercase tracking-wider">{node.category || node.type}</p>
+                      <h4 className="text-sm font-medium text-soc-text-primary">{node.title}</h4>
                     </div>
                   </div>
                   <button
                     onClick={(e) => handleDeleteNode(node.id, e)}
-                    className="p-1 text-gray-500 hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1 text-soc-text-muted hover:text-red-400 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -161,7 +161,7 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
           <div className="w-0.5 h-8 bg-soc-border border-dashed relative flex justify-center mt-2"></div>
           <button
             onClick={handleAddNode}
-            className="mt-2 w-full max-w-[280px] border-2 border-dashed border-soc-border hover:border-soc-accent rounded-lg p-3 flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-white transition-colors bg-soc-bg hover:bg-soc-card-hover"
+            className="mt-2 w-full max-w-[280px] border-2 border-dashed border-soc-border hover:border-soc-accent rounded-lg p-3 flex items-center justify-center gap-2 text-sm text-soc-text-secondary hover:text-soc-text-primary transition-colors bg-soc-bg hover:bg-soc-card-hover"
           >
             <Plus className="w-4 h-4" /> Add Next Step
           </button>

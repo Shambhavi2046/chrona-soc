@@ -70,29 +70,29 @@ export default function ReportGenerator({ templates = [], preselectedTemplateId,
 
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5 h-full">
-      <div className="flex items-center gap-2 mb-6 text-white font-medium">
+      <div className="flex items-center gap-2 mb-6 text-soc-text-primary font-medium">
         <Settings2 className="w-5 h-5 text-soc-accent" />
         Report Configuration
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Report Name</label>
+          <label className="block text-xs font-medium text-soc-text-secondary mb-2">Report Name</label>
           <input 
             type="text" 
             placeholder="e.g. Q3 Executive Summary"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent" 
+            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent" 
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Source Type</label>
+          <label className="block text-xs font-medium text-soc-text-secondary mb-2">Source Type</label>
           <select 
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
-            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent"
+            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent"
           >
             <option value="Alert">Alert</option>
             <option value="Investigation">Investigation</option>
@@ -102,23 +102,23 @@ export default function ReportGenerator({ templates = [], preselectedTemplateId,
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-2">Source ID (UUID)</label>
+          <label className="block text-xs font-medium text-soc-text-secondary mb-2">Source ID (UUID)</label>
           <input 
             type="text" 
             placeholder="00000000-0000-0000-0000-000000000000"
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
-            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent font-mono" 
+            className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent font-mono" 
           />
         </div>
 
         {templates.length > 0 && (
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-2">Template</label>
+            <label className="block text-xs font-medium text-soc-text-secondary mb-2">Template</label>
             <select 
               value={templateId}
               onChange={(e) => setTemplateId(e.target.value)}
-              className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-soc-accent"
+              className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent"
             >
               <option value="" disabled>Select a template</option>
               {templates.map(t => (

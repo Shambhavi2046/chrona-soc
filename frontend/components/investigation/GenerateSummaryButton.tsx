@@ -29,7 +29,7 @@ export default function GenerateSummaryButton() {
       <button 
         onClick={handleGenerate}
         disabled={loading}
-        className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
+        className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-soc-text-primary text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="w-4 h-4 mr-2 animate-spin text-soc-accent" />
@@ -43,19 +43,19 @@ export default function GenerateSummaryButton() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-soc-card border border-soc-border rounded-xl shadow-2xl w-full max-w-lg p-6 m-4 flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white flex items-center">
+              <h3 className="text-lg font-semibold text-soc-text-primary flex items-center">
                 <Sparkles className="w-5 h-5 mr-2 text-soc-accent" />
                 Overview Summary
               </h3>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-soc-text-secondary hover:text-soc-text-primary transition-colors"
               >
                 ✕
               </button>
             </div>
             
-            <div className="min-h-[100px] flex flex-col justify-center text-sm text-gray-300 bg-soc-bg rounded-lg p-4 border border-soc-border">
+            <div className="min-h-[100px] flex flex-col justify-center text-sm text-soc-text-secondary bg-soc-bg rounded-lg p-4 border border-soc-border">
               {loading ? (
                 <div className="flex flex-col items-center justify-center text-soc-accent">
                   <Loader2 className="w-6 h-6 animate-spin mb-2" />
@@ -74,7 +74,7 @@ export default function GenerateSummaryButton() {
             <div className="mt-6 flex justify-end">
               <button 
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-2 bg-soc-bg hover:bg-soc-bg/80 border border-soc-border text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-soc-bg hover:bg-soc-bg/80 border border-soc-border text-soc-text-primary text-sm font-medium rounded-lg transition-colors"
               >
                 Close
               </button>

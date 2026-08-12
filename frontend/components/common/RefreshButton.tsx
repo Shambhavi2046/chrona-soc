@@ -21,7 +21,7 @@ export default function RefreshButton() {
     <button 
       onClick={handleRefresh}
       disabled={isPending || isRefreshing}
-      className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+      className="flex items-center px-4 py-2 bg-soc-card hover:bg-soc-card-hover border border-soc-border text-soc-text-primary text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
     >
       {isPending || isRefreshing ? (
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -107,7 +107,7 @@ export default function ChatInterface() {
             <Bot className="w-6 h-6 text-soc-accent" />
           </div>
           <div>
-            <h2 className="text-white font-bold tracking-wide">Chrona Copilot</h2>
+            <h2 className="text-soc-text-primary font-bold tracking-wide">Chrona Copilot</h2>
             <p className="text-xs text-soc-success flex items-center">
               <span className="w-2 h-2 rounded-full bg-soc-success mr-1.5 animate-pulse"></span>
               Online & Monitoring
@@ -119,7 +119,7 @@ export default function ChatInterface() {
       {/* Context Banner */}
       {activeContext && (
         <div className="px-6 py-2 bg-soc-accent/10 border-b border-soc-accent/20 flex items-center justify-between text-xs animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-4 text-gray-300">
+          <div className="flex items-center gap-4 text-soc-text-secondary">
             <div className="flex items-center gap-1.5 font-mono">
               <Shield className="w-3.5 h-3.5 text-soc-accent" />
               <span className="text-soc-accent font-bold">{activeContext.id}</span>
@@ -137,7 +137,7 @@ export default function ChatInterface() {
             }`}>
               {activeContext.priority}
             </span>
-            <div className="flex items-center gap-1.5 border-l border-soc-border pl-4 text-gray-400">
+            <div className="flex items-center gap-1.5 border-l border-soc-border pl-4 text-soc-text-secondary">
               <Activity className="w-3.5 h-3.5" />
               <span>Risk: {activeContext.risk_score}</span>
             </div>
@@ -149,9 +149,9 @@ export default function ChatInterface() {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto opacity-70">
-            <Sparkles className="w-12 h-12 text-gray-500 mb-4" />
-            <h3 className="text-lg font-bold text-white mb-2">How can I assist?</h3>
-            <p className="text-sm text-gray-400">
+            <Sparkles className="w-12 h-12 text-soc-text-muted mb-4" />
+            <h3 className="text-lg font-bold text-soc-text-primary mb-2">How can I assist?</h3>
+            <p className="text-sm text-soc-text-secondary">
               I have deep context into your alerts, cases, and infrastructure. Ask me to summarize an incident, map an attack path, or recommend containment steps.
             </p>
           </div>
@@ -171,7 +171,7 @@ export default function ChatInterface() {
         )}
         
         {isLoading && (
-          <div className="flex items-center gap-3 text-gray-400">
+          <div className="flex items-center gap-3 text-soc-text-secondary">
             <div className="w-8 h-8 rounded-full bg-soc-accent/10 border border-soc-accent/30 flex items-center justify-center text-soc-accent">
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
@@ -188,7 +188,7 @@ export default function ChatInterface() {
             <button
               key={idx}
               onClick={() => handleSubmit(undefined, sp)}
-              className="px-3 py-1.5 rounded-full border border-soc-border bg-soc-card hover:bg-soc-accent/10 hover:border-soc-accent text-xs font-medium text-gray-300 hover:text-white transition-all shadow-sm"
+              className="px-3 py-1.5 rounded-full border border-soc-border bg-soc-card hover:bg-soc-accent/10 hover:border-soc-accent text-xs font-medium text-soc-text-secondary hover:text-white transition-all shadow-sm"
             >
               {sp}
             </button>
@@ -205,11 +205,11 @@ export default function ChatInterface() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask Copilot to investigate an alert, summarize a case, or map an attack path..."
-              className="w-full bg-soc-bg border border-soc-border rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent resize-none transition-all pr-12 min-h-[52px] max-h-[150px]"
+              className="w-full bg-soc-bg border border-soc-border rounded-xl px-4 py-3.5 text-sm text-soc-text-primary placeholder-gray-500 focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent resize-none transition-all pr-12 min-h-[52px] max-h-[150px]"
               rows={1}
               disabled={isLoading}
             />
-            <div className="absolute right-3 top-3.5 text-gray-600">
+            <div className="absolute right-3 top-3.5 text-soc-text-muted">
               <Sparkles className="w-5 h-5" />
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function ChatInterface() {
           </button>
         </form>
         <div className="text-center mt-3">
-          <p className="text-[10px] text-gray-500 flex items-center justify-center gap-1.5">
+          <p className="text-[10px] text-soc-text-muted flex items-center justify-center gap-1.5">
             <AlertCircle className="w-3 h-3" />
             AI-generated insights should be verified by a human analyst before executing containment.
           </p>

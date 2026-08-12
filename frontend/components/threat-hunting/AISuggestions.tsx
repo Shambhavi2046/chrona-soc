@@ -25,7 +25,7 @@ export default function AISuggestions({ onApply }: Props) {
 
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-4 text-white font-medium">
+      <div className="flex items-center gap-2 mb-4 text-soc-text-primary font-medium">
         <Bot className="w-5 h-5 text-soc-accent" />
         AI Copilot Suggestions
       </div>
@@ -38,7 +38,7 @@ export default function AISuggestions({ onApply }: Props) {
           >
             <div className="flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-soc-warning flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-300 group-hover:text-white transition-colors">{displayMap[suggestion]}</p>
+              <p className="text-sm text-soc-text-secondary group-hover:text-soc-text-primary transition-colors">{displayMap[suggestion]}</p>
             </div>
             <div className="mt-3 flex justify-end">
               <span className="text-xs font-medium text-soc-accent flex items-center opacity-0 group-hover:opacity-100 transition-opacity">

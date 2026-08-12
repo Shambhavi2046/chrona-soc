@@ -32,9 +32,9 @@ export default function SummaryCards({ reportCount, analytics }: SummaryCardsPro
               </div>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-medium text-gray-400 truncate">{stat.label}</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{stat.value}</h3>
-              <p className="text-xs text-gray-500 mt-2 truncate">{stat.trend}</p>
+              <p className="text-sm font-medium text-soc-text-secondary truncate">{stat.label}</p>
+              <h3 className="text-2xl font-bold text-soc-text-primary mt-1">{stat.value}</h3>
+              <p className="text-xs text-soc-text-muted mt-2 truncate">{stat.trend}</p>
             </div>
           </div>
         );

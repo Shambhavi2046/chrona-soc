@@ -21,10 +21,10 @@ export default function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps)
       >
         <div className="p-4 border-b border-soc-border flex justify-between items-center bg-soc-bg/50">
           <div>
-            <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">{type} Details</span>
-            <h3 className="text-sm font-bold text-white truncate max-w-[200px]">{data.label}</h3>
+            <span className="text-[10px] uppercase font-bold text-soc-text-muted tracking-wider">{type} Details</span>
+            <h3 className="text-sm font-bold text-soc-text-primary truncate max-w-[200px]">{data.label}</h3>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-soc-card rounded transition-colors text-gray-400 hover:text-white">
+          <button onClick={onClose} className="p-1 hover:bg-soc-card rounded transition-colors text-soc-text-secondary hover:text-soc-text-primary">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -35,8 +35,8 @@ export default function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps)
             if (key === 'label') return null;
             return (
               <div key={key} className="flex flex-col">
-                <span className="text-[10px] uppercase font-mono text-gray-500 mb-1">{key.replace('_', ' ')}</span>
-                <span className="text-sm text-gray-200 font-mono">
+                <span className="text-[10px] uppercase font-mono text-soc-text-muted mb-1">{key.replace('_', ' ')}</span>
+                <span className="text-sm text-soc-text-primary font-mono">
                   {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                 </span>
               </div>
@@ -44,7 +44,7 @@ export default function NodeDetailPanel({ node, onClose }: NodeDetailPanelProps)
           })}
           
           <div className="pt-4 border-t border-soc-border mt-2">
-            <button className="w-full py-2 bg-soc-bg border border-soc-border hover:border-soc-accent rounded text-xs font-semibold text-gray-300 hover:text-white transition-colors">
+            <button className="w-full py-2 bg-soc-bg border border-soc-border hover:border-soc-accent rounded text-xs font-semibold text-soc-text-secondary hover:text-soc-text-primary transition-colors">
               View Full Profile
             </button>
           </div>

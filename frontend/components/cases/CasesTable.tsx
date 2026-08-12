@@ -51,21 +51,21 @@ export default function CasesTable({ cases }: CasesTableProps) {
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col h-full border border-soc-border">
       <div className="p-6 border-b border-soc-border flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-white">Active Cases</h3>
+        <h3 className="text-lg font-semibold text-soc-text-primary">Active Cases</h3>
         
         <div className="flex gap-3 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-soc-text-muted" />
             <input 
               type="text" 
               placeholder="Search cases..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-soc-bg border border-soc-border rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-soc-accent transition-colors"
+              className="w-full bg-soc-bg border border-soc-border rounded-lg pl-9 pr-4 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors"
             />
           </div>
           <button className="px-3 py-2 bg-soc-bg border border-soc-border rounded-lg hover:border-soc-accent transition-colors">
-            <Filter className="w-4 h-4 text-gray-400" />
+            <Filter className="w-4 h-4 text-soc-text-secondary" />
           </button>
         </div>
       </div>
@@ -73,7 +73,7 @@ export default function CasesTable({ cases }: CasesTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-soc-bg/50 text-gray-400 text-xs uppercase tracking-wider border-b border-soc-border">
+            <tr className="bg-soc-bg/50 text-soc-text-secondary text-xs uppercase tracking-wider border-b border-soc-border">
               <th className="px-6 py-4 font-medium">Case ID</th>
               <th className="px-6 py-4 font-medium">Title</th>
               <th className="px-6 py-4 font-medium">Status</th>
@@ -86,11 +86,11 @@ export default function CasesTable({ cases }: CasesTableProps) {
           <tbody className="divide-y divide-soc-border">
             {filteredCases.map((c) => (
               <tr key={c.id} className="hover:bg-soc-card-hover/50 transition-colors group">
-                <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-gray-400 group-hover:text-soc-accent transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-soc-text-secondary group-hover:text-soc-accent transition-colors">
                   <Link href={`/cases/${c.id}`}>CASE-{c.id.toString().split('-')[0].toUpperCase()}</Link>
                 </td>
                 <td className="px-6 py-4">
-                  <Link href={`/cases/${c.id}`} className="font-medium text-gray-200 group-hover:text-white transition-colors">
+                  <Link href={`/cases/${c.id}`} className="font-medium text-soc-text-primary group-hover:text-soc-text-primary transition-colors">
                     {c.title}
                   </Link>
                 </td>
@@ -100,17 +100,17 @@ export default function CasesTable({ cases }: CasesTableProps) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`text-sm flex items-center ${c.priority === 'High' ? 'text-soc-danger' : 'text-gray-300'}`}>
+                  <span className={`text-sm flex items-center ${c.priority === 'High' ? 'text-soc-danger' : 'text-soc-text-secondary'}`}>
                     {c.priority === 'High' && <ShieldAlert className="w-3 h-3 mr-1.5" />}
                     {c.priority}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-400">
+                <td className="px-6 py-4 text-sm text-soc-text-secondary">
                   <div className="flex flex-col gap-1">
-                    {c.assignee || <span className="italic text-gray-600">Unassigned</span>}
+                    {c.assignee || <span className="italic text-soc-text-muted">Unassigned</span>}
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                       <select 
-                        className="text-[10px] bg-soc-bg border border-soc-border hover:border-soc-accent rounded px-1 py-0.5 text-gray-400 max-w-[120px] outline-none"
+                        className="text-[10px] bg-soc-bg border border-soc-border hover:border-soc-accent rounded px-1 py-0.5 text-soc-text-secondary max-w-[120px] outline-none"
                         value=""
                         onChange={async (e) => {
                           const newAssignee = e.target.value;
@@ -134,7 +134,7 @@ export default function CasesTable({ cases }: CasesTableProps) {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                <td className="px-6 py-4 text-sm text-soc-text-muted whitespace-nowrap">
                   <ClientDate date={c.created_at} format="date" />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -151,7 +151,7 @@ export default function CasesTable({ cases }: CasesTableProps) {
                             alert("Failed to close case");
                           }
                         }}
-                        className="text-xs px-2 py-1 bg-soc-bg border border-soc-border hover:border-soc-success text-gray-400 hover:text-soc-success rounded transition-colors"
+                        className="text-xs px-2 py-1 bg-soc-bg border border-soc-border hover:border-soc-success text-soc-text-secondary hover:text-soc-success rounded transition-colors"
                       >
                         Close
                       </button>
@@ -162,7 +162,7 @@ export default function CasesTable({ cases }: CasesTableProps) {
             ))}
             {filteredCases.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-12 text-center text-soc-text-muted">
                   No cases found matching your search.
                 </td>
               </tr>

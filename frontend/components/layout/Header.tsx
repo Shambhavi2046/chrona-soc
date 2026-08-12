@@ -46,7 +46,7 @@ export default function Header({ user }: { user?: any }) {
         </div>
 
         {/* Notifications */}
-        <button className="relative p-1 text-gray-400 hover:text-white transition-colors focus:outline-none">
+        <button className="relative p-1 text-soc-text-secondary hover:text-soc-text-primary transition-colors focus:outline-none">
           <Bell className="w-5 h-5" />
           <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-soc-danger ring-2 ring-soc-bg" />
         </button>
@@ -58,10 +58,10 @@ export default function Header({ user }: { user?: any }) {
             className="flex items-center space-x-3 focus:outline-none"
           >
             <div className="text-right hidden md:block">
-              <div className="text-sm font-medium text-white">{user?.name || "Guest"}</div>
-              <div className="text-xs text-gray-400">{user?.email || "Not signed in"}</div>
+              <div className="text-sm font-medium text-soc-text-primary">{user?.name || "Guest"}</div>
+              <div className="text-xs text-soc-text-secondary">{user?.email || "Not signed in"}</div>
             </div>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-r from-soc-accent to-blue-600 flex items-center justify-center text-white text-sm font-medium ring-2 ring-soc-bg">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-r from-soc-accent to-blue-600 flex items-center justify-center text-soc-text-primary text-sm font-medium ring-2 ring-soc-bg">
               {user?.name ? getInitials(user.name) : <User className="w-4 h-4" />}
             </div>
           </button>

@@ -166,12 +166,12 @@ export default function ThreatHuntingWorkspace() {
       {/* Visual State Indicator */}
       {isNewHunt && !currentHuntName && (
         <div className="bg-soc-accent/10 border border-soc-accent/50 text-soc-accent px-4 py-3 rounded-lg flex items-center mb-6 animate-in fade-in slide-in-from-top-2">
-          <span className="font-bold mr-2 text-white">Unsaved Hunt:</span> Configure your query parameters and click Save Hunt when finished.
+          <span className="font-bold mr-2 text-soc-text-primary">Unsaved Hunt:</span> Configure your query parameters and click Save Hunt when finished.
         </div>
       )}
       {currentHuntName && (
         <div className="bg-soc-bg border border-soc-border px-4 py-3 rounded-lg flex items-center mb-6 animate-in fade-in slide-in-from-top-2">
-          <span className="font-bold mr-2 text-gray-400">Active Hunt:</span> <span className="text-white">{currentHuntName}</span>
+          <span className="font-bold mr-2 text-soc-text-secondary">Active Hunt:</span> <span className="text-soc-text-primary">{currentHuntName}</span>
         </div>
       )}
 
@@ -223,9 +223,9 @@ export default function ThreatHuntingWorkspace() {
           {error && <div className="text-red-400 p-4 bg-soc-card border border-red-900 rounded mb-4">{error}</div>}
           {successMsg && <div className="text-green-400 p-4 bg-soc-card border border-green-900 rounded mb-4 flex items-center"><CheckCircle2 className="w-5 h-5 mr-2" />{successMsg}</div>}
           {isLoading ? (
-            <div className="text-center p-8 text-gray-400 glass-card">Executing query...</div>
+            <div className="text-center p-8 text-soc-text-secondary glass-card">Executing query...</div>
           ) : events.length === 0 ? (
-            <div className="text-center p-8 text-gray-400 glass-card">No events found matching the criteria. Execution was successful.</div>
+            <div className="text-center p-8 text-soc-text-secondary glass-card">No events found matching the criteria. Execution was successful.</div>
           ) : (
             <ResultsTable
               events={events}
@@ -242,23 +242,23 @@ export default function ThreatHuntingWorkspace() {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-soc-bg border border-soc-border rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold text-white mb-4">Save Hunt</h3>
+            <h3 className="text-xl font-bold text-soc-text-primary mb-4">Save Hunt</h3>
             <form onSubmit={handleSaveHunt}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">Hunt Name</label>
+                  <label className="block text-sm font-medium text-soc-text-secondary mb-1">Hunt Name</label>
                   <input
                     type="text"
                     required
                     value={newHuntName}
                     onChange={(e) => setNewHuntName(e.target.value)}
-                    className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent"
+                    className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent"
                     placeholder="e.g. Suspicious Logins"
                   />
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm text-soc-text-secondary hover:text-soc-text-primary transition-colors">Cancel</button>
                 <button type="submit" className="px-4 py-2 bg-soc-accent hover:bg-soc-accent/90 text-white text-sm font-medium rounded-lg transition-colors shadow-[0_0_15px_rgba(56,189,248,0.4)]">Save</button>
               </div>
             </form>

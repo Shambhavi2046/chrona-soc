@@ -67,15 +67,15 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
         {/* Header */}
         <div className="px-6 py-4 border-b border-soc-border bg-soc-card flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <h2 className="text-lg font-bold text-soc-text-primary flex items-center gap-2">
               <Activity className="w-5 h-5 text-soc-accent" />
               Execution Pipeline
             </h2>
-            <p className="text-sm font-mono text-gray-500 mt-0.5">{execution.id} - {execution.playbookName}</p>
+            <p className="text-sm font-mono text-soc-text-muted mt-0.5">{execution.id} - {execution.playbookName}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white hover:bg-soc-bg rounded-lg transition-colors"
+            className="p-2 text-soc-text-secondary hover:text-soc-text-primary hover:bg-soc-bg rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -98,12 +98,12 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
               {(execution.status as string) === 'Paused' && <PauseCircle className="w-5 h-5" />}
               {['Running', 'Pending'].includes(execution.status as string) && <RefreshCw className="w-5 h-5 animate-spin" />}
               <span className="font-bold">{execution.status}</span>
-              <span className="text-sm font-mono ml-4 text-gray-400 border-l border-gray-600 pl-4"><ClientDate date={execution.startTime} format="full" /></span>
+              <span className="text-sm font-mono ml-4 text-soc-text-secondary border-l border-gray-600 pl-4"><ClientDate date={execution.startTime} format="full" /></span>
             </div>
             <div className="flex items-center gap-2">
               {['Running', 'Pending'].includes(execution.status as string) && (
                 <>
-                  <button onClick={() => handleControl('pause')} className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:bg-soc-card-hover rounded text-xs font-medium text-white flex items-center gap-1"><PauseCircle className="w-3.5 h-3.5" /> Pause</button>
+                  <button onClick={() => handleControl('pause')} className="px-3 py-1.5 bg-soc-bg border border-soc-border hover:bg-soc-card-hover rounded text-xs font-medium text-soc-text-primary flex items-center gap-1"><PauseCircle className="w-3.5 h-3.5" /> Pause</button>
                   <button onClick={() => handleControl('cancel')} className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 rounded text-xs font-medium text-red-400 flex items-center gap-1"><StopCircle className="w-3.5 h-3.5" /> Cancel</button>
                 </>
               )}
@@ -125,7 +125,7 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
 
           {/* Stepper Timeline */}
           <div className="glass-card p-5 rounded-xl border border-soc-border">
-            <h3 className="text-sm font-bold text-white mb-6">Workflow Trace</h3>
+            <h3 className="text-sm font-bold text-soc-text-primary mb-6">Workflow Trace</h3>
             <div className="relative border-l-2 border-soc-border ml-3 space-y-8">
 
               {execution.execution_logs && execution.execution_logs.length > 0 ? (
@@ -140,11 +140,11 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
                         <div className="flex-1 pr-4 min-w-0">
                           <h4 className={`text-sm font-medium ${isSuccess ? 'text-emerald-400' : isFailed ? 'text-red-400' : 'text-white'}`}>{log.step}</h4>
                           {log.message && (
-                            <p className="text-xs text-gray-400 mt-1 break-words">{log.message}</p>
+                            <p className="text-xs text-soc-text-secondary mt-1 break-words">{log.message}</p>
                           )}
                           {log.output && Object.keys(log.output).length > 0 && (
                             <div className="mt-2 bg-[#0D1117] border border-soc-border rounded p-2 overflow-x-auto">
-                              <pre className="text-[10px] text-gray-400 font-mono">
+                              <pre className="text-[10px] text-soc-text-secondary font-mono">
                                 {JSON.stringify(log.output, null, 2)}
                               </pre>
                             </div>
@@ -155,7 +155,7 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
                             </p>
                           )}
                         </div>
-                        <span className="text-xs text-gray-500 font-mono whitespace-nowrap ml-4">
+                        <span className="text-xs text-soc-text-muted font-mono whitespace-nowrap ml-4">
                           {log.time ? new Date(log.time).toLocaleTimeString() : '--:--'}
                         </span>
                       </div>
@@ -163,15 +163,15 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
                   );
                 })
               ) : (
-                <div className="text-gray-500 text-sm">No execution logs available.</div>
+                <div className="text-soc-text-muted text-sm">No execution logs available.</div>
               )}
             </div>
           </div>
 
           {/* Raw Log Output */}
           <div>
-            <h3 className="text-sm font-bold text-white mb-3">Debug Logs (Raw)</h3>
-            <div className="bg-[#0D1117] border border-soc-border rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-gray-400 leading-relaxed whitespace-pre">
+            <h3 className="text-sm font-bold text-soc-text-primary mb-3">Debug Logs (Raw)</h3>
+            <div className="bg-[#0D1117] border border-soc-border rounded-xl p-4 h-48 overflow-y-auto font-mono text-[11px] text-soc-text-secondary leading-relaxed whitespace-pre">
               {execution.execution_logs ? JSON.stringify(execution.execution_logs, null, 2) : "No raw logs available."}
             </div>
           </div>

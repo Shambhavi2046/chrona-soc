@@ -1,6 +1,6 @@
 import { User, Shield, Bell, Palette, Bot, Network, Sliders, Database, Info } from "lucide-react";
 
-export type SettingsTab = "profile" | "security" | "notifications" | "appearance" | "copilot" | "integrations" | "system" | "backup" | "about";
+export type SettingsTab = "profile" | "appearance" | "about";
 
 interface SettingsSidebarProps {
   activeTab: SettingsTab;
@@ -10,13 +10,7 @@ interface SettingsSidebarProps {
 export default function SettingsSidebar({ activeTab, onTabChange }: SettingsSidebarProps) {
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
-    { id: "security", label: "Security & Access", icon: Shield },
-    { id: "notifications", label: "Notifications", icon: Bell },
     { id: "appearance", label: "Appearance", icon: Palette },
-    { id: "copilot", label: "AI Copilot", icon: Bot },
-    { id: "integrations", label: "Integrations", icon: Network },
-    { id: "system", label: "System Preferences", icon: Sliders },
-    { id: "backup", label: "Data & Backup", icon: Database },
     { id: "about", label: "About", icon: Info },
   ];
 
@@ -36,7 +30,7 @@ export default function SettingsSidebar({ activeTab, onTabChange }: SettingsSide
                 : "text-gray-400 hover:bg-soc-card hover:text-gray-200"
             }`}
           >
-            <Icon className={`w-4 h-4 transition-colors ${isActive ? "text-soc-accent" : "text-gray-500 group-hover:text-gray-300"}`} />
+            <Icon className={`w-4 h-4 transition-colors ${isActive ? "text-soc-accent" : "text-soc-text-muted group-hover:text-soc-text-secondary"}`} />
             {tab.label}
           </button>
         );

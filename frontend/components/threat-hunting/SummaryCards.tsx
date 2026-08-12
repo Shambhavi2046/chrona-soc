@@ -33,9 +33,9 @@ export default function SummaryCards({ events = [] }: Props) {
               </div>
             </div>
             <div className="relative z-10">
-              <p className="text-sm font-medium text-gray-400">{stat.label}</p>
-              <h3 className="text-2xl font-bold text-white mt-1">{stat.value}</h3>
-              <p className="text-xs text-gray-500 mt-2">{stat.trend}</p>
+              <p className="text-sm font-medium text-soc-text-secondary">{stat.label}</p>
+              <h3 className="text-2xl font-bold text-soc-text-primary mt-1">{stat.value}</h3>
+              <p className="text-xs text-soc-text-muted mt-2">{stat.trend}</p>
             </div>
           </div>
         );

@@ -5,9 +5,9 @@ export default function ThreatOverview() {
   return (
     <div className="glass-card rounded-xl p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-white">Threat Activity Overview</h3>
+        <h3 className="text-lg font-semibold text-soc-text-primary">Threat Activity Overview</h3>
         <Link href="/alerts">
-          <button className="text-xs text-soc-accent hover:text-white transition-colors">View All</button>
+          <button className="text-xs text-soc-accent hover:text-soc-text-primary transition-colors">View All</button>
         </Link>
       </div>
 
@@ -15,7 +15,7 @@ export default function ThreatOverview() {
         {/* Security Posture */}
         <div>
           <div className="flex justify-between items-end mb-2">
-            <span className="text-sm font-medium text-gray-400">Security Posture</span>
+            <span className="text-sm font-medium text-soc-text-secondary">Security Posture</span>
             <span className="text-sm font-bold text-soc-success">85% Optimal</span>
           </div>
           <div className="h-2 w-full bg-soc-bg rounded-full overflow-hidden">
@@ -26,7 +26,7 @@ export default function ThreatOverview() {
         {/* Attack Frequency */}
         <div>
           <div className="flex justify-between items-end mb-2">
-            <span className="text-sm font-medium text-gray-400">Attack Frequency</span>
+            <span className="text-sm font-medium text-soc-text-secondary">Attack Frequency</span>
             <span className="text-sm font-bold text-soc-warning">Elevated</span>
           </div>
           <div className="h-2 w-full bg-soc-bg rounded-full overflow-hidden flex">
@@ -39,7 +39,7 @@ export default function ThreatOverview() {
         {/* Global Threat Level */}
         <div>
           <div className="flex justify-between items-end mb-2">
-            <span className="text-sm font-medium text-gray-400">Global Threat Level</span>
+            <span className="text-sm font-medium text-soc-text-secondary">Global Threat Level</span>
             <span className="text-sm font-bold text-soc-danger">Critical</span>
           </div>
           <div className="h-2 w-full bg-soc-bg rounded-full overflow-hidden">
@@ -51,18 +51,18 @@ export default function ThreatOverview() {
       <div className="mt-6 pt-6 border-t border-soc-border grid grid-cols-3 gap-4">
         <div className="text-center">
           <ShieldAlert className="w-5 h-5 text-soc-warning mx-auto mb-1" />
-          <span className="block text-xl font-bold text-white">24</span>
-          <span className="text-xs text-gray-500">Active</span>
+          <span className="block text-xl font-bold text-soc-text-primary">24</span>
+          <span className="text-xs text-soc-text-muted">Active</span>
         </div>
         <div className="text-center border-l border-r border-soc-border">
           <Activity className="w-5 h-5 text-soc-accent mx-auto mb-1" />
-          <span className="block text-xl font-bold text-white">12k</span>
-          <span className="text-xs text-gray-500">Events/s</span>
+          <span className="block text-xl font-bold text-soc-text-primary">12k</span>
+          <span className="text-xs text-soc-text-muted">Events/s</span>
         </div>
         <div className="text-center">
           <Wifi className="w-5 h-5 text-soc-success mx-auto mb-1" />
-          <span className="block text-xl font-bold text-white">99%</span>
-          <span className="text-xs text-gray-500">Uptime</span>
+          <span className="block text-xl font-bold text-soc-text-primary">99%</span>
+          <span className="text-xs text-soc-text-muted">Uptime</span>
         </div>
       </div>
     </div>

@@ -40,8 +40,8 @@ export default function NewTemplateModal({ isOpen, onClose, onSuccess }: NewTemp
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-soc-bg border border-soc-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-4 border-b border-soc-border">
-          <h3 className="text-lg font-semibold text-white">New Report Template</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white rounded transition-colors">
+          <h3 className="text-lg font-semibold text-soc-text-primary">New Report Template</h3>
+          <button onClick={onClose} className="p-1 text-soc-text-secondary hover:text-soc-text-primary rounded transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -54,33 +54,33 @@ export default function NewTemplateModal({ isOpen, onClose, onSuccess }: NewTemp
           )}
           
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Template Name</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Template Name</label>
             <input 
               required
               type="text" 
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent transition-colors"
+              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors"
               placeholder="e.g., Executive Summary"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Description</label>
             <textarea 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent transition-colors h-24 resize-none"
+              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors h-24 resize-none"
               placeholder="Optional description..."
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Category Layout</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Category Layout</label>
             <select 
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent transition-colors"
+              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors"
             >
               <option value="Standard">Standard Incident Report</option>
               <option value="Executive">Executive Summary</option>
@@ -93,7 +93,7 @@ export default function NewTemplateModal({ isOpen, onClose, onSuccess }: NewTemp
             <button 
               type="button" 
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm font-medium text-soc-text-secondary hover:text-soc-text-primary transition-colors"
             >
               Cancel
             </button>

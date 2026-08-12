@@ -44,17 +44,17 @@ export default function IncidentTable({ incidents = [] }: { incidents?: any[] })
     return (
       <div className="glass-card rounded-xl overflow-hidden flex flex-col">
         <div className="p-6 border-b border-soc-border flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white flex items-center">
+          <h3 className="text-lg font-semibold text-soc-text-primary flex items-center">
             <AlertTriangle className="w-5 h-5 mr-2 text-soc-warning" />
             Recent Security Incidents
           </h3>
           <Link href="/alerts">
-            <button className="text-sm font-medium text-soc-accent hover:text-white transition-colors">
+            <button className="text-sm font-medium text-soc-accent hover:text-soc-text-primary transition-colors">
               View All Incidents
             </button>
           </Link>
         </div>
-        <div className="p-8 text-center text-gray-400">
+        <div className="p-8 text-center text-soc-text-secondary">
           No recent security incidents.
         </div>
       </div>
@@ -64,12 +64,12 @@ export default function IncidentTable({ incidents = [] }: { incidents?: any[] })
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col">
       <div className="p-6 border-b border-soc-border flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center">
+        <h3 className="text-lg font-semibold text-soc-text-primary flex items-center">
           <AlertTriangle className="w-5 h-5 mr-2 text-soc-warning" />
           Recent Security Incidents
         </h3>
         <Link href="/alerts">
-          <button className="text-sm font-medium text-soc-accent hover:text-white transition-colors">
+          <button className="text-sm font-medium text-soc-accent hover:text-soc-text-primary transition-colors">
             View All Incidents
           </button>
         </Link>
@@ -78,7 +78,7 @@ export default function IncidentTable({ incidents = [] }: { incidents?: any[] })
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-soc-bg/50 text-gray-400 text-xs uppercase tracking-wider">
+            <tr className="bg-soc-bg/50 text-soc-text-secondary text-xs uppercase tracking-wider">
               <th className="px-6 py-4 font-medium">Severity</th>
               <th className="px-6 py-4 font-medium">Threat Type</th>
               <th className="px-6 py-4 font-medium">Source</th>
@@ -97,10 +97,10 @@ export default function IncidentTable({ incidents = [] }: { incidents?: any[] })
                     <SeverityBadge severity={incident.severity} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-white">{incident.threat_type || incident.title}</div>
-                    <div className="text-xs text-gray-500">ALT-{displayId}</div>
+                    <div className="font-medium text-soc-text-primary">{incident.threat_type || incident.title}</div>
+                    <div className="text-xs text-soc-text-muted">ALT-{displayId}</div>
                   </td>
-                  <td className="px-6 py-4 text-gray-300 font-mono text-sm">{incident.source || "Unknown"}</td>
+                  <td className="px-6 py-4 text-soc-text-secondary font-mono text-sm">{incident.source || "Unknown"}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-full max-w-[4rem] bg-soc-bg rounded-full h-1.5 mr-2">
@@ -109,20 +109,20 @@ export default function IncidentTable({ incidents = [] }: { incidents?: any[] })
                           style={{ width: `${incident.risk_score || 0}%` }}
                         ></div>
                       </div>
-                      <span className={`font-mono text-sm ${incident.risk_score > 80 ? 'text-soc-danger font-bold' : 'text-gray-400'}`}>
+                      <span className={`font-mono text-sm ${incident.risk_score > 80 ? 'text-soc-danger font-bold' : 'text-soc-text-secondary'}`}>
                         {incident.risk_score || 0}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-300 flex items-center">
+                    <span className="text-sm text-soc-text-secondary flex items-center">
                       {incident.status === 'Resolved' && <ShieldCheck className="w-4 h-4 mr-1 text-soc-success" />}
                       {incident.status === 'Blocked' && <Shield className="w-4 h-4 mr-1 text-soc-accent" />}
                       {incident.status === 'In Progress' && <ShieldAlert className="w-4 h-4 mr-1 text-soc-warning animate-pulse" />}
                       {incident.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap">{timeAgo(incident.created_at)}</td>
+                  <td className="px-6 py-4 text-sm text-soc-text-secondary whitespace-nowrap">{timeAgo(incident.created_at)}</td>
                   <td className="px-6 py-4 text-right">
                     <button 
                       onClick={() => router.push(`/investigations/${incident.id}`)}

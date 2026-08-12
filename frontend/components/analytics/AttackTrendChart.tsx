@@ -23,8 +23,8 @@ export default function AttackTrendChart({ data, currentPeriod }: AttackTrendCha
     <div className={`glass-card rounded-xl p-6 h-[400px] flex flex-col ${isPending ? 'opacity-50' : 'opacity-100'} transition-opacity duration-200`}>
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h3 className="text-lg font-semibold text-white">Attack Trends</h3>
-          <p className="text-sm text-gray-400">Total detected incidents over time</p>
+          <h3 className="text-lg font-semibold text-soc-text-primary">Attack Trends</h3>
+          <p className="text-sm text-soc-text-secondary">Total detected incidents over time</p>
         </div>
         <div className="flex gap-2">
           {["Hour", "Day", "Week", "Month"].map((tf) => {
@@ -48,7 +48,7 @@ export default function AttackTrendChart({ data, currentPeriod }: AttackTrendCha
       
       <div className="flex-1 w-full h-full">
         {data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-soc-text-secondary">
             <span className="text-sm">No detected incidents in this period</span>
           </div>
         ) : (

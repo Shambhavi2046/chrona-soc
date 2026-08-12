@@ -19,16 +19,16 @@ export default async function AlertsPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center">
+          <h1 className="text-2xl font-bold text-soc-text-primary tracking-tight flex items-center">
             <ShieldAlert className="w-6 h-6 mr-3 text-soc-danger" />
             Security Alerts
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-soc-text-secondary mt-1">
             Real-time threat detection feed and automated analysis results
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-sm text-gray-500">Live Feed Active</span>
+          <span className="text-sm text-soc-text-muted">Live Feed Active</span>
           <RefreshButton />
         </div>
       </div>

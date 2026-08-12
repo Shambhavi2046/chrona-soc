@@ -74,12 +74,12 @@ export default function PlaybookModal({ playbook, isOpen, onClose, onSave }: Pla
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-soc-border bg-soc-card flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="text-lg font-bold text-soc-text-primary">
             {playbook ? "Edit Playbook" : "New Playbook"}
           </h2>
           <button 
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded-lg transition-colors"
+            className="p-1.5 text-soc-text-secondary hover:text-soc-text-primary hover:bg-soc-bg rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -96,33 +96,33 @@ export default function PlaybookModal({ playbook, isOpen, onClose, onSave }: Pla
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Name</label>
             <input 
               type="text" 
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent"
+              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent"
               placeholder="e.g. Phishing Response"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Description</label>
             <textarea 
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent min-h-[80px]"
+              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent min-h-[80px]"
               placeholder="Describe the playbook's purpose..."
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
+              <label className="block text-sm font-medium text-soc-text-secondary mb-1">Category</label>
               <select 
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent"
+                className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent"
               >
                 <option value="General">General</option>
                 <option value="Incident Response">Incident Response</option>
@@ -132,11 +132,11 @@ export default function PlaybookModal({ playbook, isOpen, onClose, onSave }: Pla
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Trigger Type</label>
+              <label className="block text-sm font-medium text-soc-text-secondary mb-1">Trigger Type</label>
               <select 
                 value={triggerType}
                 onChange={e => setTriggerType(e.target.value)}
-                className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent"
+                className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent"
               >
                 <option value="Manual">Manual</option>
                 <option value="Email Alert">Email Alert</option>
@@ -148,11 +148,11 @@ export default function PlaybookModal({ playbook, isOpen, onClose, onSave }: Pla
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Status</label>
+            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Status</label>
             <select 
               value={status}
               onChange={e => setStatus(e.target.value)}
-              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-soc-accent"
+              className="w-full bg-soc-card border border-soc-border rounded-lg px-3 py-2 text-soc-text-primary focus:outline-none focus:border-soc-accent"
             >
               <option value="Draft">Draft</option>
               <option value="Active">Active</option>
@@ -166,7 +166,7 @@ export default function PlaybookModal({ playbook, isOpen, onClose, onSave }: Pla
         <div className="px-6 py-4 border-t border-soc-border bg-soc-card flex justify-end gap-3">
           <button 
             onClick={onClose}
-            className="px-4 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm font-medium text-gray-300 transition-colors"
+            className="px-4 py-2 bg-soc-bg border border-soc-border hover:border-gray-500 rounded-lg text-sm font-medium text-soc-text-secondary transition-colors"
           >
             Cancel
           </button>
