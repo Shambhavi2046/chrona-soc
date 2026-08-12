@@ -34,39 +34,49 @@ class ReportService(BaseService):
         }
 
         try:
-            if request.source_type.lower() == "alert":
-                alert = await alert_service.get_by_id(db, request.source_id, org_id=org_id)
-                if alert:
-                    content_kwargs["incident_overview"] = f"Alert '{alert.title}' (Severity: {alert.severity}) triggered at {alert.created_at}."
-                    content_kwargs["affected_assets"] = [alert.asset] if alert.asset else []
-                    if alert.mitre_tactic or alert.mitre_technique:
-                        content_kwargs["mitre_mapping"] = [f"{alert.mitre_tactic or ''} - {alert.mitre_technique or ''}"]
-            elif request.source_type.lower() == "investigation":
-                investigation = await investigation_service.get_by_id(db, request.source_id, org_id=org_id)
-                if investigation:
-                    content_kwargs["incident_overview"] = f"Investigation initiated for alert {investigation.alert_id}."
-                    content_kwargs["analyst_findings"] = str(investigation.findings) if investigation.findings else ""
-                    content_kwargs["executive_summary"] = investigation.summary or content_kwargs["executive_summary"]
-            elif request.source_type.lower() == "case":
-                case = await case_service.get_by_id(db, request.source_id, org_id=org_id)
-                if case:
-                    content_kwargs["incident_overview"] = f"Case '{case.title}' (Priority: {case.priority}) currently {case.status}."
-                    content_kwargs["executive_summary"] = case.description or content_kwargs["executive_summary"]
-                    if getattr(case, 'timeline', None):
-                        content_kwargs["timeline"] = [{"time": str(t.created_at), "event": t.content} for t in case.timeline]
-                    if getattr(case, 'evidence', None):
-                        content_kwargs["indicators_of_compromise"] = [{"type": e.type, "value": e.value} for e in case.evidence]
-            elif request.source_type.lower() == "threat hunt":
-                from sqlalchemy import select
-                from app.models.hunting_model import SavedHunt
-                result = await db.execute(select(SavedHunt).filter_by(id=request.source_id, org_id=org_id))
-                hunt = result.scalar_one_or_none()
-                if hunt:
-                    content_kwargs["incident_overview"] = f"Threat Hunt '{hunt.name}' with query: {hunt.query}."
-                    content_kwargs["analyst_findings"] = f"Matches found based on Threat Hunt execution."
-        except Exception as e:
-            # Fallback in case of fetching error, don't crash
-            print(f"Error fetching source data for report: {e}")
+            source_uuid = uuid.UUID(request.source_id)
+        except ValueError:
+            raise ValueError("Invalid source identifier")
+
+        if request.source_type.lower() == "alert":
+            alert = await alert_service.get_by_id(db, source_uuid, org_id=org_id)
+            if not alert:
+                raise ValueError("Source entity not found")
+            content_kwargs["incident_overview"] = f"Alert '{alert.title}' (Severity: {alert.severity}) triggered at {alert.created_at}."
+            asset_val = getattr(alert, "source", None)
+            content_kwargs["affected_assets"] = [asset_val] if asset_val else []
+            tactic = getattr(alert, "mitre_tactic", None)
+            tech = getattr(alert, "mitre_technique", None)
+            if tactic or tech:
+                content_kwargs["mitre_mapping"] = [f"{tactic or ''} - {tech or ''}"]
+        elif request.source_type.lower() == "investigation":
+            investigation = await investigation_service.get_by_id(db, source_uuid, org_id=org_id)
+            if not investigation:
+                raise ValueError("Source entity not found")
+            content_kwargs["incident_overview"] = f"Investigation initiated for alert {investigation.alert_id}."
+            content_kwargs["analyst_findings"] = str(investigation.findings) if investigation.findings else ""
+            content_kwargs["executive_summary"] = investigation.summary or content_kwargs["executive_summary"]
+        elif request.source_type.lower() == "case":
+            case = await case_service.get_by_id(db, source_uuid, org_id=org_id)
+            if not case:
+                raise ValueError("Source entity not found")
+            content_kwargs["incident_overview"] = f"Case '{case.title}' (Priority: {case.priority}) currently {case.status}."
+            content_kwargs["executive_summary"] = case.description or content_kwargs["executive_summary"]
+            if getattr(case, 'timeline', None):
+                content_kwargs["timeline"] = [{"time": str(t.created_at), "event": t.content} for t in case.timeline]
+            if getattr(case, 'evidence', None):
+                content_kwargs["indicators_of_compromise"] = [{"type": e.type, "value": e.value} for e in case.evidence]
+        elif request.source_type.lower() == "threat hunt":
+            from sqlalchemy import select
+            from app.models.hunting_model import SavedHunt
+            result = await db.execute(select(SavedHunt).filter_by(id=source_uuid, org_id=org_id))
+            hunt = result.scalar_one_or_none()
+            if not hunt:
+                raise ValueError("Source entity not found")
+            content_kwargs["incident_overview"] = f"Threat Hunt '{hunt.name}' with query: {hunt.query}."
+            content_kwargs["analyst_findings"] = f"Matches found based on Threat Hunt execution."
+        else:
+            raise ValueError("Unsupported source_type")
 
         content = ReportContentSchema(**content_kwargs)
 

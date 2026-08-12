@@ -1,13 +1,19 @@
 import { FileText, Calendar, ShieldCheck, AlertTriangle, AlertOctagon, Download } from "lucide-react";
 
-export default function SummaryCards() {
+interface SummaryCardsProps {
+  reportCount: number;
+  analytics?: any;
+}
+
+export default function SummaryCards({ reportCount, analytics }: SummaryCardsProps) {
+  const kpis = analytics?.kpis || {};
+  
   const stats = [
-    { label: "Generated Reports", value: "24", icon: FileText, color: "text-blue-400", bg: "bg-blue-500/10", trend: "+4 this week" },
-    { label: "Scheduled Reports", value: "8", icon: Calendar, color: "text-purple-400", bg: "bg-purple-500/10", trend: "Next: Tomorrow 08:00" },
-    { label: "Compliance Score", value: "89%", icon: ShieldCheck, color: "text-emerald-400", bg: "bg-emerald-500/10", trend: "+2% vs last month" },
-    { label: "Open Findings", value: "49", icon: AlertTriangle, color: "text-orange-400", bg: "bg-orange-500/10", trend: "-12 resolved" },
-    { label: "Critical Risks", value: "3", icon: AlertOctagon, color: "text-red-400", bg: "bg-red-500/10", trend: "Requires attention" },
-    { label: "Exported Reports", value: "142", icon: Download, color: "text-gray-400", bg: "bg-gray-500/10", trend: "All time" },
+    { label: "Generated Reports", value: reportCount.toString(), icon: FileText, color: "text-blue-400", bg: "bg-blue-500/10", trend: "" },
+    { label: "Compliance Score", value: kpis.securityScore ? `${kpis.securityScore}%` : "0%", icon: ShieldCheck, color: "text-emerald-400", bg: "bg-emerald-500/10", trend: "Security posture" },
+    { label: "Open Findings", value: (kpis.openInvestigations || 0).toString(), icon: AlertTriangle, color: "text-orange-400", bg: "bg-orange-500/10", trend: "Active investigations" },
+    { label: "Critical Risks", value: (kpis.criticalIncidents || 0).toString(), icon: AlertOctagon, color: "text-red-400", bg: "bg-red-500/10", trend: "Requires attention" },
+    { label: "Threat Intel Matches", value: (kpis.threatIntelMatches || 0).toString(), icon: ShieldCheck, color: "text-purple-400", bg: "bg-purple-500/10", trend: "IoC detections" },
   ];
 
   return (

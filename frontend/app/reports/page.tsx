@@ -7,16 +7,14 @@ import { FileText, RefreshCw, Download, Plus, FilePlus2, Loader2, AlertCircle } 
 import SummaryCards from "@/components/reports/SummaryCards";
 import TemplateGallery from "@/components/reports/TemplateGallery";
 import GeneratedReportsTable from "@/components/reports/GeneratedReportsTable";
-import ComplianceDashboard from "@/components/reports/ComplianceDashboard";
-import FrameworkCards from "@/components/reports/FrameworkCards";
 import ExecutiveDashboard from "@/components/reports/ExecutiveDashboard";
 import ReportGenerator from "@/components/reports/ReportGenerator";
 import ReportPreview from "@/components/reports/ReportPreview";
-import AIReportAssistant from "@/components/reports/AIReportAssistant";
 
-import { mockFrameworks } from "@/lib/mocks/reports";
 import { GeneratedReport, ReportTemplate } from "@/types/reports";
-import { getReports, getTemplates } from "@/services/reports";
+import { getReports, getTemplates, exportAllReportsZip } from "@/services/reports";
+import { getAnalytics } from "@/services/analytics";
+import NewTemplateModal from "@/components/reports/NewTemplateModal";
 
 export default function ReportsWorkspace() {
   const [reports, setReports] = useState<GeneratedReport[]>([]);
@@ -24,14 +22,18 @@ export default function ReportsWorkspace() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<GeneratedReport | null>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [selectedTemplateForGen, setSelectedTemplateForGen] = useState<string>("");
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [r, t] = await Promise.all([getReports(), getTemplates()]);
+      const [r, t, a] = await Promise.all([getReports(), getTemplates(), getAnalytics()]);
       setReports(r);
       setTemplates(t);
+      setAnalytics(a);
     } catch (e) {
       console.error(e);
       setError("Failed to fetch reports data");
@@ -52,13 +54,14 @@ export default function ReportsWorkspace() {
         icon={FileText}
         actions={[
           { label: "Refresh", icon: RefreshCw, onClick: fetchData },
-          { label: "Export All", icon: Download },
-          { label: "New Template", icon: Plus, variant: "outline" },
-          { label: "Generate Report", icon: FilePlus2, variant: "primary" }
+          { label: "Export All", icon: Download, onClick: async () => {
+            try { await exportAllReportsZip(); } 
+            catch (e: any) { alert(e.message || "Failed to export reports"); }
+          }},
+          { label: "New Template", icon: Plus, variant: "outline", onClick: () => setIsTemplateModalOpen(true) },
+          { label: "Generate Report", icon: FilePlus2, variant: "primary", onClick: () => document.getElementById('report-generator')?.scrollIntoView({ behavior: 'smooth' }) }
         ]}
       />
-
-
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-24 text-gray-400">
@@ -72,29 +75,34 @@ export default function ReportsWorkspace() {
         </div>
       ) : (
         <>
-          <SummaryCards />
-          <ExecutiveDashboard />
+          <NewTemplateModal 
+            isOpen={isTemplateModalOpen} 
+            onClose={() => setIsTemplateModalOpen(false)} 
+            onSuccess={fetchData} 
+          />
+          <SummaryCards reportCount={reports.length} analytics={analytics} />
+          <ExecutiveDashboard analytics={analytics} />
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-1 flex flex-col gap-6">
-              <ReportGenerator templates={templates} onGenerateSuccess={fetchData} />
-              <AIReportAssistant />
+            <div id="report-generator" className="xl:col-span-1 flex flex-col gap-6">
+              <ReportGenerator 
+                templates={templates} 
+                preselectedTemplateId={selectedTemplateForGen}
+                onGenerateSuccess={fetchData} 
+              />
             </div>
             <div className="xl:col-span-2">
               <ReportPreview report={selectedReport || reports[0]} />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <ComplianceDashboard />
-            </div>
-            <div className="lg:col-span-2">
-              <FrameworkCards frameworks={mockFrameworks} />
-            </div>
-          </div>
-
-          <TemplateGallery templates={templates} />
+          <TemplateGallery 
+            templates={templates} 
+            onUseTemplate={(id) => {
+              setSelectedTemplateForGen(id);
+              document.getElementById('report-generator')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          />
           <GeneratedReportsTable reports={reports} onRefresh={fetchData} />
         </>
       )}

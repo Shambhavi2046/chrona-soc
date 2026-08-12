@@ -77,10 +77,16 @@ export default function GeneratedReportsTable({ reports, onRefresh }: GeneratedR
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => downloadReportPdf(report.id)} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download PDF">
+                    <button onClick={async () => {
+                      try { await downloadReportPdf(report.id); } 
+                      catch (e: any) { alert(e.message); }
+                    }} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download PDF">
                       <Download className="w-4 h-4" />
                     </button>
-                    <button onClick={() => downloadReportJson(report.id)} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download JSON">
+                    <button onClick={async () => {
+                      try { await downloadReportJson(report.id); } 
+                      catch (e: any) { alert(e.message); }
+                    }} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Download JSON">
                       <FileJson className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleDelete(report.id)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-soc-bg rounded transition-colors tooltip-trigger" title="Delete">

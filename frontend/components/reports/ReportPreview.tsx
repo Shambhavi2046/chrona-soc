@@ -40,7 +40,10 @@ export default function ReportPreview({ report }: ReportPreviewProps) {
         </div>
         <div className="flex items-center gap-2">
           <button className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-card rounded transition-colors tooltip-trigger" title="Print (Coming Soon)"><Printer className="w-4 h-4" /></button>
-          <button onClick={() => downloadReportPdf(report.id)} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-card rounded transition-colors tooltip-trigger" title="Download PDF"><Download className="w-4 h-4" /></button>
+          <button onClick={async () => {
+            try { await downloadReportPdf(report.id); } 
+            catch (e: any) { alert(e.message); }
+          }} className="p-1.5 text-gray-400 hover:text-white hover:bg-soc-card rounded transition-colors tooltip-trigger" title="Download PDF"><Download className="w-4 h-4" /></button>
         </div>
       </div>
 

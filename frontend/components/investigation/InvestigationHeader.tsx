@@ -44,20 +44,22 @@ export default function InvestigationHeader({
     if (!investigationId) return;
     try {
       setIsExporting(true);
-      // Pick the first available template
-      const templates = await getTemplates();
-      if (!templates.length) throw new Error("No templates available");
+      const templates = await getTemplates().catch(() => []);
       
-      const report = await generateReport({
+      const payload: any = {
         name: `Investigation Report - ALT-${String(alertId).padStart(4, '0')}`,
         source_type: "Investigation",
         source_id: investigationId,
-        template_id: templates[0].id
-      });
+      };
+      if (templates && templates.length > 0) {
+        payload.template_id = templates[0].id;
+      }
       
-      downloadReportPdf(report.id);
-    } catch (e) {
+      const report = await generateReport(payload);
+      await downloadReportPdf(report.id);
+    } catch (e: any) {
       console.error("Failed to export report", e);
+      alert(e.message || "Failed to export report");
     } finally {
       setIsExporting(false);
     }

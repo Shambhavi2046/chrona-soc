@@ -21,6 +21,9 @@ class ReportTemplateBase(BaseModel):
     estimated_pages: int = 1
     category: str
 
+class ReportTemplateCreate(ReportTemplateBase):
+    pass
+
 class ReportTemplateSchema(ReportTemplateBase):
     id: uuid.UUID
     created_at: datetime

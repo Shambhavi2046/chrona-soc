@@ -3,9 +3,10 @@ import { ReportTemplate } from "@/types";
 
 interface TemplateGalleryProps {
   templates: ReportTemplate[];
+  onUseTemplate?: (templateId: string) => void;
 }
 
-export default function TemplateGallery({ templates }: TemplateGalleryProps) {
+export default function TemplateGallery({ templates, onUseTemplate }: TemplateGalleryProps) {
   const getIcon = (category: string) => {
     switch (category) {
       case "Executive": return <Activity className="w-5 h-5 text-purple-400" />;
@@ -29,7 +30,11 @@ export default function TemplateGallery({ templates }: TemplateGalleryProps) {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {templates.map((template) => (
-          <div key={template.id} className="bg-soc-bg border border-soc-border hover:border-soc-accent/50 rounded-lg p-4 transition-all group relative cursor-pointer">
+          <div 
+            key={template.id} 
+            onClick={() => onUseTemplate?.(template.id)}
+            className="bg-soc-bg border border-soc-border hover:border-soc-accent/50 rounded-lg p-4 transition-all group relative cursor-pointer"
+          >
             <div className="flex items-start gap-3 mb-2">
               <div className="p-2 bg-soc-card rounded-lg group-hover:bg-soc-accent/10 transition-colors">
                 {getIcon(template.category)}

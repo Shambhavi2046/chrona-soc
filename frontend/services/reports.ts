@@ -12,11 +12,37 @@ export const getReports = async (): Promise<GeneratedReport[]> => {
 };
 
 export const getTemplates = async (): Promise<ReportTemplate[]> => {
-  const response = await fetchApi(`/reports/templates`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch report templates');
-  }
+  const response = await fetchApi(`${API_URL}/reports/templates`);
+  if (!response.ok) throw new Error("Failed to fetch templates");
   return response.json();
+};
+
+export const createTemplate = async (data: Partial<ReportTemplate>): Promise<ReportTemplate> => {
+  const response = await fetchApi(`${API_URL}/reports/templates`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("Failed to create template");
+  return response.json();
+};
+
+export const exportAllReportsZip = async (): Promise<void> => {
+  const response = await fetchApi(`${API_URL}/reports/export/zip`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to download zip');
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `all_reports.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 };
 
 export const generateReport = async (payload: { name: string, source_type: string, source_id: string, template_id: string }): Promise<GeneratedReport> => {
@@ -26,7 +52,8 @@ export const generateReport = async (payload: { name: string, source_type: strin
     body: JSON.stringify(payload)
   });
   if (!response.ok) {
-    throw new Error('Failed to generate report');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to generate report');
   }
   return response.json();
 };
@@ -39,10 +66,38 @@ export const deleteReport = async (id: string): Promise<void> => {
   }
 };
 
-export const downloadReportJson = (id: string) => {
-  window.open(`${API_URL}/reports/${id}/export/json`, '_blank');
+export const downloadReportJson = async (id: string): Promise<void> => {
+  const response = await fetchApi(`${API_URL}/reports/${id}/export/json`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to download JSON report');
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `report_${id}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 };
 
-export const downloadReportPdf = (id: string) => {
-  window.open(`${API_URL}/reports/${id}/export/pdf`, '_blank');
+export const downloadReportPdf = async (id: string): Promise<void> => {
+  const response = await fetchApi(`${API_URL}/reports/${id}/export/pdf`);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || 'Failed to download PDF report');
+  }
+  
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `report_${id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
 };

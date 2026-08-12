@@ -5,9 +5,11 @@ from typing import List
 import uuid
 from app.db.session import get_db
 from app.services.report_service import report_service
-from app.schemas.report_schema import ReportSchema, ReportGenerateRequest, ReportTemplateSchema
+from app.schemas.report_schema import ReportSchema, ReportGenerateRequest, ReportTemplateSchema, ReportTemplateCreate
 from app.utils.validation import get_pagination, PaginationParams
 import json
+import io
+import zipfile
 
 from app.middleware.auth import require_permissions
 from app.models.identity import User
@@ -30,13 +32,57 @@ async def list_templates(
 ):
     return await report_service.template_repo.get_all(db, skip=pagination.skip, limit=pagination.limit, org_id=current_user.org_id)
 
+@router.post("/templates", response_model=ReportTemplateSchema)
+async def create_template(
+    template_in: ReportTemplateCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["reports:write"]))
+):
+    template = await report_service.template_repo.create(
+        db, 
+        obj_in=template_in, 
+        org_id=current_user.org_id
+    )
+    return template
+
+@router.get("/export/zip")
+async def export_all_reports_zip(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["reports:read"]))
+):
+    reports = await report_service.repository.get_all(db, skip=0, limit=10000, org_id=current_user.org_id)
+    
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for report in reports:
+            # We must format it for standard JSON download
+            data = {
+                "id": str(report.id),
+                "name": report.name,
+                "type": report.type,
+                "generated_by": report.generated_by,
+                "content": report.content
+            }
+            json_str = json.dumps(data, indent=2)
+            zip_file.writestr(f"report_{report.id}.json", json_str)
+            
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=all_reports.zip"}
+    )
+
+
 @router.post("/generate", response_model=ReportSchema)
 async def generate_report(
     request: ReportGenerateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["reports:write"]))
 ):
-    return await report_service.generate_report_from_source(db, request, org_id=current_user.org_id)
+    try:
+        return await report_service.generate_report_from_source(db, request, org_id=current_user.org_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{id}")
 async def delete_report(

@@ -1,19 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Settings2, FileText, Loader2 } from "lucide-react";
 import { ReportTemplate } from "@/types/reports";
 import { generateReport } from "@/services/reports";
 
 interface ReportGeneratorProps {
   templates?: ReportTemplate[];
+  preselectedTemplateId?: string;
   onGenerateSuccess?: () => void;
 }
 
-export default function ReportGenerator({ templates = [], onGenerateSuccess }: ReportGeneratorProps) {
+export default function ReportGenerator({ templates = [], preselectedTemplateId, onGenerateSuccess }: ReportGeneratorProps) {
   const [loading, setLoading] = useState(false);
   const [sourceType, setSourceType] = useState("Alert");
   const [sourceId, setSourceId] = useState("");
   const [name, setName] = useState("");
   const [templateId, setTemplateId] = useState("");
+
+  useEffect(() => {
+    if (preselectedTemplateId) {
+      setTemplateId(preselectedTemplateId);
+    }
+  }, [preselectedTemplateId]);
 
   const mapToUuid = (id: string): string => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,27 +42,27 @@ export default function ReportGenerator({ templates = [], onGenerateSuccess }: R
     }
     
     const selectedTemplateId = templateId || templates[0]?.id;
-    if (!selectedTemplateId) {
-      alert("No report templates available. Please seed the database.");
-      return;
-    }
     
     setLoading(true);
     try {
       const validSourceId = mapToUuid(sourceId);
       
-      await generateReport({
+      const payload: any = {
         name,
         source_type: sourceType,
         source_id: validSourceId,
-        template_id: selectedTemplateId
-      });
+      };
+      if (selectedTemplateId) {
+        payload.template_id = selectedTemplateId;
+      }
+      
+      await generateReport(payload);
       if (onGenerateSuccess) onGenerateSuccess();
       setName("");
       setSourceId("");
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to generate report");
+      alert(e.message || "Failed to generate report");
     } finally {
       setLoading(false);
     }

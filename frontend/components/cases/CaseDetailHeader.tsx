@@ -35,23 +35,24 @@ export default function CaseDetailHeader({ caseDetail }: CaseDetailHeaderProps) 
 
   const handleGenerateReport = async () => {
     try {
-      const { generateReport, getTemplates, downloadReportPdf } = await import("@/services/reports");
-      const templates = await getTemplates();
-      if (!templates || templates.length === 0) {
-         alert("No templates available");
-         return;
-      }
-      const report = await generateReport({
+      const { generateReport, getTemplates } = await import("@/services/reports");
+      const templates = await getTemplates().catch(() => []);
+      
+      const payload: any = {
         name: `Report for Case ${caseDetail.id}`,
         source_type: "Case",
         source_id: caseDetail.id.toString(),
-        template_id: templates[0].id
-      });
+      };
+      if (templates && templates.length > 0) {
+        payload.template_id = templates[0].id;
+      }
+      
+      const report = await generateReport(payload);
       alert(`Report generated: ${report.name}`);
       router.push("/reports");
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Failed to generate report");
+      alert(e.message || "Failed to generate report");
     }
   };
 
