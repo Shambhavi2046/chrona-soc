@@ -21,7 +21,8 @@ class CorrelationService:
             and_(
                 Alert.source_rule == rule_id,
                 Alert.status == "Open",
-                Alert.created_at >= cutoff_time
+                Alert.created_at >= cutoff_time,
+                Alert.org_id == event.tenant_id
             )
         )
         

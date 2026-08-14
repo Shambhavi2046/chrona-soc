@@ -281,3 +281,75 @@ async def test_detection_engine_tenant_isolation(async_client: AsyncClient, monk
         alert_ids = [a["id"] for a in resp.json()]
         assert str(alert_a.id) not in alert_ids, "Org B can see Org A's alert!"
         assert str(alert_b.id) in alert_ids, "Org B cannot see its own alert!"
+
+@pytest.mark.asyncio
+async def test_correlation_tenant_isolation(async_client: AsyncClient, monkeypatch, db_session):
+    """TEST I: Detection engine correlation tenant isolation"""
+    from app.models.operations import Alert
+    from sqlalchemy import select
+
+    # Mock async_session_maker
+    from contextlib import asynccontextmanager
+    @asynccontextmanager
+    async def mock_async_session_maker():
+        yield db_session
+    monkeypatch.setattr("app.api.v1.events.async_session_maker", mock_async_session_maker)
+
+    # 1. Org A Event -> Creates Alert
+    switch_user(user_a)
+    await async_client.post("/api/v1/events/ingest", json={
+        "event_id": "EVT-CORR-A-1",
+        "timestamp": "2023-10-01T12:00:00Z",
+        "source": "aws",
+        "event_type": "logon",
+        "severity": "low",
+        "status": "failure",
+        "user_account": "shared_admin",
+        "normalized_data": {"threat": "brute_force"},
+        "raw_event": {}
+    })
+
+    await asyncio.sleep(0.2)
+
+    # 2. Org B Event -> Should create NEW alert, NOT correlate with Org A
+    switch_user(user_b)
+    await async_client.post("/api/v1/events/ingest", json={
+        "event_id": "EVT-CORR-B-1",
+        "timestamp": "2023-10-01T12:05:00Z",
+        "source": "aws",
+        "event_type": "logon",
+        "severity": "low",
+        "status": "failure",
+        "user_account": "shared_admin",
+        "normalized_data": {"threat": "brute_force"},
+        "raw_event": {}
+    })
+
+    await asyncio.sleep(0.2)
+
+    # 3. Org A Event 2 -> Should correlate with Org A's alert
+    switch_user(user_a)
+    await async_client.post("/api/v1/events/ingest", json={
+        "event_id": "EVT-CORR-A-2",
+        "timestamp": "2023-10-01T12:10:00Z",
+        "source": "aws",
+        "event_type": "logon",
+        "severity": "low",
+        "status": "failure",
+        "user_account": "shared_admin",
+        "normalized_data": {"threat": "brute_force"},
+        "raw_event": {}
+    })
+
+    await asyncio.sleep(0.2)
+
+    # Verify
+    alerts_result_a = await db_session.execute(select(Alert).filter(Alert.org_id == org_a_id))
+    alerts_a = [a for a in alerts_result_a.scalars().all() if "EVT-CORR" in a.raw_log.get("event_id", "")]
+    assert len(alerts_a) == 1
+    assert len(alerts_a[0].related_events) == 2
+
+    alerts_result_b = await db_session.execute(select(Alert).filter(Alert.org_id == org_b_id))
+    alerts_b = [a for a in alerts_result_b.scalars().all() if "EVT-CORR" in a.raw_log.get("event_id", "")]
+    assert len(alerts_b) == 1
+    assert len(alerts_b[0].related_events) == 1
