@@ -232,3 +232,95 @@ async def test_case_assignee_cross_tenant_lookup(async_client: AsyncClient, db_s
     resp = await async_client.patch(f"/api/v1/cases/{case_id}", json={"assignee": "User B"})
     assert resp.status_code == 400
     assert "not found" in resp.json()["detail"].lower()
+
+@pytest.mark.asyncio
+async def test_cross_tenant_alert_case_injection(async_client: AsyncClient, db_session: AsyncSession):
+    global current_mock_user
+
+    # 1. Tenant B creates a Case
+    current_mock_user = user_b
+    case_payload = {
+        "title": "Tenant B Case",
+        "severity": "High",
+        "description": "Test Case"
+    }
+    resp = await async_client.post("/api/v1/cases", json=case_payload)
+    assert resp.status_code == 200
+    tenant_b_case_id = resp.json()["id"]
+
+    # 2. Tenant A creates an Alert
+    current_mock_user = user_a
+    alert_payload = {
+        "title": "Tenant A Alert",
+        "severity": "High",
+        "status": "Open",
+        "source": "Sentinel"
+    }
+    resp = await async_client.post("/api/v1/alerts", json=alert_payload)
+    assert resp.status_code == 200
+    tenant_a_alert_id = resp.json()["id"]
+
+    # 3. Tenant A attempts to update Alert with Tenant B's case_id
+    resp = await async_client.patch(f"/api/v1/alerts/{tenant_a_alert_id}", json={"case_id": tenant_b_case_id})
+    assert resp.status_code in [404, 400] # Should be rejected, specifically Case not found (404)
+
+    # 4. Tenant A attempts to create an Alert with Tenant B's case_id
+    alert_payload["case_id"] = tenant_b_case_id
+    resp = await async_client.post("/api/v1/alerts", json=alert_payload)
+    assert resp.status_code in [404, 400]
+
+@pytest.mark.asyncio
+async def test_case_assignee_id_cross_tenant_lookup(async_client: AsyncClient, db_session: AsyncSession):
+    global current_mock_user
+
+    # 1. Tenant A creates Case
+    current_mock_user = user_a
+    case_payload = {
+        "title": "Tenant A Case",
+        "description": "Test Case",
+        "priority": "High",
+        "severity": "High"
+    }
+    resp = await async_client.post("/api/v1/cases", json=case_payload)
+    assert resp.status_code == 200
+    case_id = resp.json()["id"]
+
+    # 2. Tenant A attempts to assign Tenant B user via assignee_id
+    resp = await async_client.patch(f"/api/v1/cases/{case_id}", json={"assignee_id": str(user_b_id)})
+    assert resp.status_code == 200
+    assert resp.json().get("assignee_id") is None # Field should be ignored and unchanged
+
+@pytest.mark.asyncio
+async def test_investigation_read_only_creation_prevention(async_client: AsyncClient, db_session: AsyncSession):
+    global current_mock_user
+
+    # Create a read-only role and user
+    read_only_role = Role(name="Read Only", permissions=["alerts:read", "cases:read"])
+    read_only_user = User(
+        id=uuid.uuid4(), email="ro@org_a.local", name="RO User", status="Active", org_id=org_a_id, roles=[read_only_role], hashed_password="mock"
+    )
+    db_session.add(read_only_user)
+    await db_session.commit()
+
+    # Create an alert in Tenant A
+    current_mock_user = user_a
+    alert_payload = {
+        "title": "Tenant A Alert",
+        "severity": "High",
+        "status": "Open"
+    }
+    resp = await async_client.post("/api/v1/alerts", json=alert_payload)
+    assert resp.status_code == 200
+    alert_id = resp.json()["id"]
+
+    # Switch to read-only user and query investigation
+    current_mock_user = read_only_user
+    resp = await async_client.get(f"/api/v1/investigations/by-alert/{alert_id}")
+    assert resp.status_code == 404 # Not found
+
+    # Verify database has NO investigation for this alert
+    from sqlalchemy import select
+    from app.models.operations import Investigation
+    res = await db_session.execute(select(Investigation).filter(Investigation.alert_id == uuid.UUID(alert_id)))
+    inv = res.scalars().first()
+    assert inv is None

@@ -32,7 +32,7 @@ async def get_investigation_by_alert(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["cases:read"]))
 ):
-    return await investigation_service.get_or_create_by_alert_id(db, alert_id, org_id=current_user.org_id)
+    return await investigation_service.get_by_alert_id(db, alert_id, org_id=current_user.org_id)
 
 @router.post("", response_model=InvestigationResponse)
 async def create_investigation(

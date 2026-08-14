@@ -37,7 +37,6 @@ class InvestigationBase(BaseModel):
     status: Optional[str] = "In Progress"
     summary: Optional[str] = None
     findings: Optional[List[Dict[str, Any]]] = []
-    assignee_id: Optional[uuid.UUID] = None
 
 class InvestigationCreate(InvestigationBase):
     pass
@@ -46,7 +45,6 @@ class InvestigationUpdate(BaseModel):
     status: Optional[str] = None
     summary: Optional[str] = None
     findings: Optional[List[Dict[str, Any]]] = None
-    assignee_id: Optional[uuid.UUID] = None
 
 class InvestigationDetails(BaseModel):
     analysis: str
@@ -59,6 +57,7 @@ class InvestigationResponse(BaseModel):
     risk_score: int
     status: str
     investigation: InvestigationDetails
+    assignee_id: Optional[uuid.UUID] = None
     
     @model_validator(mode='before')
     @classmethod
@@ -105,7 +104,6 @@ class CaseBase(BaseModel):
     priority: Optional[str] = "Medium"
     risk_score: Optional[int] = 50
     description: Optional[str] = None
-    assignee_id: Optional[uuid.UUID] = None
 
 class CaseCreate(CaseBase):
     pass
@@ -116,7 +114,6 @@ class CaseUpdate(BaseModel):
     severity: Optional[str] = None
     priority: Optional[str] = None
     description: Optional[str] = None
-    assignee_id: Optional[uuid.UUID] = None
     assignee: Optional[str] = None
 
 from pydantic import field_validator
@@ -125,6 +122,7 @@ class CaseResponse(CaseBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    assignee_id: Optional[uuid.UUID] = None
     assignee: Optional[str] = None
     alerts: List[AlertResponse] = []
     timeline: List["TimelineEventResponse"] = Field(default_factory=list, alias="timeline_events")
