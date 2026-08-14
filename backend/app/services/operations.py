@@ -129,7 +129,10 @@ class CaseService(BaseService[CaseRepository]):
                 from sqlalchemy import select
                 from app.models.identity import User
                 from fastapi import HTTPException
-                user_res = await db.execute(select(User).filter(User.name == assignee_name))
+                if org_id:
+                    user_res = await db.execute(select(User).filter(User.name == assignee_name, User.org_id == org_id))
+                else:
+                    user_res = await db.execute(select(User).filter(User.name == assignee_name))
                 user = user_res.scalars().first()
                 if user:
                     update_data["assignee_id"] = user.id

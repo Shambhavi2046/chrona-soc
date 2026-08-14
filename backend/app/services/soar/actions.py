@@ -236,7 +236,7 @@ class IntegrationActionHandler(ActionHandler):
 
         # Securely retrieve the credential
         async with async_session_maker() as db:
-            cred = await credentials_service.get_by_id(db, credential_id)
+            cred = await credentials_service.get_by_id(db, credential_id, org_id=context.org_id)
 
         if not cred:
             return {

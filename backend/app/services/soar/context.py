@@ -1,10 +1,11 @@
 from typing import Dict, Any
 
 class ExecutionContext:
-    def __init__(self, execution_id: str, playbook_id: str, initiated_by: str = "System"):
+    def __init__(self, execution_id: str, playbook_id: str, initiated_by: str = "System", org_id: Any = None):
         self.execution_id = execution_id
         self.playbook_id = playbook_id
         self.initiated_by = initiated_by
+        self.org_id = org_id
         
         # Scoped runtime variables strictly for this execution
         self.variables: Dict[str, Any] = {}

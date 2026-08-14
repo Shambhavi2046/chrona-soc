@@ -139,7 +139,7 @@ class SOARService:
             if not playbook:
                 return
 
-            context = ExecutionContext(execution_id=str(execution_id), playbook_id=str(playbook.id), initiated_by=user)
+            context = ExecutionContext(execution_id=str(execution_id), playbook_id=str(playbook.id), initiated_by=user, org_id=org_id)
             definition = playbook.definition or {}
             actions = definition.get("actions") or definition.get("nodes") or []
 
