@@ -59,6 +59,6 @@ async def execute_hunt(
 async def ask_copilot(
     event_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permissions(["hunting:read"]))
 ):
     return await hunting_service.ask_copilot(db, event_id, current_user.org_id)

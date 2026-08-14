@@ -19,11 +19,12 @@ def get_db():
         db.close()
 
 @router.post("/chat", response_model=ChatResponseSchema)
-async def chat_with_copilot(
-    request: ChatRequestSchema, 
+def chat_with_copilot(
+    request: ChatRequestSchema,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permissions(["cases:read"]))
 ):
     # Simulate AI processing delay
-    await asyncio.sleep(1.2)
+    import time
+    time.sleep(1.2)
     return copilot_service.process_chat(db, request, current_user.org_id)

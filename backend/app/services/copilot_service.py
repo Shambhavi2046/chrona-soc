@@ -13,7 +13,7 @@ class LLMResponseSchema(BaseModel):
 import re
 
 def _extract_case_id_from_text(text: str) -> Optional[str]:
-    match = re.search(r'case(?:-|\s+)?([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|\d+)', text.lower())
+    match = re.search(r'case(?:-|\s+)?([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', text.lower())
     if match:
         return match.group(1)
     return None
@@ -112,7 +112,7 @@ def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUID) -> 
             suggested_prompts = ["What is the root cause?", "Recommend containment steps"]
             quick_actions = [QuickActionSchema(label=f"View CASE-{context_case.id}", url=f"/cases/{context_case.id}", action_type="link")]
         else:
-            response = "I need a specific case to generate an executive report. Please specify a case ID (e.g., 'Generate report for CASE-1')."
+            response = "I need a specific case to generate an executive report. Please specify a case ID (e.g., 'Generate report for CASE-123e4567-e89b-12d3-a456-426614174000')."
             suggested_prompts = ["Show active cases", "Summarize the latest critical case"]
 
     # Route: Timeline Analysis
@@ -127,7 +127,7 @@ def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUID) -> 
                 response += "No timeline data available."
             suggested_prompts = ["Generate executive report", "What is the root cause?"]
         else:
-            response = "Please specify a case to analyze its timeline (e.g., 'What is the timeline for CASE-1?')."
+            response = "Please specify a case to analyze its timeline (e.g., 'What is the timeline for CASE-123e4567-e89b-12d3-a456-426614174000?')."
             suggested_prompts = ["Summarize the latest critical case"]
 
     # Route: Root Cause Analysis
@@ -188,8 +188,15 @@ I highly recommend initiating enterprise-wide credential rotations."""
         suggested_prompts = ["Recommend containment steps", "Are any assets impacted?"]
         quick_actions = [QuickActionSchema(label="View Threat Intel", url="/threat-intelligence", action_type="link")]
 
+    # Route: Alert Summarization
+    elif "summarize" in prompt and "alert" in prompt:
+        # Currently, copilot_service only tracks Case context globally.
+        # If the user specifically asks to summarize an alert, we do not invent a summary from a Case.
+        response = "Please specify the alert you would like to summarize (e.g., 'Summarize alert <UUID>'). I currently only have context for cases."
+        suggested_prompts = ["Summarize the latest critical case"]
+
     # Route: Case Summarization
-    elif "summarize" in prompt and ("case" in prompt or "incident" in prompt or "alert" in prompt):
+    elif "summarize" in prompt and ("case" in prompt or "incident" in prompt):
         case_to_summarize = context_case
         if not case_to_summarize:
             case_to_summarize = db.query(Case).filter(Case.priority.in_(["Critical", "High"]), Case.org_id == org_id).order_by(Case.id.desc()).first()
@@ -224,7 +231,7 @@ Would you like to see the timeline, analyze the root cause, or map the attack pa
             ]
         else:
             response = "I couldn't find any recent high-priority cases."
-            suggested_prompts = ["Show me active alerts"]
+            suggested_prompts = ["Show me active cases"]
 
     # Route: Asset & Attack Path
     elif "attack path" in prompt or "assets" in prompt or "impact" in prompt:
@@ -274,7 +281,7 @@ To neutralize the threat targeting {target}, execute the following:
                 response = f"No evidence artifacts currently attached to CASE-{context_case.id}."
             suggested_prompts = ["Analyze root cause", "Recommend containment steps"]
         else:
-            response = "Please specify a case to view its evidence (e.g., 'Show evidence for CASE-1')."
+            response = "Please specify a case to view its evidence (e.g., 'Show evidence for CASE-123e4567-e89b-12d3-a456-426614174000')."
             suggested_prompts = ["Summarize the latest case"]
 
     # Fallback Route
