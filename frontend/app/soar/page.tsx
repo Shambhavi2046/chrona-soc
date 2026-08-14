@@ -130,7 +130,7 @@ export default function SoarWorkspace() {
           <IntegrationsPanel integrations={mockIntegrations} />
         </div>
         <div className="lg:col-span-1">
-          <Analytics />
+          <Analytics executions={executions} />
         </div>
         <div className="lg:col-span-1">
           <AIPlaybookAssistant />
