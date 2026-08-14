@@ -10,7 +10,9 @@ from app.middleware.auth import get_current_user
 from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import insert
 from app.db.base_class import Base
+from app.models.operations import Alert, Asset, ThreatActor, MitreTechnique, alert_assets_table, alert_mitre_table
 
 # Setup organizations
 org_a_id = uuid.uuid4()
@@ -55,7 +57,7 @@ async def db_session():
 async def async_client(db_session):
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_current_user] = mock_get_current_user
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
@@ -68,15 +70,33 @@ def switch_user(user):
 @pytest.mark.asyncio
 async def test_dashboard_tenant_isolation(async_client: AsyncClient):
     switch_user(user_a)
+    # Create an alert for Org A
+    alert_resp = await async_client.post("/api/v1/alerts", json={
+        "title": "Dashboard Alert A",
+        "severity": "Critical",
+        "status": "Open",
+        "description": "Desc"
+    })
+    assert alert_resp.status_code == 200
+
     resp1 = await async_client.get("/api/v1/dashboard/summary")
     assert resp1.status_code == 200
-    
+    summary_a = resp1.json()
+    assert summary_a["total_alerts"] >= 1
+    assert summary_a["critical_alerts"] >= 1
+
     switch_user(user_b)
     resp2 = await async_client.get("/api/v1/dashboard/summary")
     assert resp2.status_code == 200
+    summary_b = resp2.json()
+    # Org B should not see Org A's alerts
+    assert summary_b["total_alerts"] == 0
+    assert summary_b["critical_alerts"] == 0
 
     metrics1 = await async_client.get("/api/v1/dashboard/metrics")
     assert metrics1.status_code == 200
+    metrics_b = metrics1.json()
+    assert metrics_b["alerts_by_severity"] == {}
 
 @pytest.mark.asyncio
 async def test_hunting_tenant_isolation(async_client: AsyncClient):
@@ -113,20 +133,125 @@ async def test_analytics_tenant_isolation(async_client: AsyncClient):
     assert "kpis" in data
 
 @pytest.mark.asyncio
-async def test_attack_graph_tenant_isolation(async_client: AsyncClient):
-    switch_user(user_a)
-    resp1 = await async_client.get("/api/v1/graph")
-    assert resp1.status_code == 200
-    data = resp1.json()
-    assert "nodes" in data
-    assert "edges" in data
+async def test_attack_graph_asset_isolation(async_client: AsyncClient, db_session: AsyncSession):
+    # Test 1 — Asset cross-tenant isolation
+    alert_a_id = uuid.uuid4()
+    asset_a_id = uuid.uuid4()
+
+    alert_a = Alert(id=alert_a_id, org_id=org_a_id, title="Alert A", severity="High", status="Open", threat_type="X")
+    asset_a = Asset(id=asset_a_id, name="Org A Asset", type="Server")
+
+    db_session.add(alert_a)
+    db_session.add(asset_a)
+    await db_session.commit()
+
+    await db_session.execute(insert(alert_assets_table).values(alert_id=alert_a_id, asset_id=asset_a_id))
+    await db_session.commit()
+
+    switch_user(user_b)
+    resp = await async_client.get("/api/v1/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    node_ids = [n["id"] for n in data.get("nodes", [])]
+    assert f"asset-{asset_a_id}" not in node_ids, "Org A asset leaked to Org B!"
+
+@pytest.mark.asyncio
+async def test_attack_graph_threat_actor_isolation(async_client: AsyncClient, db_session: AsyncSession):
+    # Test 2 — ThreatActor cross-tenant isolation
+    ta_a_id = uuid.uuid4()
+    ta_a = ThreatActor(id=ta_a_id, org_id=org_a_id, name="Actor A", reputation="Bad")
+    db_session.add(ta_a)
+    await db_session.commit()
+
+    switch_user(user_b)
+    resp = await async_client.get("/api/v1/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    node_ids = [n["id"] for n in data.get("nodes", [])]
+    assert f"threat_actor-{ta_a_id}" not in node_ids, "Org A threat actor leaked to Org B!"
+
+@pytest.mark.asyncio
+async def test_attack_graph_global_threat_actor_visibility(async_client: AsyncClient, db_session: AsyncSession):
+    # Test 3 — Global ThreatActor visibility
+    ta_global_id = uuid.uuid4()
+    ta_global = ThreatActor(id=ta_global_id, org_id=None, name="Global Actor", reputation="Bad")
+    db_session.add(ta_global)
+    await db_session.commit()
+
+    switch_user(user_b)
+    resp = await async_client.get("/api/v1/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    node_ids = [n["id"] for n in data.get("nodes", [])]
+    assert f"threat_actor-{ta_global_id}" in node_ids, "Global threat actor is missing!"
+
+@pytest.mark.asyncio
+async def test_attack_graph_same_tenant_visibility(async_client: AsyncClient, db_session: AsyncSession):
+    # Test 4 — Same-tenant visibility
+    alert_b_id = uuid.uuid4()
+    asset_b_id = uuid.uuid4()
+    ta_b_id = uuid.uuid4()
+
+    alert_b = Alert(id=alert_b_id, org_id=org_b_id, title="Alert B", severity="High", status="Open", threat_type="X")
+    asset_b = Asset(id=asset_b_id, name="Org B Asset", type="Server")
+    ta_b = ThreatActor(id=ta_b_id, org_id=org_b_id, name="Actor B", reputation="Bad")
+
+    db_session.add(alert_b)
+    db_session.add(asset_b)
+    db_session.add(ta_b)
+    await db_session.commit()
+
+    await db_session.execute(insert(alert_assets_table).values(alert_id=alert_b_id, asset_id=asset_b_id))
+    await db_session.commit()
+
+    switch_user(user_b)
+    resp = await async_client.get("/api/v1/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    node_ids = [n["id"] for n in data.get("nodes", [])]
+    assert f"asset-{asset_b_id}" in node_ids, "Org B asset is missing!"
+    assert f"threat_actor-{ta_b_id}" in node_ids, "Org B threat actor is missing!"
+
+@pytest.mark.asyncio
+async def test_attack_graph_mitre_tenant_isolation(async_client: AsyncClient, db_session: AsyncSession):
+    # Test 5 — MITRE tenant isolation
+    alert_a_id = uuid.uuid4()
+    alert_b_id = uuid.uuid4()
+    mitre_a_id = uuid.uuid4()
+    mitre_b_id = uuid.uuid4()
+
+    alert_a = Alert(id=alert_a_id, org_id=org_a_id, title="Alert A", severity="High", status="Open", threat_type="X")
+    alert_b = Alert(id=alert_b_id, org_id=org_b_id, title="Alert B", severity="High", status="Open", threat_type="X")
+
+    mitre_a = MitreTechnique(id=mitre_a_id, technique_id="T1111", name="Tech A")
+    mitre_b = MitreTechnique(id=mitre_b_id, technique_id="T2222", name="Tech B")
+
+    db_session.add_all([alert_a, alert_b, mitre_a, mitre_b])
+    await db_session.commit()
+
+    await db_session.execute(insert(alert_mitre_table).values(alert_id=alert_a_id, mitre_id=mitre_a_id))
+    await db_session.execute(insert(alert_mitre_table).values(alert_id=alert_b_id, mitre_id=mitre_b_id))
+    await db_session.commit()
+
+    switch_user(user_b)
+    resp = await async_client.get("/api/v1/graph")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    node_ids = [n["id"] for n in data.get("nodes", [])]
+    assert f"mitre-{mitre_a_id}" not in node_ids, "Org A MITRE technique leaked to Org B!"
+    assert f"mitre-{mitre_b_id}" in node_ids, "Org B MITRE technique missing!"
 
 @pytest.mark.asyncio
 async def test_reports_tenant_isolation(async_client: AsyncClient):
     switch_user(user_a)
     resp1 = await async_client.get("/api/v1/reports/templates")
     assert resp1.status_code == 200
-    
+
     # Get initial report count
     resp_initial = await async_client.get("/api/v1/reports/")
     initial_count = len(resp_initial.json())
@@ -140,7 +265,7 @@ async def test_reports_tenant_isolation(async_client: AsyncClient):
     }
     resp_invalid = await async_client.post("/api/v1/reports/generate", json=gen_payload_invalid)
     assert resp_invalid.status_code == 400
-    
+
     resp_after_invalid = await async_client.get("/api/v1/reports/")
     assert len(resp_after_invalid.json()) == initial_count
 

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from app.models.operations import Case, Alert, Investigation, Evidence, Asset, MitreTechnique, ThreatActor, Malware, IOC, alert_assets_table, alert_mitre_table, threat_actor_malware_table, threat_actor_iocs_table, malware_iocs_table
 from app.schemas.graph_schema import GraphNodeSchema, GraphEdgeSchema, GraphTopologySchema
 import uuid
@@ -46,19 +46,42 @@ async def generate_topology(db: AsyncSession, org_id: uuid.UUID) -> GraphTopolog
         evidence_list = ev_result.scalars().all()
 
     # 2. Knowledge Base Entities (Attack Graph Entities) - Global / Shared
-    assets_res = await db.execute(select(Asset))
-    assets = assets_res.scalars().all()
+    assets = []
+    mitres = []
+    if alert_ids:
+        assets_res = await db.execute(
+            select(Asset)
+            .join(alert_assets_table)
+            .filter(alert_assets_table.c.alert_id.in_(alert_ids))
+        )
+        assets = assets_res.scalars().all()
 
-    mitres_res = await db.execute(select(MitreTechnique))
-    mitres = mitres_res.scalars().all()
+        mitres_res = await db.execute(
+            select(MitreTechnique)
+            .join(alert_mitre_table)
+            .filter(alert_mitre_table.c.alert_id.in_(alert_ids))
+        )
+        mitres = mitres_res.scalars().all()
 
-    ta_res = await db.execute(select(ThreatActor))
+    ta_res = await db.execute(
+        select(ThreatActor).filter(
+            or_(ThreatActor.org_id == org_id, ThreatActor.org_id.is_(None))
+        )
+    )
     threat_actors = ta_res.scalars().all()
 
-    mal_res = await db.execute(select(Malware))
+    mal_res = await db.execute(
+        select(Malware).filter(
+            or_(Malware.org_id == org_id, Malware.org_id.is_(None))
+        )
+    )
     malwares = mal_res.scalars().all()
 
-    ioc_res = await db.execute(select(IOC))
+    ioc_res = await db.execute(
+        select(IOC).filter(
+            or_(IOC.org_id == org_id, IOC.org_id.is_(None))
+        )
+    )
     iocs = ioc_res.scalars().all()
 
     # 3. Add Nodes
