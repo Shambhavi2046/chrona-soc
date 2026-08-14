@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import MockModeBanner from "@/components/common/MockModeBanner";
+
 import ModuleHeader from "@/components/common/ModuleHeader";
 import { Workflow, RefreshCw, Upload, Download, Plus } from "lucide-react";
 import SummaryCards from "@/components/soar/SummaryCards";
@@ -17,7 +17,7 @@ import PlaybookModal from "@/components/soar/PlaybookModal";
 import * as soarApi from "@/services/soar";
 
 import { ExecutionLog, Playbook } from "@/types";
-import { mockExecutions, mockIntegrations } from "@/lib/mocks/soar";
+import { mockIntegrations } from "@/lib/mocks/soar";
 
 export default function SoarWorkspace() {
   const [selectedExec, setSelectedExec] = useState<ExecutionLog | null>(null);
@@ -94,7 +94,7 @@ export default function SoarWorkspace() {
       />
 
       {/* Summary KPI Cards */}
-      <SummaryCards />
+      <SummaryCards playbooks={playbooks} executions={executions} />
 
       {/* Playbook Builder & Library */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

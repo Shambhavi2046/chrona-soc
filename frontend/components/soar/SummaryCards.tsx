@@ -1,12 +1,37 @@
 import { Settings, Zap, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Playbook, ExecutionLog } from "@/types";
 
-export default function SummaryCards() {
+interface SummaryCardsProps {
+  playbooks?: Playbook[];
+  executions?: ExecutionLog[];
+}
+
+export default function SummaryCards({ playbooks = [], executions = [] }: SummaryCardsProps) {
+  const activePlaybooks = playbooks.filter(p => p.status === 'Active').length;
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const execsToday = executions.filter(e => {
+    if (!e.startTime) return false;
+    const d = new Date(e.startTime);
+    return d >= today;
+  });
+
+  const successCount = executions.filter(e => e.status === 'Success').length;
+  const failedCount = executions.filter(e => e.status === 'Failed').length;
+
+  const completedExecs = successCount + failedCount;
+  const successRate = completedExecs > 0 ? ((successCount / completedExecs) * 100).toFixed(1) + '%' : '0%';
+
+  const pendingApprovals = executions.filter(e => e.status === 'Pending Approval').length;
+
   const stats = [
-    { label: "Active Playbooks", value: "14", icon: Settings, color: "text-blue-400", bg: "bg-blue-500/10", trend: "+2 this month" },
-    { label: "Automations Today", value: "1,492", icon: Zap, color: "text-purple-400", bg: "bg-purple-500/10", trend: "+14% vs avg" },
-    { label: "Success Rate", value: "98.4%", icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10", trend: "Optimal" },
-    { label: "Failed Executions", value: "24", icon: XCircle, color: "text-red-400", bg: "bg-red-500/10", trend: "-12 vs yesterday" },
-    { label: "Pending Approvals", value: "5", icon: Clock, color: "text-orange-400", bg: "bg-orange-500/10", trend: "Requires action" },
+    { label: "Active Playbooks", value: activePlaybooks.toString(), icon: Settings, color: "text-blue-400", bg: "bg-blue-500/10", trend: "Currently active" },
+    { label: "Automations Today", value: execsToday.length.toString(), icon: Zap, color: "text-purple-400", bg: "bg-purple-500/10", trend: "Past 24 hours" },
+    { label: "Success Rate", value: successRate, icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10", trend: completedExecs > 0 ? "Based on completed" : "No executions yet" },
+    { label: "Failed Executions", value: failedCount.toString(), icon: XCircle, color: "text-red-400", bg: "bg-red-500/10", trend: "Total failed" },
+    { label: "Pending Approvals", value: pendingApprovals.toString(), icon: Clock, color: "text-orange-400", bg: "bg-orange-500/10", trend: pendingApprovals > 0 ? "Requires action" : "All clear" },
   ];
 
   return (
@@ -14,8 +39,8 @@ export default function SummaryCards() {
       {stats.map((stat, idx) => {
         const Icon = stat.icon;
         return (
-          <div 
-            key={idx} 
+          <div
+            key={idx}
             className="glass-card p-4 rounded-xl border border-soc-border hover:border-soc-accent/50 transition-all hover:shadow-[0_0_15px_rgba(59,130,246,0.1)] group relative overflow-hidden"
           >
             <div className={`absolute -right-6 -top-6 w-20 h-20 rounded-full ${stat.bg} blur-2xl group-hover:bg-opacity-100 transition-all`} />
