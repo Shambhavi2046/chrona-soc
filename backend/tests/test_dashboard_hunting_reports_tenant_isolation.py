@@ -6,6 +6,7 @@ import uuid
 
 from app.main import app
 from app.models.identity import User, Role, Organization
+from app.core.roles import Role as AppRole, ROLE_PERMISSIONS_MAPPING
 from app.middleware.auth import get_current_user
 from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -22,12 +23,7 @@ org_b_id = uuid.uuid4()
 user_a_id = uuid.uuid4()
 user_b_id = uuid.uuid4()
 
-super_admin_role = Role(name="Super Admin", permissions=[
-    "dashboard:read",
-    "hunting:read", "hunting:write", "hunting:delete",
-    "reports:read", "reports:write", "reports:delete",
-    "graph:read"
-])
+super_admin_role = Role(name=AppRole.SUPER_ADMIN.value, permissions=ROLE_PERMISSIONS_MAPPING[AppRole.SUPER_ADMIN])
 
 user_a = User(
     id=user_a_id, email="user_a@org_a.local", name="User A", status="Active", org_id=org_a_id, roles=[super_admin_role]
@@ -123,6 +119,41 @@ async def test_hunting_tenant_isolation(async_client: AsyncClient):
     switch_user(user_a)
     resp4 = await async_client.delete(f"/api/v1/hunting/saved/{hunt_id}")
     assert resp4.status_code == 200
+
+@pytest.mark.asyncio
+async def test_hunting_execute_tenant_isolation(async_client: AsyncClient, db_session: AsyncSession):
+    # Setup SecurityEvent for Org A
+    from app.models.event_model import SecurityEvent
+    from datetime import datetime
+
+    event_id_a = uuid.uuid4()
+    event_a = SecurityEvent(id=event_id_a, tenant_id=org_a_id, event_id="evt-a", timestamp=datetime.utcnow(), event_type="Logon", source="Windows", severity="High", raw_event={"host": "HostA"})
+    db_session.add(event_a)
+
+    event_id_b = uuid.uuid4()
+    event_b = SecurityEvent(id=event_id_b, tenant_id=org_b_id, event_id="evt-b", timestamp=datetime.utcnow(), event_type="Logon", source="Windows", severity="High", raw_event={"host": "HostB"})
+    db_session.add(event_b)
+
+    await db_session.commit()
+
+    switch_user(user_a)
+    exec_payload = {
+        "page": 1,
+        "page_size": 10,
+        "query": "Logon"
+    }
+    resp1 = await async_client.post("/api/v1/hunting/execute", json=exec_payload)
+    assert resp1.status_code == 200
+    data_a = resp1.json()
+    assert data_a["total"] == 1
+    assert data_a["events"][0]["id"] == str(event_id_a)
+
+    switch_user(user_b)
+    resp2 = await async_client.post("/api/v1/hunting/execute", json=exec_payload)
+    assert resp2.status_code == 200
+    data_b = resp2.json()
+    assert data_b["total"] == 1
+    assert data_b["events"][0]["id"] == str(event_id_b)
 
 @pytest.mark.asyncio
 async def test_analytics_tenant_isolation(async_client: AsyncClient):

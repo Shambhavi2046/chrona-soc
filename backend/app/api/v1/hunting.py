@@ -51,7 +51,7 @@ async def update_saved_hunt(
 async def execute_hunt(
     request: HuntQueryRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_permissions(["hunting:execute"]))
 ):
     return await hunting_service.execute_hunt(db, request, current_user.org_id)
 

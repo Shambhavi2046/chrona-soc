@@ -7,7 +7,8 @@ from sqlalchemy.orm import sessionmaker
 from app.db.base_class import Base
 from app.main import app
 from app.middleware.auth import get_current_user
-from app.models.identity import Organization, User, Role
+from app.models.identity import Organization, User, Role as DBRole
+from app.core.roles import Role, ROLE_PERMISSIONS_MAPPING
 from app.models.event_model import SecurityEvent
 
 engine = create_engine(
@@ -54,22 +55,22 @@ async def test_hunting_copilot_rbac(async_client: AsyncClient, sync_db_session):
     with patch("app.services.hunting_service.hunting_service.ask_copilot", new_callable=AsyncMock) as mock_ask_copilot:
         mock_ask_copilot.return_value = {"analysis": "Mock analysis"}
 
-        # 1. Test Authorized User
+        # 1. Test Authorized User (THREAT_HUNTER)
         async def mock_auth_user():
             return User(
                 id=uuid.uuid4(), email="auth@chrona.local", name="Auth User", org_id=org_id,
-                roles=[Role(name="Admin", permissions=["hunting:read"])]
+                roles=[DBRole(name=Role.THREAT_HUNTER.value, permissions=ROLE_PERMISSIONS_MAPPING[Role.THREAT_HUNTER])]
             )
 
         app.dependency_overrides[get_current_user] = mock_auth_user
         res = await async_client.post(f"/api/v1/hunting/copilot/{event_id}")
         assert res.status_code == 200, f"Authorized user should succeed, got {res.status_code}"
 
-        # 2. Test Unauthorized Authenticated User (missing permission)
+        # 2. Test Unauthorized Authenticated User (READ_ONLY missing permission)
         async def mock_unauth_user():
             return User(
                 id=uuid.uuid4(), email="unauth@chrona.local", name="Unauth User", org_id=org_id,
-                roles=[Role(name="Guest", permissions=[])]
+                roles=[DBRole(name=Role.READ_ONLY.value, permissions=ROLE_PERMISSIONS_MAPPING[Role.READ_ONLY])]
             )
         app.dependency_overrides[get_current_user] = mock_unauth_user
         res = await async_client.post(f"/api/v1/hunting/copilot/{event_id}")
@@ -79,3 +80,28 @@ async def test_hunting_copilot_rbac(async_client: AsyncClient, sync_db_session):
         app.dependency_overrides.pop(get_current_user, None)
         res = await async_client.post(f"/api/v1/hunting/copilot/{event_id}")
         assert res.status_code == 401, f"Unauthenticated user should get 401, got {res.status_code}"
+
+@pytest.mark.asyncio
+async def test_hunting_execute_rbac(async_client: AsyncClient, sync_db_session):
+    org_id = uuid.uuid4()
+
+    from unittest.mock import patch, AsyncMock
+    with patch("app.services.hunting_service.hunting_service.execute_hunt", new_callable=AsyncMock) as mock_execute_hunt:
+        mock_execute_hunt.return_value = {"events": [], "total": 0, "page": 1, "page_size": 10}
+
+        async def check_role_access(role_enum, expected_status):
+            async def mock_user():
+                return User(
+                    id=uuid.uuid4(), email="test@chrona.local", name="Test", org_id=org_id,
+                    roles=[DBRole(name=role_enum.value, permissions=ROLE_PERMISSIONS_MAPPING[role_enum])]
+                )
+            app.dependency_overrides[get_current_user] = mock_user
+            res = await async_client.post("/api/v1/hunting/execute", json={"page": 1, "page_size": 10, "query": "test"})
+            assert res.status_code == expected_status, f"Role {role_enum.name} expected {expected_status}, got {res.status_code}"
+
+        await check_role_access(Role.READ_ONLY, 403)
+        await check_role_access(Role.TIER_1_ANALYST, 403)
+        await check_role_access(Role.TIER_2_ANALYST, 200)
+        await check_role_access(Role.THREAT_HUNTER, 200)
+        await check_role_access(Role.SOC_MANAGER, 200)
+        await check_role_access(Role.SUPER_ADMIN, 200)

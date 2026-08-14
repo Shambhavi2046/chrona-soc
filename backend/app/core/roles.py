@@ -28,6 +28,12 @@ class Permission(str, Enum):
     SOAR_DELETE = "soar:delete"
     SOAR_EXECUTE = "soar:execute"
 
+    # Threat Hunting
+    HUNTING_READ = "hunting:read"
+    HUNTING_WRITE = "hunting:write"
+    HUNTING_DELETE = "hunting:delete"
+    HUNTING_EXECUTE = "hunting:execute"
+
 class Role(str, Enum):
     SUPER_ADMIN = "Super Admin"
     SOC_MANAGER = "SOC Manager"
@@ -46,23 +52,29 @@ ROLE_PERMISSIONS_MAPPING = {
         Permission.THREAT_INTEL_READ, Permission.THREAT_INTEL_WRITE,
         Permission.DASHBOARD_READ,
         Permission.SOAR_READ, Permission.SOAR_WRITE,
-        Permission.SOAR_DELETE, Permission.SOAR_EXECUTE
+        Permission.SOAR_DELETE, Permission.SOAR_EXECUTE,
+        Permission.HUNTING_READ, Permission.HUNTING_WRITE,
+        Permission.HUNTING_DELETE, Permission.HUNTING_EXECUTE
     ],
     Role.THREAT_HUNTER: [
         Permission.ALERTS_READ, Permission.CASES_READ,
-        Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ
+        Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ,
+        Permission.HUNTING_READ, Permission.HUNTING_WRITE,
+        Permission.HUNTING_DELETE, Permission.HUNTING_EXECUTE
     ],
     Role.TIER_2_ANALYST: [
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
         Permission.CASES_READ, Permission.CASES_WRITE,
         Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ,
-        Permission.SOAR_READ, Permission.SOAR_WRITE, Permission.SOAR_EXECUTE
+        Permission.SOAR_READ, Permission.SOAR_WRITE, Permission.SOAR_EXECUTE,
+        Permission.HUNTING_READ, Permission.HUNTING_EXECUTE
     ],
     Role.TIER_1_ANALYST: [
         Permission.ALERTS_READ, Permission.ALERTS_WRITE,
         Permission.CASES_READ,
         Permission.THREAT_INTEL_READ, Permission.DASHBOARD_READ,
-        Permission.SOAR_READ, Permission.SOAR_EXECUTE
+        Permission.SOAR_READ, Permission.SOAR_EXECUTE,
+        Permission.HUNTING_READ
     ],
     Role.READ_ONLY: [
         Permission.ALERTS_READ, Permission.CASES_READ, Permission.USERS_READ,
