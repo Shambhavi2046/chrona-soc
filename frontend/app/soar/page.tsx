@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 import ModuleHeader from "@/components/common/ModuleHeader";
-import { Workflow, RefreshCw, Upload, Download, Plus } from "lucide-react";
+import { Workflow, RefreshCw, Plus } from "lucide-react";
 import SummaryCards from "@/components/soar/SummaryCards";
 import PlaybookLibrary from "@/components/soar/PlaybookLibrary";
 import VisualPlaybookBuilder from "@/components/soar/VisualPlaybookBuilder";
@@ -17,7 +17,6 @@ import PlaybookModal from "@/components/soar/PlaybookModal";
 import * as soarApi from "@/services/soar";
 
 import { ExecutionLog, Playbook } from "@/types";
-import { mockIntegrations } from "@/lib/mocks/soar";
 
 export default function SoarWorkspace() {
   const [selectedExec, setSelectedExec] = useState<ExecutionLog | null>(null);
@@ -87,8 +86,6 @@ export default function SoarWorkspace() {
         icon={Workflow}
         actions={[
           { label: "Refresh", icon: RefreshCw, onClick: fetchPlaybooks },
-          { label: "Import", icon: Upload },
-          { label: "Export", icon: Download },
           { label: "New Playbook", icon: Plus, variant: "primary", onClick: () => { setEditingPlaybook(null); setIsModalOpen(true); } }
         ]}
       />
@@ -127,7 +124,7 @@ export default function SoarWorkspace() {
       {/* Integrations & Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <IntegrationsPanel integrations={mockIntegrations} />
+          <IntegrationsPanel />
         </div>
         <div className="lg:col-span-1">
           <Analytics executions={executions} />
