@@ -58,6 +58,7 @@ async def test_engine_unsupported_action():
     engine = ExecutionEngine(context, actions)
 
     db_mock = AsyncMock()
+    db_mock.add = MagicMock()
     exec_mock = MagicMock()
     exec_mock.status = "Running"
     db_mock.get.return_value = exec_mock
@@ -79,6 +80,7 @@ async def test_engine_full_workflow():
     engine = ExecutionEngine(context, actions)
 
     db_mock = AsyncMock()
+    db_mock.add = MagicMock()
     exec_mock = MagicMock()
     exec_mock.status = "Running"
     db_mock.get.return_value = exec_mock

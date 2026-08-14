@@ -65,7 +65,7 @@ async def create_playbook(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:write"]))
 ):
-    return await soar_service.create(db, obj_in, org_id=current_user.org_id)
+    return await soar_service.create(db, obj_in, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.put("/playbooks/{id}", response_model=PlaybookResponse)
 async def update_playbook(
@@ -74,7 +74,7 @@ async def update_playbook(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:write"]))
 ):
-    return await soar_service.update(db, id, obj_in, org_id=current_user.org_id)
+    return await soar_service.update(db, id, obj_in, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.delete("/playbooks/{id}")
 async def delete_playbook(
@@ -82,7 +82,7 @@ async def delete_playbook(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:delete"]))
 ):
-    await soar_service.delete(db, id, org_id=current_user.org_id)
+    await soar_service.delete(db, id, org_id=current_user.org_id, user_id=current_user.id)
     return {"status": "success"}
 
 @router.patch("/playbooks/{id}/activate", response_model=PlaybookResponse)
@@ -91,7 +91,7 @@ async def activate_playbook(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:write"]))
 ):
-    return await soar_service.activate(db, id, org_id=current_user.org_id)
+    return await soar_service.activate(db, id, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.patch("/playbooks/{id}/deactivate", response_model=PlaybookResponse)
 async def deactivate_playbook(
@@ -99,7 +99,7 @@ async def deactivate_playbook(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:write"]))
 ):
-    return await soar_service.deactivate(db, id, org_id=current_user.org_id)
+    return await soar_service.deactivate(db, id, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.post("/playbooks/{id}/execute", response_model=PlaybookExecutionResponse)
 async def execute_playbook(
@@ -108,7 +108,7 @@ async def execute_playbook(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:execute"]))
 ):
-    return await soar_service.execute_playbook(db, id, background_tasks, user=current_user.email, org_id=current_user.org_id)
+    return await soar_service.execute_playbook(db, id, background_tasks, user=current_user.email, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.get("/executions", response_model=List[PlaybookExecutionResponse])
 async def list_executions(
@@ -133,7 +133,7 @@ async def cancel_execution(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:execute"]))
 ):
-    return await soar_service.cancel_execution(db, id, org_id=current_user.org_id)
+    return await soar_service.cancel_execution(db, id, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.post("/executions/{id}/pause", response_model=PlaybookExecutionResponse)
 async def pause_execution(
@@ -141,7 +141,7 @@ async def pause_execution(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:execute"]))
 ):
-    return await soar_service.pause_execution(db, id, org_id=current_user.org_id)
+    return await soar_service.pause_execution(db, id, org_id=current_user.org_id, user_id=current_user.id)
 
 @router.post("/executions/{id}/resume", response_model=PlaybookExecutionResponse)
 async def resume_execution(
@@ -149,4 +149,4 @@ async def resume_execution(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_permissions(["soar:execute"]))
 ):
-    return await soar_service.resume_execution(db, id, org_id=current_user.org_id)
+    return await soar_service.resume_execution(db, id, org_id=current_user.org_id, user_id=current_user.id)
