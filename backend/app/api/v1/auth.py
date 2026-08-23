@@ -58,8 +58,7 @@ async def register(request_in: RegistrationRequest, db: AsyncSession = Depends(g
         db.add(UserRole(user_id=db_user.id, role_id=tenant_admin_role.id))
 
         await db.commit()
-        await db.refresh(db_user, attribute_names=["roles"])
-        return db_user
+        return await user_repo.get_with_roles(db, str(db_user.id))
     except Exception as e:
         await db.rollback()
         # Do not expose internal db errors in production, but we can log them

@@ -22,7 +22,13 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const url = endpoint.startsWith("http") ? endpoint : `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  let url = endpoint;
+  if (typeof window === "undefined" && url.startsWith("/")) {
+    const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8000";
+    url = `${backendUrl}${url}`;
+  } else if (!url.startsWith("http") && !url.startsWith("/")) {
+    url = `${API_URL}/${url}`;
+  }
   let res = await fetch(url, { ...options, headers });
 
   if (res.status === 401) {
