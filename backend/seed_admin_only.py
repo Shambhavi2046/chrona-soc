@@ -45,6 +45,9 @@ async def seed_admin():
             
         await db.flush()
 
+        import os
+        admin_pwd = os.environ.get("ADMIN_PASSWORD", "Admin123!@#")
+
         # 3. Get or create admin user
         result = await db.execute(select(User).where(User.email == "admin@chrona.local"))
         admin_user = result.scalars().first()
@@ -53,7 +56,7 @@ async def seed_admin():
                 id=uuid.uuid4(),
                 email="admin@chrona.local",
                 name="System Administrator",
-                hashed_password=get_password_hash("Admin123!@#"),
+                hashed_password=get_password_hash(admin_pwd),
                 org_id=org.id,
                 status="Active"
             )

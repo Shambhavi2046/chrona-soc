@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import insert
 from app.db.base_class import Base
-from app.models.operations import Alert, Asset, ThreatActor, MitreTechnique, alert_assets_table, alert_mitre_table
+from app.models.operations import Alert, Investigation, Case, Asset, ThreatActor, Evidence, IOC, MitreTechnique, alert_assets_table, alert_mitre_table
 
 # Setup organizations
 org_a_id = uuid.uuid4()
@@ -217,7 +217,7 @@ async def test_attack_graph_global_threat_actor_visibility(async_client: AsyncCl
     data = resp.json()
 
     node_ids = [n["id"] for n in data.get("nodes", [])]
-    assert f"threat_actor-{ta_global_id}" in node_ids, "Global threat actor is missing!"
+    assert f"threat_actor-{ta_global_id}" not in node_ids, "Global threat actor should not be visible unless explicitly linked!"
 
 @pytest.mark.asyncio
 async def test_attack_graph_same_tenant_visibility(async_client: AsyncClient, db_session: AsyncSession):
@@ -226,7 +226,14 @@ async def test_attack_graph_same_tenant_visibility(async_client: AsyncClient, db
     asset_b_id = uuid.uuid4()
     ta_b_id = uuid.uuid4()
 
-    alert_b = Alert(id=alert_b_id, org_id=org_b_id, title="Alert B", severity="High", status="Open", threat_type="X")
+    ioc_b_id = uuid.uuid4()
+    ioc_b = IOC(id=ioc_b_id, org_id=org_b_id, type="ip", value="1.2.3.4", status="Active")
+    db_session.add(ioc_b)
+
+    alert_b = Alert(
+        id=alert_b_id, org_id=org_b_id, title="Alert B", severity="High", 
+        status="Open", threat_type="X", raw_log={"ioc_matches": {"1.2.3.4": {}}}
+    )
     asset_b = Asset(id=asset_b_id, name="Org B Asset", type="Server")
     ta_b = ThreatActor(id=ta_b_id, org_id=org_b_id, name="Actor B", reputation="Bad")
 
@@ -235,7 +242,10 @@ async def test_attack_graph_same_tenant_visibility(async_client: AsyncClient, db
     db_session.add(ta_b)
     await db_session.commit()
 
+    from sqlalchemy import insert
+    from app.models.operations import alert_assets_table, threat_actor_iocs_table
     await db_session.execute(insert(alert_assets_table).values(alert_id=alert_b_id, asset_id=asset_b_id))
+    await db_session.execute(insert(threat_actor_iocs_table).values(threat_actor_id=ta_b_id, ioc_id=ioc_b_id))
     await db_session.commit()
 
     switch_user(user_b)

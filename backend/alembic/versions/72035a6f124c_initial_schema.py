@@ -229,6 +229,20 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_investigations_id'), 'investigations', ['id'], unique=False)
     op.create_index(op.f('ix_investigations_status'), 'investigations', ['status'], unique=False)
+    op.create_table('saved_hunts',
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('description', sa.String(), nullable=True),
+    sa.Column('query', sa.String(), nullable=False),
+    sa.Column('mitre_mapping', sa.String(), nullable=True),
+    sa.Column('author', sa.String(), nullable=False),
+    sa.Column('last_run', sa.DateTime(), nullable=True),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_saved_hunts_id'), 'saved_hunts', ['id'], unique=False)
+    op.create_index(op.f('ix_saved_hunts_name'), 'saved_hunts', ['name'], unique=False)
     # ### end Alembic commands ###
 
 
@@ -273,4 +287,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_iocs_type'), table_name='iocs')
     op.drop_index(op.f('ix_iocs_id'), table_name='iocs')
     op.drop_table('iocs')
+    op.drop_index(op.f('ix_saved_hunts_name'), table_name='saved_hunts')
+    op.drop_index(op.f('ix_saved_hunts_id'), table_name='saved_hunts')
+    op.drop_table('saved_hunts')
     # ### end Alembic commands ###

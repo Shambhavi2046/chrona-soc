@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { Shield, Lock, Mail, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/services/config";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@chrona.local");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -82,23 +83,34 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-4 text-soc-text-primary focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
-                placeholder="analyst@chrona.local"
+                placeholder="name@company.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-soc-text-secondary mb-1">Password</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-soc-text-secondary">Password</label>
+              <a href="/forgot-password" className="text-xs text-soc-accent hover:text-soc-accent/80 transition-colors">
+                Forgot password?
+              </a>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-soc-text-muted" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-4 text-soc-text-primary focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
-                placeholder="••••••••"
+                className="w-full bg-soc-bg/50 border border-soc-border rounded-lg py-2.5 pl-10 pr-10 text-soc-text-primary focus:outline-none focus:border-soc-accent focus:ring-1 focus:ring-soc-accent transition-all"
               />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-soc-text-muted hover:text-soc-text-primary transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -118,8 +130,13 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-soc-text-muted">
-          For demo purposes, the default admin account is pre-filled.
+        <div className="mt-6 pt-6 border-t border-soc-border text-center">
+          <p className="text-sm text-soc-text-secondary">
+            Don&apos;t have an account?{" "}
+            <a href="/register" className="text-soc-accent hover:text-soc-accent/80 transition-colors font-medium">
+              Sign up
+            </a>
+          </p>
         </div>
       </div>
     </div>

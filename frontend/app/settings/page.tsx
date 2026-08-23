@@ -5,6 +5,7 @@ import ModuleHeader from "@/components/common/ModuleHeader";
 import { Settings } from "lucide-react";
 import SettingsSidebar, { SettingsTab } from "@/components/settings/SettingsSidebar";
 import ProfileSettings from "@/components/settings/ProfileSettings";
+import SecuritySettings from "@/components/settings/SecuritySettings";
 import AppearanceSettings from "@/components/settings/AppearanceSettings";
 import AboutSettings from "@/components/settings/AboutSettings";
 
@@ -15,6 +16,8 @@ export default function SettingsWorkspace() {
     switch (activeTab) {
       case "profile":
         return <ProfileSettings />;
+      case "security":
+        return <SecuritySettings />;
       case "appearance":
         return <AppearanceSettings />;
       case "about":

@@ -13,6 +13,12 @@ security = HTTPBearer()
 def verify_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        if payload.get("refresh"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh tokens cannot be used as access tokens",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         return payload
     except JWTError:
         raise HTTPException(
@@ -45,6 +51,10 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
 
     if user.status != "Active":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+
+    session_version = payload.get("session_version")
+    if session_version is not None and session_version != user.session_version:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session revoked")
 
     return user
 

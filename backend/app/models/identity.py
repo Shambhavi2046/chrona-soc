@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, JSON, Boolean, DateTime
+from sqlalchemy import Column, String, ForeignKey, JSON, Boolean, DateTime, Integer
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from app.models.mixins import UUIDMixin, TimestampMixin, SoftDeleteMixin
@@ -41,6 +41,7 @@ class User(Base, UUIDMixin, TimestampMixin, SoftDeleteMixin):
     status = Column(String(50), default="Active")
     mfa_enabled = Column(Boolean, default=False)
     org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    session_version = Column(Integer, default=1, nullable=False)
 
     organization = relationship("Organization", back_populates="users")
     roles = relationship("Role", secondary="user_roles", back_populates="users")
@@ -71,3 +72,14 @@ class AuditLog(Base, UUIDMixin, TimestampMixin):
     details = Column(JSON, default=dict)
 
     user = relationship("User", back_populates="audit_logs")
+
+class PasswordResetToken(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "password_reset_tokens"
+
+    user_id = Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    token_hash = Column(String(255), unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    is_used = Column(Boolean, default=False)
+
+    user = relationship("User")
+

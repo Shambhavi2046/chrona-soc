@@ -16,8 +16,8 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table('playbook_executions',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('playbook_id', sa.String(length=36), nullable=False),
+        sa.Column('id', sa.UUID(), nullable=False),
+        sa.Column('playbook_id', sa.UUID(), nullable=False),
         sa.Column('status', sa.String(length=50), nullable=True),
         sa.Column('started_at', sa.String(length=100), nullable=False),
         sa.Column('completed_at', sa.String(length=100), nullable=True),

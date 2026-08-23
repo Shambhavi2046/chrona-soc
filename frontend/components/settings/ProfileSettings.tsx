@@ -107,6 +107,99 @@ export default function ProfileSettings() {
           </div>
         </div>
       </div>
+
+      <div className="border-t border-soc-border pt-8 mt-8">
+        <h3 className="text-md font-bold text-soc-text-primary mb-4">Change Password</h3>
+        <ChangePasswordForm />
+      </div>
     </div>
+  );
+}
+
+import { changePassword } from "@/services/profile";
+
+function ChangePasswordForm() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setMessage({ type: 'error', text: 'New passwords do not match' });
+      return;
+    }
+    
+    setLoading(true);
+    setMessage(null);
+    try {
+      const result = await changePassword({
+        current_password: currentPassword,
+        new_password: newPassword
+      });
+      setMessage({ type: 'success', text: result.message });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Failed to change password' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+      {message && (
+        <div className={`p-3 rounded text-sm font-medium ${message.type === 'success' ? 'bg-green-500/20 text-green-400' : 'bg-soc-danger/10 text-soc-danger'}`}>
+          {message.text}
+        </div>
+      )}
+      
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-soc-text-secondary">Current Password</label>
+        <input 
+          type="password" 
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          required
+          className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors" 
+        />
+      </div>
+      
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-soc-text-secondary">New Password</label>
+        <input 
+          type="password" 
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          required
+          minLength={8}
+          className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors" 
+        />
+      </div>
+      
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-soc-text-secondary">Confirm New Password</label>
+        <input 
+          type="password" 
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          minLength={8}
+          className="w-full bg-soc-bg border border-soc-border rounded-lg px-3 py-2 text-sm text-soc-text-primary focus:outline-none focus:border-soc-accent transition-colors" 
+        />
+      </div>
+      
+      <button 
+        type="submit"
+        disabled={loading}
+        className="mt-4 bg-soc-accent hover:bg-soc-accent/80 text-white px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50"
+      >
+        {loading ? 'Updating...' : 'Update Password'}
+      </button>
+    </form>
   );
 }

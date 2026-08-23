@@ -50,3 +50,16 @@ export async function generateInvestigationsSummary(): Promise<{summary: string}
   }
   return response.json();
 }
+
+export async function escalateInvestigation(id: string): Promise<any> {
+  const uuid = mapToUuid(id);
+  const response = await fetchApi(`${API_URL}/investigations/${uuid}/escalate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.detail || "Failed to escalate investigation");
+  }
+  return response.json();
+}

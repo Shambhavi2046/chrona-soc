@@ -53,9 +53,31 @@ class ReportService(BaseService):
             investigation = await investigation_service.get_by_id(db, source_uuid, org_id=org_id)
             if not investigation:
                 raise ValueError("Source entity not found")
+            
+            alert = await alert_service.get_by_id(db, investigation.alert_id, org_id=org_id)
+            
             content_kwargs["incident_overview"] = f"Investigation initiated for alert {investigation.alert_id}."
-            content_kwargs["analyst_findings"] = str(investigation.findings) if investigation.findings else ""
-            content_kwargs["executive_summary"] = investigation.summary or content_kwargs["executive_summary"]
+            if alert:
+                content_kwargs["incident_overview"] = f"Investigation for Alert '{alert.title}' (Severity: {alert.severity}) triggered at {alert.created_at}."
+                asset_val = getattr(alert, "source", None)
+                content_kwargs["affected_assets"] = [asset_val] if asset_val else []
+                tactic = getattr(alert, "mitre_tactic", None)
+                tech = getattr(alert, "mitre_technique", None)
+                if tactic or tech:
+                    content_kwargs["mitre_mapping"] = [f"{tactic or ''} - {tech or ''}"]
+                    
+            content_kwargs["analyst_findings"] = str(investigation.findings) if investigation.findings else "No verified analyst findings available."
+            content_kwargs["executive_summary"] = investigation.summary or "No executive summary available."
+            
+            has_recommendations = False
+            if isinstance(investigation.findings, list):
+                recs = [f.get("recommendation") for f in investigation.findings if isinstance(f, dict) and "recommendation" in f]
+                if recs:
+                    content_kwargs["recommendations"] = "\n".join(recs)
+                    has_recommendations = True
+            
+            if not has_recommendations:
+                content_kwargs["recommendations"] = "No verified analyst recommendations available."
         elif request.source_type.lower() == "case":
             case = await case_service.get_by_id(db, source_uuid, org_id=org_id)
             if not case:
@@ -129,6 +151,8 @@ class ReportService(BaseService):
         sections = [
             ("Executive Summary", content.get("executive_summary", "")),
             ("Incident Overview", content.get("incident_overview", "")),
+            ("Affected Assets", ", ".join(content.get("affected_assets", [])) if content.get("affected_assets") else "None identified"),
+            ("MITRE ATT&CK Mapping", ", ".join(content.get("mitre_mapping", [])) if content.get("mitre_mapping") else "None identified"),
             ("Analyst Findings", content.get("analyst_findings", "")),
             ("Recommendations", content.get("recommendations", "")),
             ("Appendix", content.get("appendix", ""))

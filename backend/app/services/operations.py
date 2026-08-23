@@ -78,9 +78,42 @@ class InvestigationService(BaseService[InvestigationRepository]):
         await db.refresh(db_obj)
         return db_obj
 
+    async def escalate_investigation(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None):
+        db_obj = await self.repository.get(db, id, org_id=org_id)
+        if not db_obj:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Investigation not found")
+        
+        alert = await alert_repo.get(db, db_obj.alert_id, org_id=org_id)
+        if not alert:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Associated Alert not found")
+
+        if alert.case_id:
+            case = await case_repo.get(db, alert.case_id, org_id=org_id)
+            if case:
+                return await case_repo.get(db, case.id, org_id=org_id)
+            
+        from app.schemas.operations import CaseCreate
+        new_case_schema = CaseCreate(
+            title=f"Case: {alert.title}",
+            severity=alert.severity,
+            priority="High" if alert.severity.lower() in ["high", "critical"] else "Medium",
+            risk_score=alert.risk_score,
+            description=f"Escalated from Investigation INV-{str(id)[:8]}. Threat Type: {alert.threat_type}"
+        )
+        new_case_db = await case_repo.create(db, obj_in=new_case_schema, org_id=org_id)
+        
+        alert.case_id = new_case_db.id
+        db.add(alert)
+        
+        db_obj.status = "Escalated"
+        db.add(db_obj)
+        
+        await db.commit()
+        return await case_repo.get(db, new_case_db.id, org_id=org_id)
+
     async def generate_overview_summary(self, db: AsyncSession, org_id: Optional[Any] = None) -> dict:
         from sqlalchemy import select
-        from app.models.operations import Aler
+        from app.models.operations import Alert
 
         query = select(Alert)
         if org_id:
@@ -95,7 +128,7 @@ class InvestigationService(BaseService[InvestigationRepository]):
 
         critical_count = sum(1 for a in alerts if a.risk_score >= 90)
         resolved_count = sum(1 for a in alerts if a.status.lower() == 'resolved')
-        pending_count = total - resolved_coun
+        pending_count = total - resolved_count
 
         threat_types = list(set([a.threat_type for a in alerts if a.threat_type]))
         threats_str = ", ".join(threat_types) if threat_types else "various threats"

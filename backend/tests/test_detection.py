@@ -39,8 +39,24 @@ def test_risk_scoring():
     # base 50 * 0.5 = 25
     assert score2 == 25
 
-def test_ioc_matching():
+@pytest.mark.asyncio
+async def test_ioc_matching():
+    from unittest.mock import AsyncMock, MagicMock
     event = SecurityEvent(ip_address="185.15.22.1")
-    matches = ioc_matcher.check_event(event)
+    
+    mock_db = AsyncMock()
+    mock_result = MagicMock()
+    
+    mock_ioc = MagicMock()
+    mock_ioc.value = "185.15.22.1"
+    mock_ioc.type = "ipv4"
+    mock_ioc.category = "C2 Server"
+    mock_ioc.confidence = 90
+    mock_ioc.source = "Test"
+    
+    mock_result.scalars().all.return_value = [mock_ioc]
+    mock_db.execute.return_value = mock_result
+    
+    matches = await ioc_matcher.check_event(mock_db, event)
     assert "185.15.22.1" in matches
     assert matches["185.15.22.1"]["threat"] == "C2 Server"

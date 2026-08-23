@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, JSON, Integer, Text, DateTime, Table
+from sqlalchemy import Column, String, ForeignKey, JSON, Integer, Text, DateTime, Table, UniqueConstraint, Index, text
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 from app.models.mixins import UUIDMixin, TimestampMixin, SoftDeleteMixin
@@ -121,10 +121,14 @@ class Evidence(Base, UUIDMixin, TimestampMixin):
 
 class IOC(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "iocs"
+    __table_args__ = (
+        UniqueConstraint("org_id", "value", name="uix_ioc_org_value"),
+        Index("ix_ioc_value_global_unique", "value", unique=True, postgresql_where=text("org_id IS NULL"), sqlite_where=text("org_id IS NULL")),
+    )
 
     org_id = Column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     type = Column(String(50), nullable=False, index=True)
-    value = Column(String(255), nullable=False, unique=True, index=True)
+    value = Column(String(255), nullable=False, index=True)
     confidence = Column(Integer, default=50)
     source = Column(String(255))
     tags = Column(JSON, default=list)

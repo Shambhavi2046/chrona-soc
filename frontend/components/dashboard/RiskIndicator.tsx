@@ -12,7 +12,7 @@ interface RiskIndicatorProps {
 
 export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
   // Use dynamic risk score or fallback
-  const riskScore = topThreat?.risk_score || 85;
+  const riskScore = topThreat?.risk_score || 0;
 
   return (
     <div className="glass-card rounded-xl p-6 relative overflow-hidden flex flex-col h-full border-t-2 border-t-soc-accent">
@@ -42,7 +42,7 @@ export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
         <div className="bg-soc-bg/50 p-4 rounded-lg border border-soc-border flex items-center justify-between">
           <div>
             <span className="text-xs font-medium text-soc-text-muted uppercase tracking-wider mb-1 block">
-              AI Confidence
+              Alert Risk Score
             </span>
             <div className="text-2xl font-bold text-soc-text-primary">{riskScore}/100</div>
           </div>
@@ -75,15 +75,8 @@ export default function RiskIndicator({ topThreat }: RiskIndicatorProps) {
           Recommended Actions
         </div>
         <ul className="text-sm text-soc-text-secondary space-y-2">
-          <li className="flex items-center group cursor-pointer hover:text-soc-text-primary transition-colors">
-            <span className="w-1.5 h-1.5 bg-soc-accent rounded-full mr-2"></span>
-            Investigate source IP activity
-            <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-soc-accent" />
-          </li>
-          <li className="flex items-center group cursor-pointer hover:text-soc-text-primary transition-colors">
-            <span className="w-1.5 h-1.5 bg-soc-accent rounded-full mr-2"></span>
-            Isolate affected authentication server
-            <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-soc-accent" />
+          <li className="flex items-center text-soc-text-muted italic">
+            No automated recommendations available.
           </li>
         </ul>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import MockModeBanner from "@/components/common/MockModeBanner";
+
 import ModuleHeader from "@/components/common/ModuleHeader";
 import { Target, RefreshCw, Download, Save, Plus, CheckCircle2 } from "lucide-react";
 import SummaryCards from "@/components/threat-hunting/SummaryCards";
@@ -23,6 +23,7 @@ export default function ThreatHuntingWorkspace() {
 
   // State
   const [events, setEvents] = useState<HuntEvent[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [savedHunts, setSavedHunts] = useState<SavedHunt[]>([]);
   const [savedHuntsError, setSavedHuntsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +53,12 @@ export default function ThreatHuntingWorkspace() {
     try {
       const res = await executeHunt(queryReq);
       setEvents(res.events);
-      setCurrentQuery(queryReq);
+      setTotalCount(res.total || 0);
+      setCurrentQuery({
+        ...queryReq,
+        page: res.page || queryReq.page || 1,
+        page_size: res.page_size || queryReq.page_size || 50
+      });
       if (res.events.length === 0) setSuccessMsg("Execution Succeeded: 0 matches found.");
       else setSuccessMsg(`Execution Succeeded: ${res.events.length} matches found.`);
     } catch (err: any) {
@@ -69,13 +75,35 @@ export default function ThreatHuntingWorkspace() {
     handleExecute({}); // Run empty hunt on load
   }, []);
 
-  const handleRunSavedHunt = (hunt: SavedHunt) => {
-    const q = { query: hunt.query, ioc: hunt.query.includes("ioc") ? hunt.query : undefined }; // basic map, since schema doesn't have ioc strictly in savedhunt
-    // A real implementation would parse the saved query parameters correctly.
+  const handleRunSavedHunt = async (hunt: SavedHunt) => {
+    let q: HuntQueryRequest = { page: 1 };
+    try {
+      if (hunt.query && hunt.query.trim().startsWith('{')) {
+        const parsed = JSON.parse(hunt.query);
+        if (typeof parsed === 'object' && parsed !== null) {
+          q = { ...parsed, page: 1 };
+        } else {
+          q = { query: hunt.query, page: 1 };
+        }
+      } else {
+        q = { query: hunt.query, page: 1 };
+      }
+    } catch {
+      // Fallback for old plain-text hunts or empty strings
+      q = { query: hunt.query, page: 1 };
+    }
+
     setCurrentQuery(q);
     handleExecute(q);
     setIsNewHunt(false);
     setCurrentHuntName(hunt.name);
+
+    try {
+      await updateSavedHunt(hunt.id, { last_run: new Date().toISOString() });
+      fetchSavedHunts();
+    } catch (err) {
+      console.error("Failed to update last_run", err);
+    }
   };
 
   const handleDeleteSavedHunt = async (id: string) => {
@@ -100,9 +128,19 @@ export default function ThreatHuntingWorkspace() {
     if (e) e.preventDefault();
     if (!newHuntName.trim()) return;
     try {
+      const queryToSave = { ...currentQuery };
+      delete queryToSave.page;
+      delete queryToSave.page_size;
+      delete queryToSave.sort_by;
+      delete queryToSave.sort_desc;
+      
+      const serializedQuery = JSON.stringify(queryToSave);
+      const mitre_mapping = currentQuery.mitre_technique || currentQuery.mitre_tactic || undefined;
+
       await createSavedHunt({
         name: newHuntName,
-        query: currentQuery.query || "",
+        query: serializedQuery,
+        mitre_mapping: mitre_mapping,
         author: "admin",
       });
       setIsModalOpen(false);
@@ -133,7 +171,14 @@ export default function ThreatHuntingWorkspace() {
   };
 
   const updateAndRun = (updates: Partial<HuntQueryRequest>) => {
-    const newQ = { ...currentQuery, ...updates };
+    // Reset to page 1 when search/filter changes
+    const newQ = { ...currentQuery, ...updates, page: 1 };
+    setCurrentQuery(newQ);
+    handleExecute(newQ);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const newQ = { ...currentQuery, page: newPage };
     setCurrentQuery(newQ);
     handleExecute(newQ);
   };
@@ -203,7 +248,7 @@ export default function ThreatHuntingWorkspace() {
 
       {/* Copilot Suggestions */}
       <AISuggestions onApply={(q) => {
-        const newQ = { ...currentQuery, query: q };
+        const newQ = { ...currentQuery, query: q, page: 1 };
         setCurrentQuery(newQ);
         handleExecute(newQ);
       }} />
@@ -230,6 +275,10 @@ export default function ThreatHuntingWorkspace() {
             <ResultsTable
               events={events}
               onRowClick={(evt) => setSelectedEvent(evt)}
+              total={totalCount}
+              currentPage={currentQuery.page || 1}
+              pageSize={currentQuery.page_size || 50}
+              onPageChange={handlePageChange}
             />
           )}
         </div>

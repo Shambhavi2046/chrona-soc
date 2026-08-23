@@ -1,6 +1,6 @@
 import { User, Shield, Bell, Palette, Bot, Network, Sliders, Database, Info } from "lucide-react";
 
-export type SettingsTab = "profile" | "appearance" | "about";
+export type SettingsTab = "profile" | "security" | "appearance" | "about";
 
 interface SettingsSidebarProps {
   activeTab: SettingsTab;
@@ -10,6 +10,7 @@ interface SettingsSidebarProps {
 export default function SettingsSidebar({ activeTab, onTabChange }: SettingsSidebarProps) {
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
+    { id: "security", label: "Security & Sessions", icon: Shield },
     { id: "appearance", label: "Appearance", icon: Palette },
     { id: "about", label: "About", icon: Info },
   ];

@@ -53,6 +53,7 @@ class InvestigationDetails(BaseModel):
 class InvestigationResponse(BaseModel):
     id: uuid.UUID
     alert_id: uuid.UUID
+    alert_title: str
     threat_type: str
     risk_score: int
     status: str
@@ -68,11 +69,13 @@ class InvestigationResponse(BaseModel):
             
         threat_type = "Unknown"
         risk_score = 50
+        alert_title = "Unknown Alert"
         if getattr(v, "alert", None):
+            alert_title = getattr(v.alert, "title", "Unknown Alert")
             threat_type = v.alert.threat_type or "Unknown"
             risk_score = v.alert.risk_score or 50
             
-        summary = v.summary or "Investigation initiated."
+        summary = v.summary or "No automated analysis available."
         
         # Recommendations mapped from findings
         recommendations = []
@@ -86,6 +89,7 @@ class InvestigationResponse(BaseModel):
         return {
             "id": v.id,
             "alert_id": v.alert_id,
+            "alert_title": alert_title,
             "threat_type": threat_type,
             "risk_score": risk_score,
             "status": v.status or "In Progress",

@@ -41,10 +41,14 @@ export default function UserManagement({ users, onRefresh }: UserManagementProps
     if (!showEditModal) return;
     try {
       setLoading(true);
-      await updateAdminUser(showEditModal.id, {
+      const payload: any = {
         name: formData.name,
         status: formData.status
-      });
+      };
+      if (formData.password) {
+        payload.password = formData.password;
+      }
+      await updateAdminUser(showEditModal.id, payload);
       setShowEditModal(null);
       setFormData({ name: "", email: "", password: "", status: "Active" });
       onRefresh?.();
@@ -230,6 +234,10 @@ export default function UserManagement({ users, onRefresh }: UserManagementProps
                   <option value="Disabled">Disabled</option>
                   <option value="Pending">Pending</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-soc-text-secondary mb-1">Reset Password (Optional)</label>
+                <input minLength={8} type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full bg-soc-card border border-soc-border rounded px-3 py-2 text-sm text-soc-text-primary" placeholder="Leave blank to keep unchanged" />
               </div>
               <div className="pt-2 flex justify-end gap-2">
                 <button type="button" onClick={() => setShowEditModal(null)} className="px-4 py-2 text-sm font-medium text-soc-text-secondary hover:text-soc-text-primary">Cancel</button>

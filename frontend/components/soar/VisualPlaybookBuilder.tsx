@@ -1,5 +1,5 @@
 import { GitMerge, Zap, Shield, HelpCircle, Mail, Database, X, AlertTriangle, Play, Plus } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Playbook } from "@/types";
 import { PlaybookNode } from "@/types/soar";
 import NodeConfigModal from "./NodeConfigModal";
@@ -32,14 +32,17 @@ export default function VisualPlaybookBuilder({ playbook, onSave }: VisualPlaybo
   const [selectedNode, setSelectedNode] = useState<PlaybookNode | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
+  const [prevPlaybookId, setPrevPlaybookId] = useState<string | undefined>(undefined);
+
+  if (playbook?.id !== prevPlaybookId) {
+    setPrevPlaybookId(playbook?.id);
     const definition = playbook?.definition || playbook?.workflow_definition;
     if (definition?.nodes) {
       setNodes(JSON.parse(JSON.stringify(definition.nodes)));
     } else {
       setNodes(JSON.parse(JSON.stringify(defaultNodes)));
     }
-  }, [playbook]);
+  }
 
   const handleAddNode = () => {
     const newNode: PlaybookNode = {

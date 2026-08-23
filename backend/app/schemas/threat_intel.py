@@ -25,3 +25,20 @@ class ThreatStatsResponse(BaseModel):
     criticalIndicators: int
     blockedIocs: int
     threatScore: int
+
+class ThreatFeedCreate(BaseModel):
+    name: str
+    url: str
+
+class ThreatFeedResponse(BaseModel):
+    id: uuid.UUID
+    org_id: Optional[uuid.UUID] = None
+    name: str
+    url: str
+    status: str
+    last_sync: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+

@@ -20,7 +20,7 @@ def seed_attack_graph():
     
     try:
         # Check if seed data already exists to be idempotent
-        existing_ta = db.query(ThreatActor).filter(ThreatActor.name == "[DEMO] APT-29 (Cozy Bear)").first()
+        existing_ta = db.query(ThreatActor).filter(ThreatActor.name == "[Simulation] APT-29 (Cozy Bear)").first()
         if existing_ta:
             print("Development seed data already exists. Skipping insertion to avoid duplicates.")
             return
@@ -29,7 +29,7 @@ def seed_attack_graph():
 
         # 1. Assets
         asset_db = Asset(
-            name="[DEMO] DB-Cluster-01",
+            name="[Simulation] DB-Cluster-01",
             type="Database",
             ip_address="10.0.50.100",
             hostname="db-prod-01",
@@ -37,7 +37,7 @@ def seed_attack_graph():
             criticality="critical"
         )
         asset_web = Asset(
-            name="[DEMO] Web-Server-DMZ",
+            name="[Simulation] Web-Server-DMZ",
             type="Server",
             ip_address="172.16.20.15",
             hostname="dmz-web-01",
@@ -49,19 +49,19 @@ def seed_attack_graph():
         # 2. Mitre Techniques
         mitre_1 = MitreTechnique(
             technique_id="T1190",
-            name="[DEMO] Exploit Public-Facing Application",
+            name="[Simulation] Exploit Public-Facing Application",
             tactic="Initial Access"
         )
         mitre_2 = MitreTechnique(
             technique_id="T1059.001",
-            name="[DEMO] PowerShell",
+            name="[Simulation] PowerShell",
             tactic="Execution"
         )
         db.add_all([mitre_1, mitre_2])
 
         # 3. Threat Actor
         ta = ThreatActor(
-            name="[DEMO] APT-29 (Cozy Bear)",
+            name="[Simulation] APT-29 (Cozy Bear)",
             aliases=["The Dukes", "YTTRIUM"],
             reputation="Known APT"
         )
@@ -69,7 +69,7 @@ def seed_attack_graph():
 
         # 4. Malware
         malware = Malware(
-            name="[DEMO] SUNBURST",
+            name="[Simulation] SUNBURST",
             family="Backdoor"
         )
         db.add(malware)
@@ -104,7 +104,7 @@ def seed_attack_graph():
 
         # 6. Case
         case = Case(
-            title="[DEMO] Suspected Sunburst Activity in DMZ",
+            title="[Simulation] Suspected Sunburst Activity in DMZ",
             status="Open",
             severity="critical",
             priority="High",
@@ -125,7 +125,7 @@ def seed_attack_graph():
 
         # 8. Alert
         alert = Alert(
-            title="[DEMO] High Volume Data Exfiltration",
+            title="[Simulation] High Volume Data Exfiltration",
             threat_type="Exfiltration",
             risk_score=90,
             severity="critical",
@@ -148,7 +148,7 @@ def seed_attack_graph():
         inv = Investigation(
             alert_id=alert.id,
             status="In Progress",
-            summary="[DEMO] Security Analyst is actively investigating the DMZ web server compromise."
+            summary="[Simulation] Security Analyst is actively investigating the DMZ web server compromise."
         )
         db.add(inv)
 
@@ -171,28 +171,28 @@ def reset_attack_graph():
     print("Removing development seed for Attack Graph...")
     db: Session = SessionLocal()
     try:
-        # Delete only [DEMO] tagged records safely
-        cases = db.query(Case).filter(Case.title.like("[DEMO]%")).all()
+        # Delete only [Simulation] tagged records safely
+        cases = db.query(Case).filter(Case.title.like("[Simulation]%")).all()
         for case in cases:
             db.delete(case)
             
-        alerts = db.query(Alert).filter(Alert.title.like("[DEMO]%")).all()
+        alerts = db.query(Alert).filter(Alert.title.like("[Simulation]%")).all()
         for alert in alerts:
             db.delete(alert)
             
-        assets = db.query(Asset).filter(Asset.name.like("[DEMO]%")).all()
+        assets = db.query(Asset).filter(Asset.name.like("[Simulation]%")).all()
         for asset in assets:
             db.delete(asset)
             
-        mitres = db.query(MitreTechnique).filter(MitreTechnique.name.like("[DEMO]%")).all()
+        mitres = db.query(MitreTechnique).filter(MitreTechnique.name.like("[Simulation]%")).all()
         for mitre in mitres:
             db.delete(mitre)
             
-        tas = db.query(ThreatActor).filter(ThreatActor.name.like("[DEMO]%")).all()
+        tas = db.query(ThreatActor).filter(ThreatActor.name.like("[Simulation]%")).all()
         for ta in tas:
             db.delete(ta)
             
-        mals = db.query(Malware).filter(Malware.name.like("[DEMO]%")).all()
+        mals = db.query(Malware).filter(Malware.name.like("[Simulation]%")).all()
         for mal in mals:
             db.delete(mal)
             
@@ -201,7 +201,7 @@ def reset_attack_graph():
         for ioc in iocs:
             db.delete(ioc)
             
-        invs = db.query(Investigation).filter(Investigation.summary.like("[DEMO]%")).all()
+        invs = db.query(Investigation).filter(Investigation.summary.like("[Simulation]%")).all()
         for inv in invs:
             db.delete(inv)
             

@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Download, CheckCircle, ShieldAlert, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, CheckCircle, ShieldAlert, Loader2, ArrowUpRight } from "lucide-react";
 import SeverityBadge from "@/components/alerts/SeverityBadge";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateInvestigationStatus } from "@/services/investigations";
+import { updateInvestigationStatus, escalateInvestigation } from "@/services/investigations";
 import { getTemplates, generateReport, downloadReportPdf } from "@/services/reports";
 
 interface InvestigationHeaderProps {
@@ -26,6 +26,7 @@ export default function InvestigationHeader({
   const router = useRouter();
   const [isResolving, setIsResolving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isEscalating, setIsEscalating] = useState(false);
 
   const handleResolve = async () => {
     if (!investigationId) return;
@@ -37,6 +38,20 @@ export default function InvestigationHeader({
       console.error("Failed to mark as resolved", e);
     } finally {
       setIsResolving(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!investigationId) return;
+    try {
+      setIsEscalating(true);
+      const newCase = await escalateInvestigation(investigationId);
+      router.push(`/cases/${newCase.id}`);
+    } catch (e: any) {
+      console.error("Failed to escalate", e);
+      alert(e.message || "Failed to escalate to case");
+    } finally {
+      setIsEscalating(false);
     }
   };
 
@@ -111,6 +126,16 @@ export default function InvestigationHeader({
           >
             {isResolving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
             {isResolving ? "Resolving..." : "Mark as Resolved"}
+          </button>
+        )}
+        {status.toLowerCase() !== 'escalated' && status.toLowerCase() !== 'resolved' && (
+          <button 
+            onClick={handleEscalate}
+            disabled={isEscalating || !investigationId}
+            className="flex items-center px-4 py-2 bg-soc-accent/20 hover:bg-soc-accent/30 border border-soc-accent/50 text-soc-accent text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
+          >
+            {isEscalating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowUpRight className="w-4 h-4 mr-2" />}
+            {isEscalating ? "Escalating..." : "Escalate to Case"}
           </button>
         )}
       </div>

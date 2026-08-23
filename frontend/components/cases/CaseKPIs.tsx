@@ -34,12 +34,10 @@ export default function CaseKPIs({ cases }: CaseKPIsProps) {
         colorClass="text-soc-warning border-soc-warning"
       />
       <StatCard
-        title="SLA Compliance"
-        value="94%"
-        icon={CheckCircle}
-        trend="up"
-        trendValue="+2%"
-        colorClass="text-soc-success border-soc-success"
+        title="Avg Time to Resolve"
+        value="--"
+        icon={Clock}
+        colorClass="text-soc-text-muted border-soc-border"
       />
     </div>
   );

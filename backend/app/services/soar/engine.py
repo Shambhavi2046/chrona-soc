@@ -122,6 +122,16 @@ class ExecutionEngine:
                         await asyncio.sleep(1)
                     else:
                         return "Failed"
+            
+            if result.get("output", {}).get("halt_execution"):
+                self.execution_logs.append({
+                    "step": "Condition Not Met",
+                    "status": "Success",
+                    "time": datetime.utcnow().isoformat() + "Z",
+                    "message": "Execution halted gracefully because condition was not met"
+                })
+                await self._update_db_logs(db, execution_id)
+                return "Success"
 
         self.execution_logs.append({
             "step": "Workflow Complete",

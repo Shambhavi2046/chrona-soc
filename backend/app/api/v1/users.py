@@ -4,7 +4,7 @@ from typing import List
 import uuid
 from app.db.session import get_db
 from app.services.user import user_service
-from app.schemas.user import UserCreate, UserUpdate, UserResponse, ProfileUpdate
+from app.schemas.user import UserCreate, UserUpdate, UserResponse, ProfileUpdate, PasswordChange
 from app.middleware.auth import require_permissions, get_current_user
 from app.utils.validation import get_pagination, PaginationParams
 
@@ -55,6 +55,39 @@ async def get_my_profile(
     if not user:
         print("IN ROUTE GET_USER" if "user_id" in locals() else "IN ROUTE UPDATE_MY_PROFILE", flush=True); raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
+
+@router.patch("/me/password")
+async def update_password(
+    password_in: PasswordChange,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    from sqlalchemy.orm import selectinload
+    from sqlalchemy import select
+    from app.models.identity import User
+    from app.core.security import verify_password, get_password_hash
+    from app.models.identity import UserSession
+
+    result = await db.execute(
+        select(User).filter(User.id == current_user.id, User.is_deleted == False)
+    )
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+    if not verify_password(password_in.current_password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password")
+        
+    user.hashed_password = get_password_hash(password_in.new_password)
+    user.session_version += 1
+    
+    sessions = await db.execute(select(UserSession).filter(UserSession.user_id == user.id))
+    for session in sessions.scalars().all():
+        session.is_revoked = True
+        
+    db.add(user)
+    await db.commit()
+    return {"message": "Password updated successfully and active sessions revoked."}
 
 @router.patch("/me", response_model=UserResponse)
 async def update_my_profile(

@@ -11,7 +11,7 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
-  const isAuthRoute = pathname === "/login" || pathname === "/register";
+  const isAuthRoute = ["/login", "/register", "/forgot-password", "/reset-password"].includes(pathname);
 
   // Exclude static files, API routes, and Next.js internals
   if (

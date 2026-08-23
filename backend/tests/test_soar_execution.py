@@ -33,8 +33,9 @@ def test_condition_equals_failure():
     context.set_variable("severity", "low")
     handler = ConditionActionHandler()
     res = handler.execute(context, {"variable": "severity", "operator": "equals", "value": "high"})
-    assert res["status"] == "failed"
+    assert res["status"] == "success"
     assert res["output"]["passed"] is False
+    assert res["output"]["halt_execution"] is True
 
 def test_condition_contains():
     context = ExecutionContext("exec-1", "pb-1")

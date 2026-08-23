@@ -1,4 +1,4 @@
-import { Bot, Sparkles, ArrowRight } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 
 interface Props {
   onApply: (query: string) => void;
@@ -26,8 +26,8 @@ export default function AISuggestions({ onApply }: Props) {
   return (
     <div className="glass-card border border-soc-border rounded-xl p-5">
       <div className="flex items-center gap-2 mb-4 text-soc-text-primary font-medium">
-        <Bot className="w-5 h-5 text-soc-accent" />
-        AI Copilot Suggestions
+        <Search className="w-5 h-5 text-soc-accent" />
+        Common Searches
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {suggestions.map((suggestion, idx) => (
@@ -37,7 +37,7 @@ export default function AISuggestions({ onApply }: Props) {
             className="bg-soc-bg border border-soc-border hover:border-soc-accent rounded-lg p-3 transition-colors group cursor-pointer"
           >
             <div className="flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-soc-warning flex-shrink-0 mt-0.5" />
+              <Search className="w-4 h-4 text-soc-text-muted flex-shrink-0 mt-0.5" />
               <p className="text-sm text-soc-text-secondary group-hover:text-soc-text-primary transition-colors">{displayMap[suggestion]}</p>
             </div>
             <div className="mt-3 flex justify-end">

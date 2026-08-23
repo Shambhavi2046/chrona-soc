@@ -70,26 +70,14 @@ export async function escalateCase(caseId: number | string): Promise<Case> {
 }
 
 export async function addCaseComment(caseId: number | string, content: string): Promise<TimelineEvent> {
-  try {
-    const uuid = mapToUuid(caseId);
-    const response = await fetchApi(`${API_URL}/cases/${uuid}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-    if (!response.ok) throw new Error("Failed to add comment");
-    return await response.json();
-  } catch (error) {
-    console.warn("Cases comments API unavailable, falling back to mock mode");
-    return {
-      id: Math.random().toString(36).substring(7),
-      case_id: String(caseId),
-      author: "Mock User",
-      event_type: "Comment",
-      content: content,
-      created_at: new Date().toISOString()
-    };
-  }
+  const uuid = mapToUuid(caseId);
+  const response = await fetchApi(`${API_URL}/cases/${uuid}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  });
+  if (!response.ok) throw new Error("Failed to add comment");
+  return await response.json();
 }
 
 export async function addCaseEvidence(caseId: number | string, evidence_type: string, value: string): Promise<Evidence> {

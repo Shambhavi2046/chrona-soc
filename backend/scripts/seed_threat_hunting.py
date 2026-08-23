@@ -9,7 +9,7 @@ def seed_threat_hunting():
     db: Session = SessionLocal()
     try:
         # Check if already seeded to maintain idempotency
-        existing = db.query(SavedHunt).filter(SavedHunt.name.like("[DEMO]%")).first()
+        existing = db.query(SavedHunt).filter(SavedHunt.name.like("[Simulation]%")).first()
         if existing:
             print("Development seed data already exists. Skipping insertion.")
             return
@@ -18,21 +18,21 @@ def seed_threat_hunting():
 
         hunts = [
             SavedHunt(
-                name="[DEMO] RDP Brute Force Hunt",
+                name="[Simulation] RDP Brute Force Hunt",
                 description="Hunts for multiple failed RDP logins followed by a success.",
                 query="event_type:logon AND process_name:svchost.exe",
                 mitre_mapping="T1110 - Brute Force",
                 author="soc_admin"
             ),
             SavedHunt(
-                name="[DEMO] Suspicious PowerShell Downloads",
+                name="[Simulation] Suspicious PowerShell Downloads",
                 description="Hunts for PowerShell executing WebClient or Invoke-WebRequest.",
                 query="process_name:powershell.exe AND (command_line:Net.WebClient OR command_line:Invoke-WebRequest)",
                 mitre_mapping="T1059.001 - PowerShell",
                 author="analyst_1"
             ),
             SavedHunt(
-                name="[DEMO] C2 Beaconing Activity",
+                name="[Simulation] C2 Beaconing Activity",
                 description="Hunts for continuous outbound traffic to unknown IPs.",
                 query="event_type:network_traffic AND ioc",
                 mitre_mapping="T1571 - Non-Standard Port",
@@ -58,7 +58,7 @@ def reset_threat_hunting():
     print("Removing development seed for Threat Hunting...")
     db: Session = SessionLocal()
     try:
-        hunts = db.query(SavedHunt).filter(SavedHunt.name.like("[DEMO]%")).all()
+        hunts = db.query(SavedHunt).filter(SavedHunt.name.like("[Simulation]%")).all()
         for hunt in hunts:
             db.delete(hunt)
 

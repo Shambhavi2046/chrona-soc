@@ -12,7 +12,7 @@ export default function LayoutWrapper({
   header: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAuthRoute = pathname === "/login" || pathname === "/register";
+  const isAuthRoute = ["/login", "/register", "/forgot-password", "/reset-password"].includes(pathname);
 
   if (isAuthRoute) {
     return <main className="flex-1 h-screen overflow-hidden">{children}</main>;

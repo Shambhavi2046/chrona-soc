@@ -138,7 +138,12 @@ export default function ExecutionDrawer({ execution: initialExecution, onClose }
                       <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-soc-bg border-2 ${isSuccess ? 'border-emerald-500' : isFailed ? 'border-red-500' : 'border-blue-500'}`} />
                       <div className="flex justify-between items-start">
                         <div className="flex-1 pr-4 min-w-0">
-                          <h4 className={`text-sm font-medium ${isSuccess ? 'text-emerald-400' : isFailed ? 'text-red-400' : 'text-white'}`}>{log.step}</h4>
+                          <h4 className={`text-sm font-medium ${isSuccess ? 'text-emerald-400' : isFailed ? 'text-red-400' : 'text-white'} flex items-center gap-2`}>
+                            {log.step}
+                            {log.output?.status === "simulated" && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">SIMULATED ACTION</span>
+                            )}
+                          </h4>
                           {log.message && (
                             <p className="text-xs text-soc-text-secondary mt-1 break-words">{log.message}</p>
                           )}

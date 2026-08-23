@@ -9,78 +9,7 @@ from app.repositories.hunting_repo import SavedHuntRepository, saved_hunt_repo
 from app.schemas.hunting import SavedHuntCreate, SavedHuntUpdate, HuntQueryRequest, HuntExecuteResponse, HuntEventSchema
 from app.models.hunting_model import SavedHunt
 
-# Simulated telemetry dataset
-MOCK_TELEMETRY = [
-    {
-        "id": "EVT-8374-291",
-        "timestamp": datetime.utcnow().isoformat(),
-        "host": "CORP-LAPTOP-042",
-        "source": "CrowdStrike Falcon",
-        "user": "jdoe",
-        "severity": "Critical",
-        "mitre_tactic": "Execution",
-        "mitre_technique": "T1059.001 - PowerShell",
-        "ioc_match": "powershell.exe -enc JABz...",
-        "description": "Encoded PowerShell command executed",
-        "status": "Open",
-        "raw_log": '{"event": "ProcessExecution", "process": "powershell.exe", "commandLine": "powershell.exe -enc JABz...", "parent": "cmd.exe", "user": "jdoe", "host": "CORP-LAPTOP-042"}'
-    },
-    {
-        "id": "EVT-8374-292",
-        "timestamp": datetime.utcnow().isoformat(),
-        "host": "DB-PROD-01",
-        "source": "Windows Security Logs",
-        "user": "SYSTEM",
-        "severity": "High",
-        "mitre_tactic": "Credential Access",
-        "mitre_technique": "T1003.001 - LSASS Memory",
-        "ioc_match": "rundll32.exe (comsvcs.dll)",
-        "description": "Suspicious LSASS memory dump attempt",
-        "status": "Investigating",
-        "raw_log": '{"eventID": 4656, "process": "rundll32.exe", "target": "lsass.exe", "access": "0x1000", "user": "SYSTEM", "host": "DB-PROD-01"}'
-    },
-    {
-        "id": "EVT-8374-293",
-        "timestamp": datetime.utcnow().isoformat(),
-        "host": "WEB-DMZ-EU",
-        "source": "Linux Audit Logs",
-        "user": "www-data",
-        "severity": "Medium",
-        "mitre_tactic": "Persistence",
-        "mitre_technique": "T1053.003 - Cron",
-        "description": "New crontab entry for www-data",
-        "status": "Resolved",
-        "raw_log": '{"type": "SYSCALL", "syscall": "open", "file": "/var/spool/cron/crontabs/www-data", "user": "www-data", "host": "WEB-DMZ-EU"}'
-    },
-    {
-        "id": "EVT-8374-294",
-        "timestamp": datetime.utcnow().isoformat(),
-        "host": "FIREWALL-FW01",
-        "source": "Palo Alto Networks",
-        "user": "N/A",
-        "severity": "Critical",
-        "mitre_tactic": "Command & Control",
-        "mitre_technique": "T1571 - Non-Standard Port",
-        "ioc_match": "198.51.100.44",
-        "description": "Outbound connection to known malicious C2 infrastructure",
-        "status": "Open",
-        "raw_log": '{"type": "TRAFFIC", "src_ip": "10.0.5.15", "dst_ip": "198.51.100.44", "dst_port": 4444, "action": "allow"}'
-    },
-    {
-        "id": "EVT-8374-295",
-        "timestamp": datetime.utcnow().isoformat(),
-        "host": "CORP-DESKTOP-99",
-        "source": "Okta",
-        "user": "asmith",
-        "severity": "High",
-        "mitre_tactic": "Initial Access",
-        "mitre_technique": "T1078 - Valid Accounts",
-        "ioc_match": "203.0.113.15",
-        "description": "Multiple failed logins followed by successful login (Impossible Travel)",
-        "status": "Investigating",
-        "raw_log": '{"event": "user.session.start", "outcome": "SUCCESS", "user": "asmith", "ip": "203.0.113.15", "location": "RU"}'
-    }
-]
+
 
 class HuntingService(BaseService[SavedHuntRepository]):
     async def create_saved_hunt(self, db: AsyncSession, obj_in: SavedHuntCreate, org_id: uuid.UUID):
@@ -153,14 +82,17 @@ class HuntingService(BaseService[SavedHuntRepository]):
             query = query.filter(func.cast(SecurityEvent.mitre_techniques, String).ilike(f"%{request.mitre_technique}%"))
 
         if request.query:
-            q = f"%{request.query}%"
-            query = query.filter(or_(
-                SecurityEvent.event_type.ilike(q),
-                SecurityEvent.source.ilike(q),
-                func.cast(SecurityEvent.raw_event, String).ilike(q),
-                SecurityEvent.process_name.ilike(q),
-                SecurityEvent.command_line.ilike(q)
-            ))
+            if request.query.strip() == "*":
+                pass
+            else:
+                q = f"%{request.query}%"
+                query = query.filter(or_(
+                    SecurityEvent.event_type.ilike(q),
+                    SecurityEvent.source.ilike(q),
+                    func.cast(SecurityEvent.raw_event, String).ilike(q),
+                    SecurityEvent.process_name.ilike(q),
+                    SecurityEvent.command_line.ilike(q)
+                ))
 
         # Count total
         count_query = select(func.count()).select_from(query.subquery())
@@ -231,9 +163,7 @@ class HuntingService(BaseService[SavedHuntRepository]):
         )
 
     async def ask_copilot(self, db: AsyncSession, event_id: str, tenant_id: uuid.UUID) -> dict:
-        import asyncio
         import uuid
-        await asyncio.sleep(1.5) # Simulate AI thinking
         from app.models.event_model import SecurityEvent
         from sqlalchemy import select
 
@@ -253,7 +183,7 @@ class HuntingService(BaseService[SavedHuntRepository]):
             return {"analysis": "Event not found. Unable to provide analysis."}
 
         return {
-            "analysis": f"AI Copilot Analysis for {event.event_type}:\n\nThis event appears to be part of a larger sequence. Based on the {event.source} logs, the user '{event.user_account or 'Unknown'}' performed an action on host '{event.hostname or 'Unknown'}'. I recommend correlating this with recent authentication attempts and checking for lateral movement indicators."
+            "analysis": f"[SIMULATED DEMO RESPONSE]\nTemplate-based Analysis for {event.event_type}:\n\nThis event appears to be part of a larger sequence. Based on the {event.source} logs, the user '{event.user_account or 'Unknown'}' performed an action on host '{event.hostname or 'Unknown'}'. I recommend correlating this with recent authentication attempts and checking for lateral movement indicators."
         }
 
 hunting_service = HuntingService(saved_hunt_repo)

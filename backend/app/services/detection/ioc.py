@@ -1,33 +1,52 @@
+from typing import Optional, Any
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_
 from app.models.event_model import SecurityEvent
-
-# Simulated IOC feed for Phase 2E.2
-MOCK_IOCS = {
-    "185.15.22.1": {"type": "ip", "threat": "C2 Server", "confidence": 95},
-    "45.22.11.9": {"type": "ip", "threat": "Known Scanner", "confidence": 80},
-    "a1b2c3d4e5f6g7h8i9j0": {"type": "hash", "threat": "Ransomware", "confidence": 100}
-}
+from app.models.operations import IOC
 
 class IOCMatcher:
     @staticmethod
-    def check_event(event: SecurityEvent) -> dict:
+    async def check_event(db: AsyncSession, event: SecurityEvent, org_id: Optional[Any] = None) -> dict:
         """
-        Check event fields against known IOCs.
+        Check event fields against known IOCs in the database.
         Returns a dict of matched IOCs if found.
         """
         matches = {}
         
-        # Check IP addresses
-        if event.ip_address and event.ip_address in MOCK_IOCS:
-            matches[event.ip_address] = MOCK_IOCS[event.ip_address]
-            
-        if event.destination_ip and event.destination_ip in MOCK_IOCS:
-            matches[event.destination_ip] = MOCK_IOCS[event.destination_ip]
+        # Collect potential IOC values from the event
+        potential_values = []
+        if event.ip_address:
+            potential_values.append(event.ip_address)
+        if event.destination_ip:
+            potential_values.append(event.destination_ip)
             
         # Check hashes if present in normalized data
         if event.normalized_data and "hash" in event.normalized_data:
-            file_hash = event.normalized_data["hash"]
-            if file_hash in MOCK_IOCS:
-                matches[file_hash] = MOCK_IOCS[file_hash]
+            potential_values.append(event.normalized_data["hash"])
+            
+        if not potential_values:
+            return matches
+            
+        query = select(IOC).filter(
+            IOC.value.in_(potential_values),
+            IOC.status == "Active"
+        )
+        
+        if org_id:
+            query = query.filter(or_(IOC.org_id == org_id, IOC.org_id.is_(None)))
+        else:
+            query = query.filter(IOC.org_id.is_(None))
+            
+        result = await db.execute(query)
+        iocs = result.scalars().all()
+        
+        for ioc in iocs:
+            matches[ioc.value] = {
+                "type": ioc.type,
+                "threat": ioc.category or "Unknown",
+                "confidence": ioc.confidence,
+                "source": ioc.source
+            }
                 
         return matches
 

@@ -77,13 +77,14 @@ class ConditionActionHandler(ActionHandler):
             }
 
         return {
-            "status": "success" if passed else "failed",
+            "status": "success",
             "output": {
                 "variable": variable,
                 "operator": operator,
                 "expected": expected_value,
                 "actual": actual_value,
-                "passed": passed
+                "passed": passed,
+                "halt_execution": not passed
             },
             "message": f"Condition evaluated to {passed}"
         }
@@ -296,10 +297,65 @@ class IntegrationActionHandler(ActionHandler):
                 "message": f"Integration execution failed: {err_msg}"
             }
 
+import ipaddress
+
+class BlockIPActionHandler(ActionHandler):
+    def execute(self, context: ExecutionContext, config: Dict[str, Any]) -> Dict[str, Any]:
+        target = config.get("target")
+        
+        if not target:
+            return {
+                "status": "failed",
+                "output": {},
+                "message": "Missing required field: 'target'"
+            }
+            
+        try:
+            ipaddress.ip_address(target)
+        except ValueError:
+            return {
+                "status": "failed",
+                "output": {},
+                "message": f"Validation failure: '{target}' is not a valid IP address"
+            }
+            
+        return {
+            "status": "success",
+            "output": {
+                "action": "block_ip",
+                "target": target,
+                "status": "simulated"
+            },
+            "message": "IP block simulated successfully"
+        }
+
+class IsolateHostActionHandler(ActionHandler):
+    def execute(self, context: ExecutionContext, config: Dict[str, Any]) -> Dict[str, Any]:
+        hostname = config.get("hostname")
+        
+        if not hostname or not str(hostname).strip():
+            return {
+                "status": "failed",
+                "output": {},
+                "message": "Validation failure: 'hostname' must be a non-empty string"
+            }
+            
+        return {
+            "status": "success",
+            "output": {
+                "action": "isolate_host",
+                "target": str(hostname).strip(),
+                "status": "simulated"
+            },
+            "message": "Host isolation simulated successfully"
+        }
+
 ACTION_REGISTRY: Dict[str, ActionHandler] = {
     "log": LogActionHandler(),
     "set_variable": SetVariableActionHandler(),
     "condition": ConditionActionHandler(),
     "http_request": HTTPRequestActionHandler(),
-    "integration": IntegrationActionHandler()
+    "integration": IntegrationActionHandler(),
+    "block_ip": BlockIPActionHandler(),
+    "isolate_host": IsolateHostActionHandler()
 }

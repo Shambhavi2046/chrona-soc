@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ModuleHeader from "@/components/common/ModuleHeader";
-import MockModeBanner from "@/components/common/MockModeBanner";
+
 import { FileText, RefreshCw, Download, Plus, FilePlus2, Loader2, AlertCircle } from "lucide-react";
 import SummaryCards from "@/components/reports/SummaryCards";
 import TemplateGallery from "@/components/reports/TemplateGallery";

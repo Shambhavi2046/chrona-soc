@@ -97,7 +97,7 @@ export default function IncidentTable({ incidents = [] }: { incidents?: any[] })
                     <SeverityBadge severity={incident.severity} />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium text-soc-text-primary">{incident.threat_type || incident.title}</div>
+                    <div className="font-medium text-soc-text-primary">{incident.title || incident.threat_type || "Unknown Threat"}</div>
                     <div className="text-xs text-soc-text-muted">ALT-{displayId}</div>
                   </td>
                   <td className="px-6 py-4 text-soc-text-secondary font-mono text-sm">{incident.source || "Unknown"}</td>

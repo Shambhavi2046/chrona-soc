@@ -14,6 +14,11 @@ export default async function Home() {
   // Fetch real data from backend
   const stats = await getDashboardSummary(token);
   const recentAlerts = await getRecentAlerts(token);
+  
+  // Select highest risk alert safely
+  const topRiskAlert = recentAlerts && recentAlerts.length > 0 
+    ? recentAlerts.reduce((prev: any, current: any) => (prev.risk_score > current.risk_score) ? prev : current)
+    : null;
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -39,8 +44,8 @@ export default async function Home() {
           title="Total Alerts"
           value={stats.total_alerts}
           icon={ShieldAlert}
-          trend="up"
-          trendValue="12%"
+          trend="neutral"
+          trendValue="--"
           colorClass="text-soc-accent border-soc-accent"
           href="/alerts"
         />
@@ -48,8 +53,8 @@ export default async function Home() {
           title="Critical Alerts"
           value={stats.critical_alerts}
           icon={AlertTriangle}
-          trend="up"
-          trendValue="5%"
+          trend="neutral"
+          trendValue="--"
           colorClass="text-soc-danger border-soc-danger"
           href="/alerts?severity=critical"
         />
@@ -57,8 +62,8 @@ export default async function Home() {
           title="Open Cases"
           value={stats.open_cases}
           icon={CheckCircle2}
-          trend="down"
-          trendValue="2%"
+          trend="neutral"
+          trendValue="--"
           colorClass="text-soc-success border-soc-success"
           href="/cases"
         />
@@ -67,7 +72,7 @@ export default async function Home() {
           value={stats.active_playbooks}
           icon={Shield}
           trend="neutral"
-          trendValue="0%"
+          trendValue="--"
           colorClass="text-soc-warning border-soc-warning"
           href="/soar"
         />
@@ -82,7 +87,7 @@ export default async function Home() {
 
         {/* Right column - spans 1 col */}
         <div className="space-y-6">
-          <RiskIndicator topThreat={{ title: "Ransomware Detected", source: "EDR", risk_score: 95 }} />
+          <RiskIndicator topThreat={topRiskAlert} />
         </div>
       </div>
 

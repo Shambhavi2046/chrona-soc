@@ -49,6 +49,7 @@ class UserService(BaseService[UserRepository]):
         update_data = user_in.dict(exclude_unset=True)
         if "password" in update_data:
             update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+            db_user.session_version += 1
             
         # roles update not handled here for simplicity in this iteration
         if "role_ids" in update_data:

@@ -34,12 +34,16 @@ async def seed_data():
             role_map[role_enum.value] = role
         await db.flush()
 
+        import os
+        admin_pwd = os.environ.get("ADMIN_PASSWORD", "Admin123!@#")
+        analyst_pwd = os.environ.get("ANALYST_PASSWORD", "Analyst123!@#")
+
         # Create Default Admin User
         admin_user = User(
             id=uuid.uuid4(),
             email="admin@chrona.local",
             name="System Administrator",
-            hashed_password=get_password_hash("Admin123!@#"),
+            hashed_password=get_password_hash(admin_pwd),
             org_id=org.id,
             status="Active"
         )
@@ -50,7 +54,7 @@ async def seed_data():
             id=uuid.uuid4(),
             email="analyst@chrona.local",
             name="Alice SOC Analyst",
-            hashed_password=get_password_hash("Analyst123!@#"),
+            hashed_password=get_password_hash(analyst_pwd),
             org_id=org.id,
             status="Active"
         )

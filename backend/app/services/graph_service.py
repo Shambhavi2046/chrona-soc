@@ -63,26 +63,63 @@ async def generate_topology(db: AsyncSession, org_id: uuid.UUID) -> GraphTopolog
         )
         mitres = mitres_res.scalars().all()
 
-    ta_res = await db.execute(
-        select(ThreatActor).filter(
+    ioc_values = set()
+    for ev in evidence_list:
+        ioc_values.add(ev.value)
+    for alert in alerts:
+        if alert.raw_log and "ioc_matches" in alert.raw_log:
+            ioc_values.update(alert.raw_log["ioc_matches"].keys())
+
+    iocs = []
+    if ioc_values:
+        ioc_res = await db.execute(
+            select(IOC).filter(
+                IOC.value.in_(ioc_values),
+                or_(IOC.org_id == org_id, IOC.org_id.is_(None))
+            )
+        )
+        iocs = ioc_res.scalars().all()
+
+    malwares = []
+    threat_actors = []
+    
+    if iocs:
+        ioc_ids = [ioc.id for ioc in iocs]
+        
+        mal_res = await db.execute(
+            select(Malware)
+            .join(malware_iocs_table)
+            .filter(
+                malware_iocs_table.c.ioc_id.in_(ioc_ids),
+                or_(Malware.org_id == org_id, Malware.org_id.is_(None))
+            )
+        )
+        malwares = mal_res.scalars().all()
+        malware_ids = [mal.id for mal in malwares]
+        
+        ta_query = select(ThreatActor).filter(
             or_(ThreatActor.org_id == org_id, ThreatActor.org_id.is_(None))
         )
-    )
-    threat_actors = ta_res.scalars().all()
-
-    mal_res = await db.execute(
-        select(Malware).filter(
-            or_(Malware.org_id == org_id, Malware.org_id.is_(None))
-        )
-    )
-    malwares = mal_res.scalars().all()
-
-    ioc_res = await db.execute(
-        select(IOC).filter(
-            or_(IOC.org_id == org_id, IOC.org_id.is_(None))
-        )
-    )
-    iocs = ioc_res.scalars().all()
+        
+        conditions = []
+        if ioc_ids:
+            conditions.append(
+                ThreatActor.id.in_(
+                    select(threat_actor_iocs_table.c.threat_actor_id)
+                    .filter(threat_actor_iocs_table.c.ioc_id.in_(ioc_ids))
+                )
+            )
+        if malware_ids:
+            conditions.append(
+                ThreatActor.id.in_(
+                    select(threat_actor_malware_table.c.threat_actor_id)
+                    .filter(threat_actor_malware_table.c.malware_id.in_(malware_ids))
+                )
+            )
+            
+        if conditions:
+            ta_res = await db.execute(ta_query.filter(or_(*conditions)))
+            threat_actors = ta_res.scalars().all()
 
     # 3. Add Nodes
     for case in cases:
@@ -100,7 +137,7 @@ async def generate_topology(db: AsyncSession, org_id: uuid.UUID) -> GraphTopolog
     for alert in alerts:
         alert_id = f"alert-{alert.id}"
         add_node(alert_id, "alert", {
-            "label": f"Alert: {alert.threat_type}",
+            "label": f"Alert: {alert.title or alert.threat_type or 'Unknown'}",
             "risk_score": alert.risk_score,
             "status": alert.status,
             "threat_type": alert.threat_type

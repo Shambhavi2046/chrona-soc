@@ -4,7 +4,7 @@ from typing import List
 import uuid
 from app.db.session import get_db
 from app.services.operations import investigation_service
-from app.schemas.operations import InvestigationCreate, InvestigationUpdate, InvestigationResponse
+from app.schemas.operations import InvestigationCreate, InvestigationUpdate, InvestigationResponse, CaseResponse
 from app.middleware.auth import require_permissions
 from app.models.identity import User
 from app.utils.validation import get_pagination, PaginationParams
@@ -61,3 +61,11 @@ async def update_investigation(
     current_user: User = Depends(require_permissions(["cases:write"]))
 ):
     return await investigation_service.update_investigation(db, id, obj_in, org_id=current_user.org_id)
+
+@router.post("/{id}/escalate", response_model=CaseResponse)
+async def escalate_investigation(
+    id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permissions(["cases:write"]))
+):
+    return await investigation_service.escalate_investigation(db, id, org_id=current_user.org_id)

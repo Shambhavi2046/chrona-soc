@@ -11,7 +11,11 @@ export async function getAuthToken(): Promise<string | null> {
   return null;
 }
 
-export async function fetchApi(endpoint: string, options: RequestInit = {}): Promise<Response> {
+interface FetchApiOptions extends RequestInit {
+  _retry?: boolean;
+}
+
+export async function fetchApi(endpoint: string, options: FetchApiOptions = {}): Promise<Response> {
   const token = await getAuthToken();
   const headers = new Headers(options.headers || {});
   if (token) {
@@ -19,12 +23,32 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}): Pro
   }
 
   const url = endpoint.startsWith("http") ? endpoint : `${API_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-  const res = await fetch(url, { ...options, headers });
+  let res = await fetch(url, { ...options, headers });
 
   if (res.status === 401) {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !options._retry) {
+      options._retry = true;
+      try {
+        const refreshRes = await fetch(`${API_URL}/auth/refresh`, {
+          method: "POST",
+          credentials: "include"
+        });
+        
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          if (data.access_token) {
+            document.cookie = `access_token=${data.access_token}; path=/; max-age=86400; samesite=strict`;
+            const newHeaders = new Headers(options.headers || {});
+            newHeaders.set("Authorization", `Bearer ${data.access_token}`);
+            res = await fetch(url, { ...options, headers: newHeaders });
+            return res;
+          }
+        }
+      } catch (err) {
+        // Refresh failed, proceed to redirect
+      }
       window.location.href = "/login?clear=1";
-    } else {
+    } else if (typeof window === "undefined") {
       const { redirect } = await import("next/navigation");
       redirect("/login?clear=1");
     }

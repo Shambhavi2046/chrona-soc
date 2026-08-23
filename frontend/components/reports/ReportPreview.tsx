@@ -39,7 +39,7 @@ export default function ReportPreview({ report }: ReportPreviewProps) {
           Preview: {report.name}
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 text-soc-text-secondary hover:text-soc-text-primary hover:bg-soc-card rounded transition-colors tooltip-trigger" title="Print (Coming Soon)"><Printer className="w-4 h-4" /></button>
+          <button onClick={() => window.print()} className="p-1.5 text-soc-text-secondary hover:text-soc-text-primary hover:bg-soc-card rounded transition-colors tooltip-trigger" title="Print Report"><Printer className="w-4 h-4" /></button>
           <button onClick={async () => {
             try { await downloadReportPdf(report.id); } 
             catch (e: any) { alert(e.message); }

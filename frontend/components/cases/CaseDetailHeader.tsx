@@ -90,9 +90,12 @@ export default function CaseDetailHeader({ caseDetail }: CaseDetailHeaderProps) 
             <span className="px-3 py-1 bg-soc-bg border border-soc-border rounded-full text-xs font-mono text-soc-text-secondary">
               Risk Score: {caseDetail.risk_score}
             </span>
-            <span className="px-3 py-1 bg-soc-bg border border-soc-border rounded-full text-xs font-mono text-soc-text-secondary">
-              Impact: {caseDetail.business_impact}
-            </span>
+            {caseDetail.linked_alerts && caseDetail.linked_alerts.length > 0 && (
+              <span className="px-3 py-1 bg-soc-bg border border-soc-accent/50 rounded-full text-xs font-mono text-soc-accent flex items-center">
+                <ShieldAlert className="w-3 h-3 mr-1" />
+                Origin: ALT-{String(caseDetail.linked_alerts[0].id).substring(0, 8).toUpperCase()}
+              </span>
+            )}
           </div>
           
           <h1 className="text-2xl font-bold text-soc-text-primary mb-2">{caseDetail.title}</h1>
@@ -109,15 +112,10 @@ export default function CaseDetailHeader({ caseDetail }: CaseDetailHeaderProps) 
           <div className="p-4 bg-soc-bg border border-soc-border rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs text-soc-text-muted uppercase tracking-wider font-semibold">SLA Status</span>
-              {caseDetail.sla_status === "On Track" ? (
-                <CheckCircle className="w-4 h-4 text-soc-success" />
-              ) : (
-                <Clock className="w-4 h-4 text-soc-danger animate-pulse" />
-              )}
+              <Clock className="w-4 h-4 text-soc-text-muted" />
             </div>
-            <div className="text-lg font-bold text-soc-text-primary mb-1">{caseDetail.sla_status}</div>
-            <div className="w-full bg-soc-card rounded-full h-1.5">
-              <div className={`h-1.5 rounded-full ${caseDetail.sla_status === 'On Track' ? 'bg-soc-success w-1/3' : 'bg-soc-danger w-full glow-danger'}`}></div>
+            <div className="text-sm font-medium text-soc-text-secondary mb-1 italic">Not Configured</div>
+            <div className="w-full bg-soc-bg rounded-full h-1.5 border border-soc-border">
             </div>
           </div>
 

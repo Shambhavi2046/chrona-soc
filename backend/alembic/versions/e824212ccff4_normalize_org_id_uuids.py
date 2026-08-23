@@ -20,9 +20,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Normalize hyphenated org_id values to match SQLAlchemy UUID(.hex) format
-    op.execute("UPDATE cases SET org_id = REPLACE(org_id, '-', '') WHERE org_id LIKE '%-%'")
-    op.execute("UPDATE alerts SET org_id = REPLACE(org_id, '-', '') WHERE org_id LIKE '%-%'")
-    op.execute("UPDATE integration_credentials SET org_id = REPLACE(org_id, '-', '') WHERE org_id LIKE '%-%'")
+    if op.get_bind().dialect.name == "sqlite":
+        op.execute("UPDATE cases SET org_id = REPLACE(org_id, '-', '') WHERE org_id LIKE '%-%'")
+        op.execute("UPDATE alerts SET org_id = REPLACE(org_id, '-', '') WHERE org_id LIKE '%-%'")
+        op.execute("UPDATE integration_credentials SET org_id = REPLACE(org_id, '-', '') WHERE org_id LIKE '%-%'")
 
 
 def downgrade() -> None:

@@ -21,3 +21,16 @@ export async function updateMyProfile(data: ProfileUpdate): Promise<AdminUser> {
   if (!response.ok) throw new Error("Failed to update profile");
   return response.json();
 }
+
+export async function changePassword(data: any): Promise<{ message: string }> {
+  const response = await fetchApi(`${API_URL}/users/me/password`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Failed to update password");
+  }
+  return response.json();
+}

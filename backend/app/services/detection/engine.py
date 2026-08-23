@@ -16,7 +16,7 @@ class DetectionEngine:
         """Evaluate a single normalized event against all active detection rules and IOCs."""
         try:
             # 1. IOC Matching
-            ioc_matches = ioc_matcher.check_event(event)
+            ioc_matches = await ioc_matcher.check_event(db, event, event.tenant_id)
             if ioc_matches:
                 # If IOC matches, we could generate an IOC alert immediately.
                 # For this implementation, we'll just log it. A dedicated IOC rule could be created.

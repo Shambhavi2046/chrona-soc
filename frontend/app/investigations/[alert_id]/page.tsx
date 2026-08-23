@@ -2,6 +2,7 @@ import { getInvestigation } from "@/services";
 import InvestigationHeader from "@/components/investigation/InvestigationHeader";
 import ThreatAnalysisCard from "@/components/investigation/ThreatAnalysisCard";
 import RecommendationList from "@/components/investigation/RecommendationList";
+import StartInvestigationButton from "@/components/investigation/StartInvestigationButton";
 import { ShieldCheck, Activity } from "lucide-react";
 
 export default async function InvestigationPage({
@@ -22,10 +23,11 @@ export default async function InvestigationPage({
     return (
       <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto flex flex-col items-center justify-center h-[50vh]">
         <ShieldCheck className="w-16 h-16 text-soc-text-muted mb-4" />
-        <h2 className="text-xl font-semibold text-soc-text-secondary">No Investigation Found</h2>
+        <h2 className="text-xl font-semibold text-soc-text-secondary">Investigation Not Started</h2>
         <p className="text-soc-text-muted max-w-md text-center mb-6">
-          There is no active investigation linked to this alert. You can initiate a new investigation from the SOC dashboard or alert details page.
+          This alert has not been opened as an investigation yet.
         </p>
+        <StartInvestigationButton alertId={resolvedParams.alert_id} />
       </div>
     );
   }
@@ -38,7 +40,7 @@ export default async function InvestigationPage({
         <InvestigationHeader
           investigationId={data.id}
           alertId={data.alert_id}
-          threatType={data.threat_type}
+          threatType={data.alert_title || data.threat_type}
           riskScore={data.risk_score}
           status={data.status}
         />
@@ -64,7 +66,9 @@ export default async function InvestigationPage({
           <Activity className="w-5 h-5 text-soc-text-muted mr-3" />
           <div className="text-sm">
             <span className="text-soc-text-secondary">Analysis Engine: </span>
-            <span className="font-mono text-soc-text-secondary">ChronaAI-v3</span>
+            <span className="font-mono text-soc-text-secondary">
+              {data.investigation.analysis === "No automated analysis available." ? "None (Pending)" : "ChronaAI-v3"}
+            </span>
           </div>
         </div>
         <div className="glass-card p-4 rounded-lg flex items-center border border-soc-border">

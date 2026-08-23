@@ -5,9 +5,22 @@ import ClientDate from "@/components/common/ClientDate";
 interface ResultsTableProps {
   events: HuntEvent[];
   onRowClick: (event: HuntEvent) => void;
+  total?: number;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export default function ResultsTable({ events, onRowClick }: ResultsTableProps) {
+export default function ResultsTable({ 
+  events, 
+  onRowClick,
+  total = 0,
+  currentPage = 1,
+  pageSize = 50,
+  onPageChange
+}: ResultsTableProps) {
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
     <div className="glass-card rounded-xl overflow-hidden flex flex-col">
       <div className="p-4 border-b border-soc-border flex items-center justify-between">
@@ -15,7 +28,7 @@ export default function ResultsTable({ events, onRowClick }: ResultsTableProps) 
           Hunting Results
         </h3>
         <span className="text-sm font-medium text-soc-text-secondary">
-          Showing {events.length} events
+          Showing {events.length} of {total} events
         </span>
       </div>
       
@@ -84,6 +97,31 @@ export default function ResultsTable({ events, onRowClick }: ResultsTableProps) 
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {onPageChange && total > 0 && (
+        <div className="p-4 border-t border-soc-border flex items-center justify-between bg-soc-bg/30">
+          <span className="text-sm text-soc-text-muted">
+            Page {currentPage} of {totalPages || 1}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-3 py-1.5 text-sm font-medium bg-soc-card hover:bg-soc-card-hover disabled:opacity-50 disabled:cursor-not-allowed border border-soc-border rounded-lg text-soc-text-secondary transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages || events.length === 0}
+              className="px-3 py-1.5 text-sm font-medium bg-soc-card hover:bg-soc-card-hover disabled:opacity-50 disabled:cursor-not-allowed border border-soc-border rounded-lg text-soc-text-secondary transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
