@@ -1,6 +1,7 @@
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { fetchApi } from "@/services/api";
+import { API_URL } from "@/services/config";
 import { cookies } from "next/headers";
 import LayoutWrapper from "./LayoutWrapper";
 
@@ -15,7 +16,7 @@ export default async function DashboardLayout({
     const token = cookieStore.get("access_token")?.value;
 
     if (token) {
-      const res = await fetchApi("/auth/me", {
+      const res = await fetchApi(`${API_URL}/auth/me`, {
         cache: "no-store",
         headers: { Authorization: `Bearer ${token}` }
       });
