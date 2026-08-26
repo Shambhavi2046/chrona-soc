@@ -31,12 +31,13 @@ async def test_event_loop_unblocked(monkeypatch):
     """
     app.dependency_overrides[get_current_user] = mock_get_current_user
 
-    # Mock the synchronous copilot_service.process_chat to sleep for 2 seconds synchronously
+    # Mock the asynchronous copilot_service.process_chat to sleep for 2 seconds
     from app.services import copilot_service
+    import asyncio
     import time
 
-    def mock_process_chat(*args, **kwargs):
-        time.sleep(2)  # Simulate blocking LLM generation
+    async def mock_process_chat(*args, **kwargs):
+        await asyncio.sleep(2)  # Simulate blocking LLM generation
         from app.schemas.copilot_schema import ChatResponseSchema
         return ChatResponseSchema(
             response="Mocked LLM Response",
