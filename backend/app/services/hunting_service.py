@@ -164,8 +164,11 @@ class HuntingService(BaseService[SavedHuntRepository]):
 
     async def ask_copilot(self, db: AsyncSession, event_id: str, tenant_id: uuid.UUID) -> dict:
         import uuid
+        import httpx
+        import logging
         from app.models.event_model import SecurityEvent
         from sqlalchemy import select
+        from app.core.config import settings
 
         try:
             evt_uuid = uuid.UUID(event_id)
@@ -182,8 +185,55 @@ class HuntingService(BaseService[SavedHuntRepository]):
         if not event:
             return {"analysis": "Event not found. Unable to provide analysis."}
 
-        return {
-            "analysis": f"[SIMULATED DEMO RESPONSE]\nTemplate-based Analysis for {event.event_type}:\n\nThis event appears to be part of a larger sequence. Based on the {event.source} logs, the user '{event.user_account or 'Unknown'}' performed an action on host '{event.hostname or 'Unknown'}'. I recommend correlating this with recent authentication attempts and checking for lateral movement indicators."
+        # Safe structured fields boundary: Excludes raw_event, normalized_data, command_line
+        event_data = {
+            "event_type": event.event_type,
+            "source": event.source,
+            "vendor": event.vendor,
+            "product": event.product,
+            "severity": event.severity,
+            "status": event.status,
+            "hostname": event.hostname,
+            "user_account": event.user_account,
+            "ip_address": event.ip_address,
+            "destination_ip": event.destination_ip,
+            "mitre_techniques": event.mitre_techniques
         }
+
+        # Safely format non-null fields
+        context_str = "\n".join(f"{k}: {v}" for k, v in event_data.items() if v is not None)
+
+        system_prompt = (
+            "You are a Threat Hunting forensic analyst AI. "
+            "Analyze the provided structured security event metadata. "
+            "Identify what the event represents, why it may be security-relevant, the likely risk/severity, "
+            "relevant MITRE ATT&CK interpretation, indicators or entities worth investigating, and recommended next steps. "
+            "Distinguish observed facts from hypotheses. Do NOT invent facts not present in the data."
+        )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Please analyze this security event metadata:\n\n{context_str}"}
+        ]
+
+        if getattr(settings, "LLM_PROVIDER", "").lower() == "ollama":
+            url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat"
+            payload = {
+                "model": settings.OLLAMA_MODEL,
+                "messages": messages,
+                "stream": False
+            }
+            try:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    response = await client.post(url, json=payload)
+                    response.raise_for_status()
+                    result_json = response.json()
+                    analysis_text = result_json.get("message", {}).get("content", "No analysis generated.")
+                    return {"analysis": analysis_text}
+            except Exception as e:
+                logging.error(f"Threat Hunting LLM Error: {str(e)}")
+                return {"analysis": "AI Analysis unavailable due to connection error."}
+
+        return {"analysis": "Threat Hunting AI analysis is currently only configured for the Ollama provider."}
 
 hunting_service = HuntingService(saved_hunt_repo)
