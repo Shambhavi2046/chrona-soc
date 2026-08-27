@@ -138,7 +138,7 @@ class SOARService:
         await db.commit()
         await db.refresh(execution)
         
-        background_tasks.add_task(self._run_execution_background, execution_id, playbook.id, user, org_id)
+        background_tasks.add_task(self._run_execution_background, execution_id, playbook.id, user, org_id, user_id)
 
         resp = execution.__dict__.copy()
         resp['playbookName'] = playbook.name
@@ -146,7 +146,7 @@ class SOARService:
         
         return resp
 
-    async def _run_execution_background(self, execution_id: uuid.UUID, playbook_id: uuid.UUID, user: str, org_id: Optional[Any] = None):
+    async def _run_execution_background(self, execution_id: uuid.UUID, playbook_id: uuid.UUID, user: str, org_id: Optional[Any] = None, user_id: Optional[Any] = None):
         from app.db.session import async_session_maker
         from datetime import datetime
         from app.services.soar.context import ExecutionContext
@@ -177,6 +177,11 @@ class SOARService:
                 exec_obj.completed_at = end_time.isoformat() + "Z"
                 exec_obj.duration = duration
                 db.add(exec_obj)
+
+                if user_id and org_id:
+                    from app.services.audit_service import log_audit
+                    await log_audit(db, user_id, org_id, "execution.complete", "PlaybookExecution", "Success" if final_status == "Success" else "Failed", {"resource_id": str(exec_obj.id), "playbook_id": str(playbook_id), "final_status": final_status})
+
                 await db.commit()
 
     async def _get_execution_db_obj(self, db: AsyncSession, id: uuid.UUID, org_id: Optional[Any] = None) -> Optional[PlaybookExecution]:

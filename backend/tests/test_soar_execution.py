@@ -227,3 +227,95 @@ def test_http_request_dns_failure(monkeypatch):
     res = handler.execute(context, {"url": "https://api.thisdoesntexist.local"})
     assert res["status"] == "failed"
     assert "DNS Resolution Failed" in res["message"]
+
+def test_block_ip_action_failure():
+    from app.services.soar.actions import BlockIPActionHandler
+    context = ExecutionContext("exec-1", "pb-1")
+    handler = BlockIPActionHandler()
+    res = handler.execute(context, {"target": "8.8.8.8"})
+    assert res["status"] == "failed"
+    assert "No active EDR/Firewall provider configured" in res["message"]
+
+def test_isolate_host_action_failure():
+    from app.services.soar.actions import IsolateHostActionHandler
+    context = ExecutionContext("exec-1", "pb-1")
+    handler = IsolateHostActionHandler()
+    res = handler.execute(context, {"hostname": "desktop-123"})
+    assert res["status"] == "failed"
+    assert "No active EDR/Firewall provider configured" in res["message"]
+
+@pytest.mark.asyncio
+async def test_engine_halts_on_failed_containment():
+    from unittest.mock import AsyncMock, MagicMock
+    context = ExecutionContext("exec-1", "pb-1")
+    actions = [
+        {"type": "log", "config": {"message": "Starting workflow"}},
+        {"type": "block_ip", "config": {"target": "8.8.8.8"}},
+        {"type": "log", "config": {"message": "This should not run"}}
+    ]
+    engine = ExecutionEngine(context, actions)
+
+    db_mock = AsyncMock()
+    db_mock.add = MagicMock()
+    exec_mock = MagicMock()
+    exec_mock.status = "Running"
+    db_mock.get.return_value = exec_mock
+
+    status = await engine.execute_all(db_mock, "exec-1")
+    assert status == "Failed"
+
+    assert len(engine.execution_logs) == 3
+    assert engine.execution_logs[-1]["status"] == "Failed"
+    assert "Action 2: block_ip" in engine.execution_logs[-1]["step"]
+
+@pytest.mark.asyncio
+async def test_completion_audit():
+    from unittest.mock import AsyncMock, MagicMock
+    from app.services.soar_service import soar_service
+    import uuid
+
+    db_mock = AsyncMock()
+    exec_mock = MagicMock()
+    exec_mock.id = uuid.uuid4()
+    exec_mock.started_at = "2023-10-01T12:00:00Z"
+    db_mock.get.return_value = exec_mock
+
+    # Mock get_by_id for playbook
+    soar_service.get_by_id = AsyncMock()
+    playbook_mock = MagicMock()
+    playbook_mock.id = uuid.uuid4()
+    playbook_mock.definition = {"actions": []}
+    soar_service.get_by_id.return_value = playbook_mock
+
+    # Mock execution engine
+    from app.services.soar.engine import ExecutionEngine
+    original_execute_all = ExecutionEngine.execute_all
+    ExecutionEngine.execute_all = AsyncMock(return_value="Success")
+
+    # Mock log_audit
+    from app.services import audit_service
+    audit_service.log_audit = AsyncMock()
+
+    # We bypass async_session_maker by mocking it
+    from app.db import session
+    session_maker_mock = MagicMock()
+    session_maker_mock.return_value.__aenter__.return_value = db_mock
+    session_maker_mock.return_value.__aexit__.return_value = False
+    session.async_session_maker = session_maker_mock
+
+    await soar_service._run_execution_background(
+        execution_id=exec_mock.id,
+        playbook_id=playbook_mock.id,
+        user="test",
+        org_id="org1",
+        user_id="user1"
+    )
+
+    ExecutionEngine.execute_all = original_execute_all
+
+    audit_service.log_audit.assert_called_once()
+    args = audit_service.log_audit.call_args[0]
+    assert args[1] == "user1"
+    assert args[2] == "org1"
+    assert args[3] == "execution.complete"
+    assert args[5] == "Success"

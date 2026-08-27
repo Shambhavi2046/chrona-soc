@@ -320,13 +320,9 @@ class BlockIPActionHandler(ActionHandler):
             }
             
         return {
-            "status": "success",
-            "output": {
-                "action": "block_ip",
-                "target": target,
-                "status": "simulated"
-            },
-            "message": "IP block simulated successfully"
+            "status": "failed",
+            "output": {},
+            "message": "Integration unavailable: No active EDR/Firewall provider configured."
         }
 
 class IsolateHostActionHandler(ActionHandler):
@@ -341,13 +337,9 @@ class IsolateHostActionHandler(ActionHandler):
             }
             
         return {
-            "status": "success",
-            "output": {
-                "action": "isolate_host",
-                "target": str(hostname).strip(),
-                "status": "simulated"
-            },
-            "message": "Host isolation simulated successfully"
+            "status": "failed",
+            "output": {},
+            "message": "Integration unavailable: No active EDR/Firewall provider configured."
         }
 
 ACTION_REGISTRY: Dict[str, ActionHandler] = {
