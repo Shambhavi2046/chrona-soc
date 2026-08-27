@@ -102,3 +102,65 @@ async def test_hunting_copilot_security_boundary():
         assert "raw_event" not in payload_json
         assert "normalized_data" not in payload_json
         assert "command_line" not in payload_json
+
+@pytest.mark.asyncio
+async def test_hunting_copilot_raises_503_on_network_failure():
+    tenant_id = uuid.uuid4()
+    event_id_str = str(uuid.uuid4())
+    mock_event = SecurityEvent(
+        id=uuid.UUID(event_id_str),
+        tenant_id=tenant_id,
+        event_id="test_event_123"
+    )
+
+    from unittest.mock import MagicMock
+    db_mock = AsyncMock()
+    result_mock = MagicMock()
+    result_mock.scalar_one_or_none.return_value = mock_event
+    db_mock.execute.return_value = result_mock
+
+    # Mock httpx throwing an exception
+    with patch("app.core.config.settings.LLM_PROVIDER", "ollama"), \
+         patch("httpx.AsyncClient.post", side_effect=Exception("Network timeout")):
+
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            await hunting_service.ask_copilot(db_mock, event_id_str, tenant_id)
+
+        assert exc_info.value.status_code == 503
+        assert exc_info.value.detail == "AI provider unavailable"
+
+@pytest.mark.asyncio
+async def test_execute_hunt_preserves_null_mitre_techniques():
+    from app.schemas.hunting import HuntQueryRequest
+    tenant_id = uuid.uuid4()
+    request = HuntQueryRequest(page=1, page_size=10)
+
+    # Event with null mitre_techniques and event_type="logon"
+    mock_event = SecurityEvent(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        event_type="logon",
+        mitre_techniques=None,
+        timestamp=None
+    )
+
+    from unittest.mock import MagicMock
+    db_mock = AsyncMock()
+
+    # Mock count query
+    count_res = MagicMock()
+    count_res.scalar.return_value = 1
+
+    # Mock records query
+    records_res = MagicMock()
+    records_res.scalars.return_value.all.return_value = [mock_event]
+
+    db_mock.execute.side_effect = [count_res, records_res]
+
+    response = await hunting_service.execute_hunt(db_mock, request, tenant_id)
+    assert response.total == 1
+    assert len(response.events) == 1
+    # Verify the fallback logic is gone and it preserves null instead of manufacturing 'Initial Access'
+    assert response.events[0].mitre_technique is None
+    assert response.events[0].mitre_tactic is None

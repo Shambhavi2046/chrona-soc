@@ -129,12 +129,6 @@ class HuntingService(BaseService[SavedHuntRepository]):
             mitre_t = None
             if e.mitre_techniques and isinstance(e.mitre_techniques, list) and len(e.mitre_techniques) > 0:
                 mitre_t = e.mitre_techniques[0]
-            elif e.event_type == 'logon':
-                mitre_t = 'Initial Access'
-            elif e.event_type == 'process_creation':
-                mitre_t = 'Execution'
-            elif e.event_type == 'network_traffic':
-                mitre_t = 'Command and Control'
 
             raw_data = e.raw_event if isinstance(e.raw_event, dict) else {}
             host = e.hostname or e.ip_address or raw_data.get('host') or raw_data.get('Computer') or "Unknown"
@@ -231,9 +225,13 @@ class HuntingService(BaseService[SavedHuntRepository]):
                     analysis_text = result_json.get("message", {}).get("content", "No analysis generated.")
                     return {"analysis": analysis_text}
             except Exception as e:
+                from fastapi import HTTPException
+                if isinstance(e, HTTPException):
+                    raise e
                 logging.error(f"Threat Hunting LLM Error: {str(e)}")
-                return {"analysis": "AI Analysis unavailable due to connection error."}
+                raise HTTPException(status_code=503, detail="AI provider unavailable")
 
-        return {"analysis": "Threat Hunting AI analysis is currently only configured for the Ollama provider."}
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="AI provider unavailable")
 
 hunting_service = HuntingService(saved_hunt_repo)
