@@ -24,6 +24,9 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
 
   let url = endpoint;
   if (typeof window === "undefined" && url.startsWith("/")) {
+    if (process.env.VERCEL && !process.env.BACKEND_INTERNAL_URL) {
+      throw new Error("BACKEND_INTERNAL_URL must be explicitly configured in production on Vercel");
+    }
     const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://127.0.0.1:8000";
     url = `${backendUrl}${url}`;
   } else if (!url.startsWith("http") && !url.startsWith("/")) {

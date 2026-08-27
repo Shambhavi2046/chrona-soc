@@ -1,5 +1,5 @@
 from typing import List, Union
-from pydantic import AnyHttpUrl, validator
+from pydantic import AnyHttpUrl, validator, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -17,6 +17,17 @@ class Settings(BaseSettings):
     LLM_PROVIDER: str = "ollama"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:3b"
+
+    @field_validator("OLLAMA_BASE_URL", mode="after")
+    @classmethod
+    def validate_ollama_url(cls, v: str) -> str:
+        import os
+        from urllib.parse import urlparse
+        if os.getenv("RENDER"):
+            parsed = urlparse(v)
+            if parsed.hostname in ["localhost", "127.0.0.1", "0.0.0.0"]:
+                raise ValueError("OLLAMA_BASE_URL must be explicitly configured in production (cannot use localhost)")
+        return v
 
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
