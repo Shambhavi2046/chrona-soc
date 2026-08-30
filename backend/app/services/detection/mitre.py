@@ -11,6 +11,9 @@ MITRE_MAPPING = {
     ],
     "rule_network_001": [
         {"tactic": "Command and Control", "tactic_id": "TA0011", "technique": "Application Layer Protocol", "technique_id": "T1071"}
+    ],
+    "rule_mac_execution_001": [
+        {"tactic": "Execution", "tactic_id": "TA0002", "technique": "Command and Scripting Interpreter: Unix Shell", "technique_id": "T1059.004"}
     ]
 }
 

@@ -3,6 +3,7 @@ from app.services.detection.rules.base import DetectionRule
 from app.services.detection.rules.brute_force import BruteForceRule
 from app.services.detection.rules.suspicious_powershell import SuspiciousPowerShellRule
 from app.services.detection.rules.malicious_network import MaliciousNetworkRule
+from app.services.detection.rules.suspicious_mac_execution import SuspiciousMacExecutionRule
 
 class RuleRegistry:
     def __init__(self):
@@ -14,7 +15,8 @@ class RuleRegistry:
         candidate_rules = [
             BruteForceRule(),
             SuspiciousPowerShellRule(),
-            MaliciousNetworkRule()
+            MaliciousNetworkRule(),
+            SuspiciousMacExecutionRule()
         ]
         
         for rule in candidate_rules:
