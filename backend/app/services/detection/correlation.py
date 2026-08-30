@@ -14,7 +14,7 @@ class CorrelationService:
         Find an existing open alert triggered by the same rule for the same entity 
         within the correlation window.
         """
-        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=cls.CORRELATION_WINDOW_MINUTES)
+        cutoff_time = datetime.utcnow() - timedelta(minutes=cls.CORRELATION_WINDOW_MINUTES)
         
         # Base query: Same rule, Open status, recently created
         query = select(Alert).where(
