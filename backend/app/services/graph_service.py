@@ -144,6 +144,27 @@ async def generate_topology(db: AsyncSession, org_id: uuid.UUID) -> GraphTopolog
         })
         if alert.case_id:
             add_edge(f"case-{alert.case_id}", alert_id, "solid", "Contains")
+            
+        if alert.mitre_mapping:
+            for mapping in alert.mitre_mapping:
+                technique_id = mapping.get("technique_id")
+                if technique_id:
+                    mitre_node_id = f"mitre-{technique_id}"
+                    add_node(mitre_node_id, "mitre", {
+                        "label": f"{technique_id} - {mapping.get('technique', 'Unknown')}",
+                        "technique_id": technique_id,
+                        "tactic": mapping.get("tactic")
+                    })
+                    add_edge(alert_id, mitre_node_id, "dashed", "Maps To")
+                    
+        if alert.related_events:
+            for evt_id in alert.related_events:
+                evt_node_id = f"event-{evt_id}"
+                add_node(evt_node_id, "event", {
+                    "label": f"Event: {evt_id}",
+                    "event_id": evt_id
+                })
+                add_edge(evt_node_id, alert_id, "solid", "Triggered")
 
     for inv in investigations:
         inv_id = f"investigation-{inv.id}"
