@@ -21,9 +21,12 @@ if config.config_file_name is not None:
 from app.db.base import Base
 target_metadata = Base.metadata
 
-from app.core.config import settings
+import os
 
-db_url = settings.DATABASE_URL
+db_url = os.getenv("DATABASE_URL")
+if not db_url:
+    from app.core.config import settings
+    db_url = settings.DATABASE_URL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif db_url.startswith("postgresql://"):
