@@ -12,17 +12,17 @@ class LLMResponseSchema(BaseModel):
 
 import re
 
-def _extract_case_id_from_text(text: str) -> Optional[str]:
-    match = re.search(r'case(?:-|\s+)?([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', text.lower())
+def _extract_uuid_from_text(text: str) -> Optional[str]:
+    match = re.search(r'([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})', text.lower())
     if match:
         return match.group(1)
     return None
 
-def _get_context_case_id(request: ChatRequestSchema) -> Optional[str]:
+def _get_context_uuid(request: ChatRequestSchema) -> Optional[str]:
     # 1. Try to extract from current prompt
-    case_id = _extract_case_id_from_text(request.prompt)
-    if case_id:
-        return case_id
+    uuid_str = _extract_uuid_from_text(request.prompt)
+    if uuid_str:
+        return uuid_str
 
     # 2. If prompt uses contextual references, check history backwards
     prompt_lower = request.prompt.lower()
@@ -32,13 +32,14 @@ def _get_context_case_id(request: ChatRequestSchema) -> Optional[str]:
         "those assets", "explain it", "continue", "next steps",
         "show evidence", "timeline", "root cause", "contain",
         "isolate", "executive report", "similar cases",
-        "threat actor", "impact", "assets", "risk"
+        "threat actor", "impact", "assets", "risk",
+        "this investigation", "this graph", "the graph"
     ]
 
     # If the user prompt implies an ongoing context, search history
     if any(ref in prompt_lower for ref in contextual_refs) or len(prompt_lower.split()) < 5:
         for msg in reversed(request.history):
-            cid = _extract_case_id_from_text(msg.content)
+            cid = _extract_uuid_from_text(msg.content)
             if cid:
                 return cid
     return None
@@ -53,14 +54,24 @@ async def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUI
     quick_actions = []
     active_context = None
 
-    case_id_str = _get_context_case_id(request)
+    uuid_str = _get_context_uuid(request)
     context_case = None
-    if case_id_str:
+    context_alert = None
+    context_inv = None
+    
+    if uuid_str:
         try:
-            case_id = uuid.UUID(case_id_str)
-            context_case = db.query(Case).filter(Case.id == case_id, Case.org_id == org_id).first()
+            target_id = uuid.UUID(uuid_str)
+            context_case = db.query(Case).filter(Case.id == target_id, Case.org_id == org_id).first()
+            if not context_case:
+                context_alert = db.query(Alert).filter(Alert.id == target_id, Alert.org_id == org_id).first()
+                if not context_alert:
+                    from app.models.operations import Investigation
+                    context_inv = db.query(Investigation).filter(Investigation.id == target_id).first()
+                    if context_inv:
+                        context_alert = db.query(Alert).filter(Alert.id == context_inv.alert_id, Alert.org_id == org_id).first()
         except ValueError:
-            context_case = None
+            pass
 
     # Build active context payload if we found a case
     if context_case:
@@ -74,9 +85,22 @@ async def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUI
             asset_count=evidence_count,
             type="Case"
         )
+    elif context_alert:
+        from app.models.operations import Investigation
+        if not context_inv:
+            context_inv = db.query(Investigation).filter(Investigation.alert_id == context_alert.id).first()
+        active_context = ActiveContextSchema(
+            id=f"ALERT-{context_alert.id}",
+            title=context_alert.title,
+            status=context_alert.status,
+            priority="High" if context_alert.severity in ["High", "Critical"] else "Medium",
+            risk_score=context_alert.risk_score,
+            asset_count=0,
+            type="Alert"
+        )
 
-    # If no explicit case, but user asks about latest/recent case, fetch it
-    if not context_case and any(w in prompt for w in ["latest", "recent", "summarize", "active"]):
+    # If no explicit context, but user asks about latest/recent case, fetch it
+    if not context_case and not context_alert and any(w in prompt for w in ["latest", "recent", "summarize", "active"]):
         context_case = db.query(Case).filter(Case.priority.in_(["Critical", "High"]), Case.org_id == org_id).order_by(Case.created_at.desc()).first()
         if context_case:
             evidence_count = db.query(Evidence).filter(Evidence.case_id == context_case.id).count()
@@ -136,6 +160,25 @@ async def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUI
             for sc in similar_cases:
                 context_str += f"- CASE-{sc.id}: {sc.title} ({sc.status})\n"
 
+        system_prompt += f"\n\n{context_str}"
+    elif context_alert:
+        context_str = f"Active Alert Context for ALERT-{context_alert.id}: {context_alert.title}\n"
+        context_str += f"Status: {context_alert.status}, Severity: {context_alert.severity}, Risk Score: {context_alert.risk_score}\n"
+        context_str += f"Threat Type: {context_alert.threat_type}\n"
+        if context_alert.description:
+            context_str += f"Description: {context_alert.description}\n"
+            
+        if context_inv:
+            context_str += f"\nInvestigation Context (INV-{context_inv.id}):\nStatus: {context_inv.status}\nSummary: {context_inv.summary}\n"
+            if context_inv.findings:
+                context_str += f"Findings: {context_inv.findings}\n"
+                
+        if context_alert.mitre_mapping:
+            context_str += f"\nAttack Graph (MITRE Mappings): {context_alert.mitre_mapping}\n"
+            
+        if context_alert.related_events:
+            context_str += f"\nAttack Graph (Triggered Events): {context_alert.related_events}\n"
+            
         system_prompt += f"\n\n{context_str}"
     else:
         recent_cases = db.query(Case).filter(Case.priority.in_(["Critical", "High"]), Case.org_id == org_id).order_by(Case.created_at.desc()).limit(3).all()
