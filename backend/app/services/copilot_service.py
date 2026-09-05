@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.operations import Case, TimelineEvent, Evidence
-from app.models.alert_model import Alert
+from app.models.operations import Case, TimelineEvent, Evidence, Alert
 from app.schemas.copilot_schema import ChatRequestSchema, ChatResponseSchema, QuickActionSchema, ActiveContextSchema
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional
