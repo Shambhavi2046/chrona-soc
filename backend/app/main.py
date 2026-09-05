@@ -7,10 +7,16 @@ from app.api.v1.api import api_router
 # Setup Logging
 setup_logging()
 
+import os
+
+is_production = bool(os.getenv("RENDER"))
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    openapi_url=None if is_production else f"{settings.API_V1_STR}/openapi.json",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc"
 )
 
 # Set all CORS enabled origins
