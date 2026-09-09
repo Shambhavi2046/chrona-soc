@@ -187,6 +187,14 @@ async def process_chat(db: Session, request: ChatRequestSchema, org_id: uuid.UUI
                 context_str += f"- CASE-{c.id}: {c.title} (Priority: {c.priority}, Status: {c.status})\n"
             system_prompt += context_str
         else:
+            # Deterministic short-circuit to prevent hallucination for case-specific queries
+            if any(w in prompt for w in ["latest", "recent", "active", "case", "summarize"]):
+                return ChatResponseSchema(
+                    response="There are currently no active Critical or High priority cases in this tenant.",
+                    suggested_prompts=["What is a Case?", "Show me active alerts"],
+                    quick_actions=[],
+                    active_context=None
+                )
             system_prompt += "\n\nThere are currently no active Critical or High priority cases in this tenant."
 
     messages = [{"role": "system", "content": system_prompt}]

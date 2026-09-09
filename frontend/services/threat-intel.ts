@@ -18,7 +18,7 @@ export interface ThreatStats {
 }
 
 export async function getIOCs(search?: string): Promise<IOC[]> {
-  const url = search ? `/threat-intel/iocs?search=${encodeURIComponent(search)}` : "/threat-intel/iocs";
+  const url = search ? `threat-intel/iocs?search=${encodeURIComponent(search)}` : "threat-intel/iocs";
   const response = await fetchApi(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch IOCs: ${response.statusText}`);
@@ -38,7 +38,7 @@ export async function getIOCs(search?: string): Promise<IOC[]> {
 }
 
 export async function getThreatStats(): Promise<ThreatStats> {
-  const response = await fetchApi("/threat-intel/stats");
+  const response = await fetchApi("threat-intel/stats");
   if (!response.ok) {
     throw new Error(`Failed to fetch Threat Stats: ${response.statusText}`);
   }

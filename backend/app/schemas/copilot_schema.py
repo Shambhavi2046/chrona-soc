@@ -18,10 +18,10 @@ class ChatRequestSchema(BaseModel):
 class ActiveContextSchema(BaseModel):
     id: str
     title: str
-    status: str
+    status: Optional[str] = None
     priority: str
-    risk_score: int
-    asset_count: int
+    risk_score: Optional[int] = None
+    asset_count: int = 0
     type: str # "Case", "Alert"
 
 class ChatResponseSchema(BaseModel):

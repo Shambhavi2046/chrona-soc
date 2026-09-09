@@ -4,7 +4,7 @@ import { GeneratedReport, ReportTemplate } from '@/types/reports';
 import { mapToUuid } from '@/utils/idMapping';
 
 export const getReports = async (): Promise<GeneratedReport[]> => {
-  const response = await fetchApi(`/reports/`);
+  const response = await fetchApi(`reports/`);
   if (!response.ok) {
     throw new Error('Failed to fetch reports');
   }
