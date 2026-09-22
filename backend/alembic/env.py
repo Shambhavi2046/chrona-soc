@@ -32,6 +32,10 @@ if db_url.startswith("postgres://"):
 elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
+needs_ssl = os.getenv("RENDER") or ("neon.tech" in db_url)
+if "?" in db_url:
+    db_url = db_url.split("?")[0]
+
 config.set_main_option("sqlalchemy.url", db_url)
 
 # other values from the config, defined by the needs of env.py,
@@ -77,10 +81,14 @@ async def run_async_migrations() -> None:
 
     """
 
+    kwargs = {"poolclass": pool.NullPool}
+    if needs_ssl:
+        kwargs["connect_args"] = {"ssl": "require"}
+
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+        **kwargs
     )
 
     async with connectable.connect() as connection:

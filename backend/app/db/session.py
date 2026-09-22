@@ -8,6 +8,9 @@ if db_url.startswith("postgres://"):
 elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
+if "?" in db_url:
+    db_url = db_url.split("?")[0]
+
 import os
 
 engine_kwargs = {
@@ -16,7 +19,7 @@ engine_kwargs = {
     "pool_pre_ping": True,
 }
 
-if os.getenv("RENDER"):
+if os.getenv("RENDER") or "neon.tech" in settings.DATABASE_URL:
     engine_kwargs["connect_args"] = {"ssl": "require"}
 
 engine = create_async_engine(
